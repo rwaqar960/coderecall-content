@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "updatedAt": "2026-07-13",
+  "packs": [
+    {
+      "id": "oop",
+      "title": "Object-Oriented Programming",
+      "version": "0.1.0",
+      "bundled": true,
+      "url": null,
+      "sizeBytes": null,
+      "minAppVersion": "1.0.0"
+    }
+  ]
+}

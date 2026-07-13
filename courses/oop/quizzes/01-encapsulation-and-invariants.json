@@ -1,0 +1,99 @@
+{
+  "schemaVersion": 1,
+  "chapterId": "oop-01",
+  "passScore": 0.7,
+  "questions": [
+    {
+      "id": "oop-01-q01",
+      "type": "mcq",
+      "difficulty": "senior",
+      "prompt": "A class has all-private fields with a public getter **and setter** for each. What is the most accurate criticism?",
+      "options": [
+        { "id": "a", "text": "It violates naming conventions for accessors." },
+        { "id": "b", "text": "Its invariants can be broken from any call site, so validity must be re-checked everywhere instead of enforced once." },
+        { "id": "c", "text": "It is slower than using public fields because of method-call overhead." },
+        { "id": "d", "text": "It exposes the field types, which should be secret." }
+      ],
+      "answer": ["b"],
+      "explanation": "Per-field setters let callers create invalid intermediate states, moving invariant enforcement from one constructor to every call site — that is the substantive failure. (a) is cosmetic. (c) is false in practice; trivial accessors are inlined by any modern JIT/compiler. (d) misstates encapsulation: types appear in getters too — the goal is protecting state transitions, not hiding type names.",
+      "tags": ["encapsulation", "invariants", "getters-setters"]
+    },
+    {
+      "id": "oop-01-q02",
+      "type": "code-review",
+      "difficulty": "senior",
+      "prompt": "This class compiles and all its tests pass. What is the design flaw a reviewer should flag?",
+      "code": "public class Order {\n    private final List<LineItem> items = new ArrayList<>();\n    private Money cachedTotal = Money.ZERO;\n\n    public void add(LineItem item) {\n        items.add(item);\n        cachedTotal = cachedTotal.plus(item.price());\n    }\n\n    public List<LineItem> getItems() {\n        return items;\n    }\n\n    public Money getTotal() {\n        return cachedTotal;\n    }\n}",
+      "codeLanguage": "java",
+      "options": [
+        { "id": "a", "text": "`cachedTotal` should be recomputed on every call to `getTotal()` for correctness." },
+        { "id": "b", "text": "`getItems()` returns the internal mutable list, so callers can change items and make `cachedTotal` a lie." },
+        { "id": "c", "text": "`items` should not be `final` because the list contents change." },
+        { "id": "d", "text": "`add` should return `this` to allow fluent chaining." }
+      ],
+      "answer": ["b"],
+      "explanation": "`getItems()` hands out a live reference to internal state: `order.getItems().clear()` silently desynchronizes items from `cachedTotal` — the invariant 'total equals sum of items' has left the building. Return `List.copyOf(items)` or expose targeted queries instead. (a) recomputing would *mask* the leak, not fix it — the leak remains for any other derived state. (c) confuses reference immutability with content immutability; `final` here is correct. (d) is a style preference, not a flaw.",
+      "tags": ["encapsulation", "mutable-state", "defensive-copy"]
+    },
+    {
+      "id": "oop-01-q03",
+      "type": "mcq",
+      "difficulty": "senior",
+      "prompt": "Which refactoring best applies **Tell, Don't Ask** to this code?\n\n```java\nif (cart.getItemCount() > 0 && !cart.isCheckedOut()) {\n    cart.setCheckedOut(true);\n    cart.setCheckoutTime(now());\n}\n```",
+      "options": [
+        { "id": "a", "text": "Move the condition into a helper: `if (CartUtils.canCheckout(cart)) { ... }`" },
+        { "id": "b", "text": "Replace with `cart.checkout(now())`, which validates internally and throws or returns a result if the cart is empty or already checked out." },
+        { "id": "c", "text": "Combine the two setters into one: `cart.setCheckedOutAndTime(true, now())`." },
+        { "id": "d", "text": "Make the fields public so the intent is more visible at the call site." }
+      ],
+      "answer": ["b"],
+      "explanation": "Tell-Don't-Ask means the object that owns the state makes the decision: `checkout(...)` enforces 'only non-empty, not-yet-checked-out carts can check out' in exactly one place. (a) still asks-then-acts — every call site must remember to call the helper, and the check-then-act gap remains. (c) merges the writes but still leaves validation to callers. (d) is the opposite of the principle.",
+      "tags": ["tell-dont-ask", "invariants"]
+    },
+    {
+      "id": "oop-01-q04",
+      "type": "multi",
+      "difficulty": "senior",
+      "prompt": "Which of the following can break an object's invariants **without any setter existing**? Select all that apply.",
+      "options": [
+        { "id": "a", "text": "A getter that returns an internal mutable collection." },
+        { "id": "b", "text": "A constructor that stores a caller-supplied mutable list without copying it." },
+        { "id": "c", "text": "A getter that returns an immutable value object such as `LocalDate`." },
+        { "id": "d", "text": "Reflection or serialization frameworks writing directly to private fields." }
+      ],
+      "answer": ["a", "b", "d"],
+      "explanation": "(a) and (b) are the two directions of the same leak — a shared mutable reference, whether handed out or kept in. (d) is real: deserialization bypasses constructors, which is why deserialized input needs re-validation (e.g. `readObject`/`@JsonCreator` checks). (c) is safe — immutable values cannot be used as a remote control for internal state; returning them is exactly what getters are for.",
+      "tags": ["encapsulation", "mutable-state", "serialization"]
+    },
+    {
+      "id": "oop-01-q05",
+      "type": "mcq",
+      "difficulty": "staff",
+      "prompt": "A teammate applies Tell-Don't-Ask aggressively until `Customer` contains pricing, tax, loyalty, and email-formatting logic — 'because it all touches customer data.' What is the correct boundary to argue for?",
+      "options": [
+        { "id": "a", "text": "An object should own decisions that protect its own invariants; multi-concern orchestration belongs in domain services, even if it reads the object's data." },
+        { "id": "b", "text": "All behavior touching a class's data must live in that class; the god object is the correct OO design." },
+        { "id": "c", "text": "Objects should hold only data; all behavior belongs in service classes." },
+        { "id": "d", "text": "Split Customer into one class per method to keep classes small." }
+      ],
+      "answer": ["a"],
+      "explanation": "Tell-Don't-Ask has a boundary: it assigns *invariant-protecting* decisions to the object. Tax rules and email formatting don't protect any Customer invariant — pulling them in creates a god object with low cohesion. (b) is the failure mode itself. (c) is the opposite extreme (an anemic domain model), which reintroduces ask-then-act everywhere. (d) optimizes a metric, not a design.",
+      "tags": ["tell-dont-ask", "cohesion", "god-object"]
+    },
+    {
+      "id": "oop-01-q06",
+      "type": "mcq",
+      "difficulty": "staff",
+      "prompt": "Two microservices both read and write the same `orders` database table. In encapsulation terms, what is the most precise diagnosis?",
+      "options": [
+        { "id": "a", "text": "It is fine as long as both services validate the data before writing." },
+        { "id": "b", "text": "The orders invariants no longer have a single enforced home — the same failure as a class whose fields are mutated by outsiders, at service scale." },
+        { "id": "c", "text": "The problem is purely operational: schema migrations require coordinating two deployments." },
+        { "id": "d", "text": "It violates REST principles because services should communicate over HTTP." }
+      ],
+      "answer": ["b"],
+      "explanation": "Encapsulation scales: a shared writable table is a service-level public field. Every rule about valid order state must now be duplicated (and kept in sync) in both codebases — (a) describes that duplication, which is the disease, not the cure. (c) is a real cost but a symptom, not the root diagnosis. (d) confuses transport style with ownership of state; the issue would remain even with perfect REST APIs.",
+      "tags": ["encapsulation", "microservices", "boundaries"]
+    }
+  ]
+}

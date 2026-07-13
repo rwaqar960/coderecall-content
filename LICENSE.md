@@ -1,0 +1,26 @@
+# License
+
+All content in this repository (course text, quizzes, examples, and images) is
+licensed under the **Creative Commons Attribution-NonCommercial-ShareAlike 4.0
+International License (CC BY-NC-SA 4.0)**.
+
+You are free to:
+
+- **Share** — copy and redistribute the material in any medium or format
+- **Adapt** — remix, transform, and build upon the material
+
+Under the following terms:
+
+- **Attribution** — You must give appropriate credit to *CodeRecall*
+  (https://github.com/rwaqar/coderecall-content), provide a link to the
+  license, and indicate if changes were made.
+- **NonCommercial** — You may not use the material for commercial purposes.
+- **ShareAlike** — If you remix, transform, or build upon the material, you
+  must distribute your contributions under the same license.
+
+The full legal text is available at:
+https://creativecommons.org/licenses/by-nc-sa/4.0/legalcode
+
+Code snippets embedded within chapters may be reused freely in your own
+projects without attribution (they are illustrative examples, not the
+protected work).
