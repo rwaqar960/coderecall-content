@@ -1,0 +1,23 @@
+/**
+ * Brand palette matches the CodeRecall app (seed color #00696B).
+ */
+:root {
+  --ifm-color-primary: #00696b;
+  --ifm-color-primary-dark: #005e60;
+  --ifm-color-primary-darker: #005759;
+  --ifm-color-primary-darkest: #004849;
+  --ifm-color-primary-light: #007477;
+  --ifm-color-primary-lighter: #007b7e;
+  --ifm-color-primary-lightest: #009598;
+  --ifm-code-font-size: 92%;
+}
+
+[data-theme='dark'] {
+  --ifm-color-primary: #4dd0d2;
+  --ifm-color-primary-dark: #29c3c6;
+  --ifm-color-primary-darker: #1abcbf;
+  --ifm-color-primary-darkest: #159b9d;
+  --ifm-color-primary-light: #71ddde;
+  --ifm-color-primary-lighter: #80e1e2;
+  --ifm-color-primary-lightest: #adecec;
+}
