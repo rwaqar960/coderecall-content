@@ -41,8 +41,12 @@ frequency. Java's `HashMap` resizes (doubles bucket count, rehashes every
 entry) once load factor exceeds 0.75. This is structurally identical to
 dynamic array resizing from chapter 1: individual `put` calls are O(1), but
 a resize is O(n), averaging out to amortized O(1) — **and knowing the
-expected final size lets you pre-size the map** (`new HashMap<>(expectedSize
-* 4/3)`) to skip resizes entirely, exactly as you'd pre-size an ArrayList.
+expected final size lets you pre-size the map** to skip resizes entirely,
+exactly as you'd pre-size an ArrayList:
+
+```java
+new HashMap<>(expectedSize * 4 / 3)
+```
 
 > **Interview lens:** "Why is HashMap O(1)?" — the complete answer names
 > three things: the bucket-index arithmetic, the average bucket chain
