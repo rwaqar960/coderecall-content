@@ -19,13 +19,21 @@ for chapters_dir in courses/*/chapters; do
   mkdir -p "$out"
   cp "$chapters_dir"/*.md "$out"/
 
-  python3 - "$course_dir/course.json" "$out/_category_.json" <<'PY'
+  python3 - "$course_dir/course.json" "$out/_category_.json" "$course_id" <<'PY'
 import json, sys
 course = json.load(open(sys.argv[1], encoding="utf-8-sig"))
+course_id = sys.argv[3]
 category = {
     "label": course["title"],
     "position": 1,
-    "link": {"type": "generated-index", "description": course["description"]},
+    # Without an explicit slug, Docusaurus puts the generated index at
+    # /docs/category/<slugified-label> instead of /docs/<course_id> — pin it
+    # so homepage/footer links to /docs/<course_id> actually resolve.
+    "link": {
+        "type": "generated-index",
+        "slug": f"/{course_id}",
+        "description": course["description"],
+    },
 }
 json.dump(category, open(sys.argv[2], "w", encoding="utf-8"))
 PY
