@@ -9,7 +9,9 @@ const config = {
 
   url: 'https://rwaqar960.github.io',
   baseUrl: '/coderecall-content/',
-  trailingSlash: false,
+  // Required for GitHub Pages: without this, a course's generated-index page
+  // ("oop.html") and its chapter folder ("oop/") collide, and the index 404s.
+  trailingSlash: true,
 
   organizationName: 'rwaqar960',
   projectName: 'coderecall-content',
