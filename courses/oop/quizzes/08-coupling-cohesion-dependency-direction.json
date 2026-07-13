@@ -1,0 +1,99 @@
+{
+  "schemaVersion": 1,
+  "chapterId": "oop-08",
+  "passScore": 0.7,
+  "questions": [
+    {
+      "id": "oop-08-q01",
+      "type": "mcq",
+      "difficulty": "senior",
+      "prompt": "Service B reads rows directly from Service A's database tables. On the coupling ladder, this is…",
+      "options": [
+        { "id": "a", "text": "Content coupling — depending on another module's internals, the worst rung; A can never change its schema safely." },
+        { "id": "b", "text": "Data coupling — only data is exchanged, which is the good default." },
+        { "id": "c", "text": "Message coupling — the database acts as the message bus." },
+        { "id": "d", "text": "Stamp coupling — whole rows are passed where fields would do." }
+      ],
+      "answer": ["a"],
+      "explanation": "A's schema is its private representation; reading it bypasses every invariant gate and freezes A's internals forever — chapter 1's leaked-state disease at service scale. (b) data coupling means passing needed values through a *public, intentional* interface. (c) a queue decouples through a contract; a peeked table is the absence of one. (d) misdiagnoses the layer: the problem isn't payload width, it's that the payload is someone's internals.",
+      "tags": ["coupling", "content-coupling", "microservices"]
+    },
+    {
+      "id": "oop-08-q02",
+      "type": "code-review",
+      "difficulty": "senior",
+      "prompt": "What coupling smell should a reviewer name in this API, and what is the standard fix?",
+      "code": "// caller\nreportService.render(data, true, false);\n\n// callee\nvoid render(ReportData data, boolean isAdminView, boolean skipTotals) {\n    if (isAdminView) { ... } else { ... }\n    if (!skipTotals) { ... }\n}",
+      "codeLanguage": "java",
+      "options": [
+        { "id": "a", "text": "Control coupling — the caller steers the callee's internal branches via flags; split into intention-revealing methods or strategy objects (renderAdminView / renderUserView)." },
+        { "id": "b", "text": "Stamp coupling — ReportData is too large; pass individual fields." },
+        { "id": "c", "text": "Common coupling — the booleans are shared global state." },
+        { "id": "d", "text": "No smell: booleans are the simplest way to configure behavior." }
+      ],
+      "answer": ["a"],
+      "explanation": "Boolean parameters that select behavior mean the caller must know the callee's internal logic to call it correctly — and call sites (`render(data, true, false)`) are unreadable. Splitting by intention (or passing a strategy/enum with named variants) removes the steering. (b) nothing indicates ReportData is oversized for rendering a report. (c) the flags are parameters, not globals. (d) two interacting booleans = four implicit modes; that's configuration by control coupling.",
+      "tags": ["control-coupling", "api-design"]
+    },
+    {
+      "id": "oop-08-q03",
+      "type": "mcq",
+      "difficulty": "staff",
+      "prompt": "Which dependency situation is the most expensive over time?",
+      "options": [
+        { "id": "a", "text": "Many volatile modules depending on one small, abstract, rarely-changing interface" },
+        { "id": "b", "text": "One volatile UI module depending on the standard library" },
+        { "id": "c", "text": "The core domain model depending directly on a vendor SDK that ships quarterly breaking changes" },
+        { "id": "d", "text": "Two stable modules tightly coupled to each other for years" }
+      ],
+      "answer": ["c"],
+      "explanation": "Cost = (probability the dependee changes) × (number and importance of dependents). The domain is what everything else depends on; routing vendor volatility into it makes every SDK break ripple through the whole system — the exact inversion of 'arrows point toward stability.' (a) is the *designed* good case: stable abstraction absorbing many dependents. (b) volatile-on-stable is cheap. (d) coupling between stable things is a budget well spent — the chapter calls this out as often correct.",
+      "tags": ["dependency-direction", "stability"]
+    },
+    {
+      "id": "oop-08-q04",
+      "type": "mcq",
+      "difficulty": "staff",
+      "prompt": "Two services deployed separately must always release together: every schema tweak in one forces a matching deploy of the other, and features routinely span both codebases. What is the correct diagnosis?",
+      "options": [
+        { "id": "a", "text": "A distributed monolith: the service boundary cut through a cohesive change-axis, so the design pays network/versioning costs while getting none of the independence a boundary exists to buy." },
+        { "id": "b", "text": "Normal microservice operation — coordinated releases are expected." },
+        { "id": "c", "text": "The services need an API gateway in front to decouple them." },
+        { "id": "d", "text": "The fix is switching their communication from REST to gRPC." }
+      ],
+      "answer": ["a"],
+      "explanation": "The whole justification for a service boundary is independent change (teams, cadence, scaling). Lockstep releases prove the two sides share one change-axis — high cohesion split in half. The honest fixes: merge them, or re-cut the boundary where change actually diverges. (b) normalizes the failure. (c) and (d) change the plumbing while the coupling — features spanning both — is in the domain, not the transport.",
+      "tags": ["cohesion", "microservices", "distributed-monolith"]
+    },
+    {
+      "id": "oop-08-q05",
+      "type": "multi",
+      "difficulty": "senior",
+      "prompt": "Which claims about coupling and cohesion are true? Select all that apply.",
+      "options": [
+        { "id": "a", "text": "An explicit constructor dependency is preferable to a hidden 'must call init() first' requirement of the same strength, because visible coupling is compiler-checked." },
+        { "id": "b", "text": "A `utils` package is a cohesion failure: 'miscellaneous' is a topic, not a change-axis." },
+        { "id": "c", "text": "Zero coupling between all modules is the ideal end-state of refactoring." },
+        { "id": "d", "text": "The practical cohesion test is how many modules must be opened to implement one requirement change." }
+      ],
+      "answer": ["a", "b", "d"],
+      "explanation": "(a) visibility is half of coupling's cost — hidden temporal coupling fails silently at 3am; explicit dependencies fail at compile time. (b) utils grows without bound precisely because nothing changes together in it. (d) is the operational definition — 'change together, live together.' (c) is the trap the chapter closes on: zero coupling means the modules don't form a system; coupling is a budget to spend where change is likely, and events/queues purchased needlessly add latency, schema drift, and debugging cost.",
+      "tags": ["coupling", "cohesion"]
+    },
+    {
+      "id": "oop-08-q06",
+      "type": "mcq",
+      "difficulty": "staff",
+      "prompt": "Modules `billing` and `notifications` import each other (`billing → notifications` to send receipts; `notifications → billing` to look up invoice details for templates). Which fix follows the chapter's guidance?",
+      "options": [
+        { "id": "a", "text": "Extract what templates need into a shared fragment (e.g. an `InvoiceSummary` value type in a module both import), or invert one arrow: billing passes the needed data into notifications at call time." },
+        { "id": "b", "text": "Merge both into one module, since cycles mean they were one module anyway." },
+        { "id": "c", "text": "Suppress the dependency check — the cycle is fine if both teams coordinate." },
+        { "id": "d", "text": "Introduce a message queue in both directions." }
+      ],
+      "answer": ["a"],
+      "explanation": "Both standard cycle-breaks apply: extract the shared piece downward (both depend on a stable value type), or invert one edge (notifications receives invoice data as a parameter — it never needed to *import* billing, just to see some fields). (b) is sometimes right, but only after checking whether the change-axes genuinely coincide — here they plausibly don't (billing rules vs message formatting). (c) keeps the degenerate structure and its lockstep costs. (d) hides the same cycle behind two queues — now it's eventually-consistent *and* circular.",
+      "tags": ["dependency-cycles", "dependency-direction"]
+    }
+  ]
+}

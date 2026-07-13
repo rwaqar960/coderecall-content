@@ -1,0 +1,99 @@
+{
+  "schemaVersion": 1,
+  "chapterId": "oop-05",
+  "passScore": 0.7,
+  "questions": [
+    {
+      "id": "oop-05-q01",
+      "type": "mcq",
+      "difficulty": "senior",
+      "prompt": "Which formulation of the Single Responsibility Principle is the one that holds up in design review?",
+      "options": [
+        { "id": "a", "text": "A module should be responsible to exactly one actor — one group whose requirements can force it to change." },
+        { "id": "b", "text": "A class should have exactly one public method." },
+        { "id": "c", "text": "A class should do only one thing, as judged by its method count." },
+        { "id": "d", "text": "Every class should map to exactly one database table." }
+      ],
+      "answer": ["a"],
+      "explanation": "SRP is about *reasons to change*, and reasons come from people: finance, operations, the DBA team. One actor = changes never collide. (b) and (c) are the confetti misreading — a twelve-method class serving one team can be perfectly SRP-compliant. (d) confuses SRP with a persistence pattern.",
+      "tags": ["srp", "single-responsibility"]
+    },
+    {
+      "id": "oop-05-q02",
+      "type": "code-review",
+      "difficulty": "senior",
+      "prompt": "Finance recently changed overtime rules, and the operations hours report silently changed format. Using SRP, what is the root cause in this class?",
+      "code": "class Employee {\n    Money calculatePay() {           // finance rules\n        return rate.times(calculateHours());\n    }\n    String reportHours() {           // operations report\n        return format(calculateHours());\n    }\n    private Duration calculateHours() {\n        // shared logic both methods depend on\n    }\n}",
+      "codeLanguage": "java",
+      "options": [
+        { "id": "a", "text": "Two different actors' requirements are coupled through the shared private helper — a change requested by one actor altered behavior owned by another." },
+        { "id": "b", "text": "The private method should be public so both teams can review it." },
+        { "id": "c", "text": "calculateHours should be static since it has no side effects." },
+        { "id": "d", "text": "The class mixes a query (reportHours) with a command (calculatePay), violating CQS." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is the canonical SRP failure mechanism: finance's overtime tweak changed `calculateHours`, which operations' report also depends on. Split pay calculation and hour reporting into modules owned by their actors, each with its own (initially duplicated) hours logic or an explicitly shared, contract-tested one. (b) visibility doesn't decouple fates. (c) is irrelevant to the coupling. (d) both methods are queries; CQS isn't the issue.",
+      "tags": ["srp", "coupling", "actors"]
+    },
+    {
+      "id": "oop-05-q03",
+      "type": "mcq",
+      "difficulty": "senior",
+      "prompt": "What is the actual mechanism by which the Open/Closed Principle reduces risk?",
+      "options": [
+        { "id": "a", "text": "New behavior arrives as new code behind an abstraction point, so shipped, tested code is not edited — its risk is not re-opened." },
+        { "id": "b", "text": "Classes marked final cannot be modified, preventing bugs." },
+        { "id": "c", "text": "Interfaces run faster than switch statements." },
+        { "id": "d", "text": "It mandates that all classes be open for inheritance." }
+      ],
+      "answer": ["a"],
+      "explanation": "OCP's payoff is risk isolation: the two-year-old CSV exporter is untouched — not re-reviewed, not re-broken — when the PDF exporter is added as a new class. (b) confuses 'closed for modification' with the `final` keyword. (c) dispatch through an interface is not faster. (d) OCP says nothing about requiring inheritance; composition and registration achieve it too.",
+      "tags": ["ocp", "open-closed"]
+    },
+    {
+      "id": "oop-05-q04",
+      "type": "mcq",
+      "difficulty": "staff",
+      "prompt": "A teammate, citing OCP, wants an interface + factory for the tax calculation 'in case tax law changes.' There is one implementation and no second on the roadmap. The senior response?",
+      "options": [
+        { "id": "a", "text": "Decline for now: abstract on the second change of a kind or for roadmap-certain axes; speculative abstraction pays indirection tax forever and often sits on the wrong axis anyway." },
+        { "id": "b", "text": "Approve: OCP requires every class to be extensible without modification." },
+        { "id": "c", "text": "Approve, but make it an abstract class instead of an interface." },
+        { "id": "d", "text": "Decline: tax logic never changes, so no abstraction will ever be needed." }
+      ],
+      "answer": ["a"],
+      "explanation": "OCP is economical only where variation *recurs*. First change: modify concrete code. Second change of the same kind: now you know the real axis of variation — abstract along it. Pre-building for imagined change adds permanent indirection and, when change finally comes, it usually varies along an axis the speculative interface didn't anticipate. (b) is the plugin-disease reading of OCP. (c) changes the mechanism, not the mistake. (d) is wrong in the other direction — tax law changes constantly; the point is to abstract when the *shape* of change is evidenced.",
+      "tags": ["ocp", "speculative-abstraction", "yagni"]
+    },
+    {
+      "id": "oop-05-q05",
+      "type": "multi",
+      "difficulty": "senior",
+      "prompt": "Which are genuine symptoms that a class is violating SRP (as opposed to just being large)? Select all that apply.",
+      "options": [
+        { "id": "a", "text": "It is a chronic merge-conflict hotspot for multiple teams." },
+        { "id": "b", "text": "Changes requested by one stakeholder keep breaking behavior another stakeholder owns." },
+        { "id": "c", "text": "It has more than 300 lines." },
+        { "id": "d", "text": "Its unit tests exercise unrelated fixtures — pay rules in one test, report formatting in the next." }
+      ],
+      "answer": ["a", "b", "d"],
+      "explanation": "(a) multiple teams editing one file is the social signature of multiple actors. (b) is the failure mechanism itself — coupled reasons to change. (d) test suites mirror responsibilities; unrelated fixtures in one suite mean unrelated responsibilities in one class. (c) alone proves nothing: a cohesive parser or state machine can be long and still answer to one actor — size is a prompt to check, not a verdict.",
+      "tags": ["srp", "code-smells"]
+    },
+    {
+      "id": "oop-05-q06",
+      "type": "mcq",
+      "difficulty": "staff",
+      "prompt": "Your sealed-type switch over `NotificationChannel` (email, SMS) has been edited in four PRs this quarter to add push, WhatsApp, Slack, and Teams — each edit touching the switch, its tests, and two call sites. What does this signal?",
+      "options": [
+        { "id": "a", "text": "The channel axis is demonstrably volatile: introduce an abstraction point (interface + registry) so future channels arrive as new code — the evidence OCP asks for now exists." },
+        { "id": "b", "text": "Nothing — sealed switches are always preferable to interfaces." },
+        { "id": "c", "text": "The team should batch new channels into quarterly releases to reduce PR count." },
+        { "id": "d", "text": "Each channel should have been a subclass of the switch's enclosing class." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is the chapter's rule operating in reverse: repeated same-shaped edits across files are the sealed-switch design telling you the variant set is *open*, not closed. Four occurrences is well past the abstraction threshold. (b) sealed switches win for genuinely closed sets — this one demonstrably isn't. (c) manages the symptom administratively. (d) inheritance of the orchestrator isn't an extension point; it's the fragile-base-class trap from chapter 3.",
+      "tags": ["ocp", "sealed-types", "expression-problem"]
+    }
+  ]
+}

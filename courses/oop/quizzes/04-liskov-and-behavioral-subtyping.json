@@ -1,0 +1,99 @@
+{
+  "schemaVersion": 1,
+  "chapterId": "oop-04",
+  "passScore": 0.7,
+  "questions": [
+    {
+      "id": "oop-04-q01",
+      "type": "mcq",
+      "difficulty": "senior",
+      "prompt": "Which change in an override is an LSP violation?",
+      "options": [
+        { "id": "a", "text": "Accepting inputs the base method would have rejected" },
+        { "id": "b", "text": "Rejecting inputs the base method's contract accepts" },
+        { "id": "c", "text": "Guaranteeing a stronger postcondition than the base" },
+        { "id": "d", "text": "Returning a narrower (covariant) type" }
+      ],
+      "answer": ["b"],
+      "explanation": "Rejecting previously valid inputs *strengthens the precondition* — callers written against the base contract now blow up. The memorable form: require no more, promise no less. (a) weakening preconditions is allowed (accept more). (c) strengthening postconditions is allowed (promise more). (d) covariant returns are type-safe and legal in Java/Kotlin/C++.",
+      "tags": ["lsp", "preconditions"]
+    },
+    {
+      "id": "oop-04-q02",
+      "type": "code-review",
+      "difficulty": "senior",
+      "prompt": "`stretch` is well-tested against `Rectangle`. A teammate passes a `Square`. What is the correct diagnosis?",
+      "code": "void stretch(Rectangle r) {\n    r.setHeight(2);\n    r.setWidth(10);\n    assert r.area() == 20;\n}\n\nclass Square extends Rectangle {\n    @Override void setWidth(int w)  { super.setWidth(w); super.setHeight(w); }\n    @Override void setHeight(int h) { super.setWidth(h); super.setHeight(h); }\n}",
+      "codeLanguage": "java",
+      "options": [
+        { "id": "a", "text": "Square violates Rectangle's implicit contract that width and height vary independently; the mutable subtype relationship is invalid even though geometry says square is-a rectangle." },
+        { "id": "b", "text": "stretch is at fault: code should never assert on results of setters." },
+        { "id": "c", "text": "The bug is that Square calls super twice; caching the values locally would fix substitutability." },
+        { "id": "d", "text": "Java's assert being disabled by default makes this a non-issue." }
+      ],
+      "answer": ["a"],
+      "explanation": "`setWidth` on a Rectangle promises height is untouched — an unwritten but real postcondition callers rely on. No implementation trick preserves both that promise and squareness under mutation, which is why the fix is modeling (immutability, or no subtype relation), not code. (b) callers are entitled to rely on contracts; that's what contracts are for. (c) any mechanism keeping the sides equal breaks the same promise. (d) the assert is illustrative — real callers encode the same assumption in logic.",
+      "tags": ["lsp", "square-rectangle", "mutability"]
+    },
+    {
+      "id": "oop-04-q03",
+      "type": "multi",
+      "difficulty": "senior",
+      "prompt": "Which of these compile cleanly but violate LSP? Select all that apply.",
+      "options": [
+        { "id": "a", "text": "A `List` implementation whose `add` throws `UnsupportedOperationException`" },
+        { "id": "b", "text": "An override returning null where the base's contract guarantees a non-null result" },
+        { "id": "c", "text": "A subclass requiring `init()` to be called before methods that the base allows calling immediately" },
+        { "id": "d", "text": "An override documented and implemented as thread-safe where the base makes no thread-safety promise" }
+      ],
+      "answer": ["a", "b", "c"],
+      "explanation": "(a) refuses part of the inherited contract — the canonical production LSP break (Java's own fixed-size lists do this, which is a design apology, not a precedent). (b) weakens a postcondition. (c) strengthens a precondition. (d) is the *allowed* direction: promising more than the base (stronger guarantee) never breaks callers written against the weaker contract.",
+      "tags": ["lsp", "contracts"]
+    },
+    {
+      "id": "oop-04-q04",
+      "type": "mcq",
+      "difficulty": "staff",
+      "prompt": "The 'history rule' in behavioral subtyping rules out which design?",
+      "options": [
+        { "id": "a", "text": "A mutable subtype of a type whose contract implies immutability" },
+        { "id": "b", "text": "A subtype adding new methods the base lacks" },
+        { "id": "c", "text": "A subtype with a faster implementation of the same behavior" },
+        { "id": "d", "text": "A subtype implemented in a different package" }
+      ],
+      "answer": ["a"],
+      "explanation": "The history rule says a subtype may not permit state transitions the base's contract excludes. If callers of `Money` may cache it, share it across threads, and use it as a map key *because it never changes*, a mutable subtype invalidates all of that reasoning even if every method signature matches. (b) adding methods is fine — existing callers can't see them. (c) performance isn't contract (unless documented as such). (d) packaging is irrelevant.",
+      "tags": ["lsp", "history-rule", "immutability"]
+    },
+    {
+      "id": "oop-04-q05",
+      "type": "mcq",
+      "difficulty": "staff",
+      "prompt": "A third of your `PaymentProvider` implementations throw `UnsupportedOperationException` from `refund()`. What is the senior-level fix?",
+      "options": [
+        { "id": "a", "text": "Split the interface: `PaymentProvider` and a separate `Refundable` capability implemented only by providers that support it." },
+        { "id": "b", "text": "Document that callers must catch `UnsupportedOperationException`." },
+        { "id": "c", "text": "Make `refund()` a default method that returns a failed result." },
+        { "id": "d", "text": "Add a `supportsRefund()` boolean and require callers to check it first." }
+      ],
+      "answer": ["a"],
+      "explanation": "Systematic 'not supported' implementations mean the interface promises more than the implementations deliver — fix the type, not the callers. A narrow capability interface makes refund-ability visible to the compiler: `if (provider instanceof Refundable r)`. (b) institutionalizes the violation. (d) is (b) with a flag — nothing stops the unchecked call; it trades a type-system guarantee for a runtime convention. (c) hides failures in a corner where compliance bugs go unnoticed — better than throwing only if 'refund silently fails' is genuinely acceptable, which for payments it is not.",
+      "tags": ["lsp", "interface-segregation", "capability"]
+    },
+    {
+      "id": "oop-04-q06",
+      "type": "mcq",
+      "difficulty": "core",
+      "prompt": "Why can't the compiler catch most LSP violations?",
+      "options": [
+        { "id": "a", "text": "Because LSP concerns behavioral contracts — promises about semantics — while the compiler checks only signatures and types." },
+        { "id": "b", "text": "Because LSP applies only at runtime in dynamically typed languages." },
+        { "id": "c", "text": "Because compilers do not analyze subclasses." },
+        { "id": "d", "text": "It can: enabling strict mode catches LSP violations in modern compilers." }
+      ],
+      "answer": ["a"],
+      "explanation": "A method that returns null, throws 'unsupported', or mutates what should be frozen has a perfectly valid signature. Semantics live in documentation, tests, and callers' expectations — which is why LSP is enforced by contract tests (run the base type's test suite against every subtype) and review, not by the type checker. (b) LSP applies identically in static languages. (c) and (d) are false.",
+      "tags": ["lsp", "contracts", "testing"]
+    }
+  ]
+}

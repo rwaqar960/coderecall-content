@@ -1,0 +1,99 @@
+{
+  "schemaVersion": 1,
+  "chapterId": "oop-09",
+  "passScore": 0.7,
+  "questions": [
+    {
+      "id": "oop-09-q01",
+      "type": "mcq",
+      "difficulty": "senior",
+      "prompt": "What is the actual design problem with the classic Singleton, given that many systems legitimately need exactly one instance of something?",
+      "options": [
+        { "id": "a", "text": "The global access point: dependencies vanish from signatures, tests share bleeding state, and every consumer is welded to one concrete instance — the single-instance property itself is fine when owned by the composition root." },
+        { "id": "b", "text": "Creating only one instance wastes the memory reserved for the class." },
+        { "id": "c", "text": "Singletons cannot be made thread-safe." },
+        { "id": "d", "text": "Modern languages have removed static fields, making the pattern impossible." }
+      ],
+      "answer": ["a"],
+      "explanation": "Separate the two properties the pattern conflates: *one instance* (often correct) and *globally reachable* (the disease). Nothing in a method signature reveals a `Config.instance()` call, so the dependency graph lies; test isolation dies because state persists across tests. Inject the single instance and both problems evaporate. (b) is meaningless. (c) thread-safe singletons are routine (holder idiom, locks). (d) is false.",
+      "tags": ["singleton", "dependency-injection"]
+    },
+    {
+      "id": "oop-09-q02",
+      "type": "code-review",
+      "difficulty": "senior",
+      "prompt": "This Android/Flutter-style screen subscribes to a stream. What Observer failure mode does it exhibit?",
+      "code": "class OrderScreenState extends State<OrderScreen> {\n  @override\n  void initState() {\n    super.initState();\n    orderRepository.updates.listen((order) {\n      setState(() => current = order);\n    });\n  }\n\n  // no dispose() override\n}",
+      "codeLanguage": "dart",
+      "options": [
+        { "id": "a", "text": "A leaked subscription: the listener outlives the screen, holding it in memory and firing setState on a disposed widget — cancel the StreamSubscription in dispose()." },
+        { "id": "b", "text": "Reentrancy: the observer mutates the observable during notification." },
+        { "id": "c", "text": "The stream should be a broadcast stream to allow multiple screens." },
+        { "id": "d", "text": "listen() is deprecated in favor of StreamBuilder in all cases." }
+      ],
+      "answer": ["a"],
+      "explanation": "Unsubscribed observers are the #1 memory leak in UI code: the repository's listener list keeps a strong reference to the whole screen state after navigation, and late events hit a dead widget (`setState called after dispose`). Store the `StreamSubscription` and cancel it in `dispose()` — or use a widget (StreamBuilder) that manages the lifecycle. (b) nothing here writes back to the observable. (c) broadcast-vs-single is orthogonal. (d) StreamBuilder is often cleaner but `listen` is not deprecated; the flaw is the missing cancel, not the API choice.",
+      "tags": ["observer", "memory-leak", "lifecycle"]
+    },
+    {
+      "id": "oop-09-q03",
+      "type": "mcq",
+      "difficulty": "senior",
+      "prompt": "You need per-request retry, then caching, then metrics around an HTTP client — composable in different orders per environment. Which pattern is this, and why does it fit?",
+      "options": [
+        { "id": "a", "text": "Decorator: each concern implements the client interface and wraps another instance, so concerns stack in any order without touching the underlying client." },
+        { "id": "b", "text": "Template Method: a base client with retry/cache/metrics hook methods overridden per environment." },
+        { "id": "c", "text": "Singleton: one preconfigured client shared globally avoids the problem." },
+        { "id": "d", "text": "Visitor: each concern visits the request object." }
+      ],
+      "answer": ["a"],
+      "explanation": "Same-interface wrapping is exactly the middleware shape: `Metrics(Cache(Retry(realClient)))`, reordered by rewiring, each concern testable alone. (b) inheritance fixes the combination at compile time and hits chapter 3's fragile-base problems — one subclass per permutation. (c) dodges the requirement (different stacks per environment). (d) Visitor solves operations-over-a-node-hierarchy, not request pipelines.",
+      "tags": ["decorator", "composition"]
+    },
+    {
+      "id": "oop-09-q04",
+      "type": "multi",
+      "difficulty": "senior",
+      "prompt": "Which GoF patterns are (mostly) absorbed into mainstream language features, making the hand-rolled class form usually unnecessary? Select all that apply.",
+      "options": [
+        { "id": "a", "text": "Iterator — foreach loops, Iterable protocols, generators" },
+        { "id": "b", "text": "Command (simple invocation cases) — lambdas and closures" },
+        { "id": "c", "text": "Adapter — no longer needed once SDKs publish interfaces" },
+        { "id": "d", "text": "Prototype — copyWith / record with-expressions / structured clone" }
+      ],
+      "answer": ["a", "b", "d"],
+      "explanation": "(a) writing a GoF Iterator class in 2026 is museum code. (b) a lambda *is* a command object for invocation purposes; the class form earns its keep only with undo state or serialization (job queues). (d) modern copy mechanisms cover Prototype's intent. (c) is the odd one out: Adapter is *more* relevant than ever — it's how DIP keeps vendor SDK types out of your domain, and no language feature does that translation for you.",
+      "tags": ["patterns", "language-features"]
+    },
+    {
+      "id": "oop-09-q05",
+      "type": "mcq",
+      "difficulty": "staff",
+      "prompt": "A mid-level engineer proposes starting the new module design by 'choosing which patterns to use.' What is the staff-level correction?",
+      "options": [
+        { "id": "a", "text": "Design for the requirements simply, then let patterns enter as refactorings when a specific pressure appears — patterns are vocabulary for shapes that emerge, not targets to aim at." },
+        { "id": "b", "text": "Agree, but limit the design to a maximum of three patterns." },
+        { "id": "c", "text": "Patterns are obsolete; the catalog should not influence design at all." },
+        { "id": "d", "text": "Require Factory, Strategy, and Observer in every module for consistency." }
+      ],
+      "answer": ["a"],
+      "explanation": "Pattern-first design is how `AbstractSingletonProxyFactoryBean` happens: structure without pressure. The chapter's asymmetry seals it — adding a pattern to simple code is easy; removing one from clever code is hard, so default simple. (b) rations the mistake instead of correcting it. (c) overshoots: the vocabulary value ('decorate the client with retry') is real and permanent. (d) is cargo cult by policy.",
+      "tags": ["patterns", "design-process", "simplicity"]
+    },
+    {
+      "id": "oop-09-q06",
+      "type": "mcq",
+      "difficulty": "senior",
+      "prompt": "In a language with sealed classes and exhaustive pattern matching (Kotlin, Dart 3, Java 21+), when does the Visitor pattern still earn its ceremony over a switch?",
+      "options": [
+        { "id": "a", "text": "Rarely — mainly when the node hierarchy can't be sealed (open for external extension) yet operations must still dispatch on concrete type, or when double-dispatch over two hierarchies is genuinely needed." },
+        { "id": "b", "text": "Always — Visitor is type-safe and switches are not." },
+        { "id": "c", "text": "Whenever there are more than five node types." },
+        { "id": "d", "text": "Never — Visitor should be deleted from all modern codebases on sight." }
+      ],
+      "answer": ["a"],
+      "explanation": "Sealed types + exhaustive matching deliver Visitor's compile-time completeness guarantee with a fraction of the ceremony — that was Visitor's main selling point. What remains for Visitor: unsealed/externally-extensible hierarchies (accept/visit gives you dispatch without the compiler knowing all subtypes) and true double-dispatch. (b) inverts the modern situation — exhaustive switches over sealed types are exactly as safe. (c) node count is irrelevant. (d) overcorrects: legacy code and the named cases keep it legitimate.",
+      "tags": ["visitor", "sealed-types", "pattern-matching"]
+    }
+  ]
+}

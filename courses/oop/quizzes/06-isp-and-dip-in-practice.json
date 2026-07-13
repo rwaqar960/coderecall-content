@@ -1,0 +1,99 @@
+{
+  "schemaVersion": 1,
+  "chapterId": "oop-06",
+  "passScore": 0.7,
+  "questions": [
+    {
+      "id": "oop-06-q01",
+      "type": "mcq",
+      "difficulty": "senior",
+      "prompt": "What is the most consequential *practical* insight of the Interface Segregation Principle?",
+      "options": [
+        { "id": "a", "text": "Interfaces belong to the clients that call them — they should express what a consumer needs, not everything an implementation offers." },
+        { "id": "b", "text": "Interfaces should contain at most three methods." },
+        { "id": "c", "text": "Every class should implement at least one interface." },
+        { "id": "d", "text": "Interfaces should be placed in a separate 'interfaces' package." }
+      ],
+      "answer": ["a"],
+      "explanation": "ISP's ownership insight is what makes it actionable: design contracts from the consumption side (a password-reset flow needs read+save, so it depends on `UserReader`/`UserWriter`), and one implementation can satisfy many slices. (b) numeric limits are ISP theater — slice along client roles, not method counts. (c) and (d) are cargo-cult conventions unrelated to the principle.",
+      "tags": ["isp", "interface-design"]
+    },
+    {
+      "id": "oop-06-q02",
+      "type": "multi",
+      "difficulty": "senior",
+      "prompt": "A `PasswordResetService` depends on a seven-method `UserRepository` but calls only `findById` and `save`. Which costs is it actually paying? Select all that apply.",
+      "options": [
+        { "id": "a", "text": "Its tests require stubbing or ignoring five irrelevant methods." },
+        { "id": "b", "text": "Its type signature overstates its true dependencies, hiding that it never deletes or bulk-imports." },
+        { "id": "c", "text": "It recompiles / re-verifies when any of the seven signatures change, including ones it never calls." },
+        { "id": "d", "text": "It runs slower at runtime because unused methods occupy the vtable." }
+      ],
+      "answer": ["a", "b", "c"],
+      "explanation": "(a) fat mocks are the daily tax. (b) is the subtle one — a reviewer or security auditor cannot tell from types that this flow can't delete users; narrow interfaces are documentation the compiler checks. (c) over-broad build/change coupling is ISP's original motivation. (d) is false: unused interface methods have no per-call runtime cost — the damage is at design/build time, not execution time.",
+      "tags": ["isp", "coupling", "testability"]
+    },
+    {
+      "id": "oop-06-q03",
+      "type": "mcq",
+      "difficulty": "senior",
+      "prompt": "Which detail determines whether an `OrderService` → `OrderStore` → `PostgresOrderStore` design actually follows the Dependency Inversion Principle?",
+      "options": [
+        { "id": "a", "text": "Whether `OrderStore` is defined in (and owned by) the domain layer in domain vocabulary, with the Postgres adapter importing the domain — never the reverse." },
+        { "id": "b", "text": "Whether a DI framework (Spring, Dagger, get_it) constructs the objects." },
+        { "id": "c", "text": "Whether `OrderStore` has more than one implementation in production." },
+        { "id": "d", "text": "Whether `OrderService` receives its dependencies via constructor rather than field injection." }
+      ],
+      "answer": ["a"],
+      "explanation": "DIP is about *ownership and direction*: the high-level policy defines the contract; details implement it. If `OrderStore` lives in the persistence package or speaks SQL vocabulary, the arrows still point the wrong way regardless of tooling. (b) and (d) are dependency *injection* — wiring mechanics that can exist without inversion. (c) a test double (in-memory store) is a perfectly sufficient second implementation; production plurality isn't required.",
+      "tags": ["dip", "dependency-inversion", "architecture"]
+    },
+    {
+      "id": "oop-06-q04",
+      "type": "code-review",
+      "difficulty": "staff",
+      "prompt": "This interface lives in the domain package. What should a reviewer flag?",
+      "code": "// package com.acme.orders.domain\npublic interface OrderStore {\n    void beginTransaction();\n    void save(Order o);\n    void flushBatch(int batchSize);\n    void hintIndex(String indexName);\n    void commit();\n}",
+      "codeLanguage": "java",
+      "options": [
+        { "id": "a", "text": "The abstraction is fictional: transaction control, batching, and index hints are persistence vocabulary, so the domain still depends on database concepts — DIP in name only." },
+        { "id": "b", "text": "The interface should be an abstract class to allow shared logic." },
+        { "id": "c", "text": "beginTransaction/commit should be combined into one method to reduce the method count." },
+        { "id": "d", "text": "The interface is fine: it lives in the domain package, which is what DIP requires." }
+      ],
+      "answer": ["a"],
+      "explanation": "Package placement isn't the test — vocabulary is. A domain that must call `hintIndex` cannot swap to an in-memory store or a document DB, so the 'inversion' bought nothing; this is Postgres wearing a fake mustache. The fix is a contract in domain terms (`save(Order)`, perhaps a `transactionally(Runnable)` policy hook) with batching/hints buried in the adapter. (b) and (c) rearrange the same leak. (d) mistakes the letter for the substance.",
+      "tags": ["dip", "leaky-abstraction"]
+    },
+    {
+      "id": "oop-06-q05",
+      "type": "mcq",
+      "difficulty": "staff",
+      "prompt": "Where is introducing an abstraction/interface **least** justified?",
+      "options": [
+        { "id": "a", "text": "Between two classes that collaborate privately inside one cohesive module, with no I/O and no variation in sight." },
+        { "id": "b", "text": "Between the domain and the payment provider's SDK." },
+        { "id": "c", "text": "Between services and the system clock, when logic depends on 'now'." },
+        { "id": "d", "text": "Between the domain and the persistence layer." }
+      ],
+      "answer": ["a"],
+      "explanation": "DIP guards *boundaries* — I/O, vendors, volatile axes. Inside a cohesive module, an interface between private collaborators is pure ceremony: no second implementation will exist, and the indirection just obscures the call graph. (b) and (d) are the canonical boundaries. (c) `Clock` is the classic testability inversion — time is I/O in disguise.",
+      "tags": ["dip", "boundaries", "over-abstraction"]
+    },
+    {
+      "id": "oop-06-q06",
+      "type": "mcq",
+      "difficulty": "senior",
+      "prompt": "How do ISP violations *cause* LSP violations?",
+      "options": [
+        { "id": "a", "text": "A too-wide interface forces implementations that can't honestly support every method, so they resort to `UnsupportedOperationException`, null returns, or silent no-ops — all contract breaks." },
+        { "id": "b", "text": "Segregated interfaces cannot be checked by the compiler, so behavioral bugs increase." },
+        { "id": "c", "text": "They don't — ISP and LSP concern unrelated layers of design." },
+        { "id": "d", "text": "Wide interfaces slow down dispatch, and timeouts violate postconditions." }
+      ],
+      "answer": ["a"],
+      "explanation": "The chapter-4 smell (implementations throwing 'unsupported') is usually a chapter-6 disease: the interface promises a union of all clients' needs, and each implementation can only honestly deliver a subset. Narrowing the contract to client-shaped slices lets every implementation keep every promise. (b) is backwards. (c) misses that SOLID principles interlock. (d) is nonsense dressed in plausible words.",
+      "tags": ["isp", "lsp", "contracts"]
+    }
+  ]
+}

@@ -1,0 +1,99 @@
+{
+  "schemaVersion": 1,
+  "chapterId": "oop-10",
+  "passScore": 0.7,
+  "questions": [
+    {
+      "id": "oop-10-q01",
+      "type": "code-review",
+      "difficulty": "senior",
+      "prompt": "Three months after this code shipped, submitted orders are being modified in production via a different service. Why was that outcome predictable?",
+      "code": "class Order {\n    // getters and setters for status, items, total\n}\n\nclass OrderService {\n    void addItem(Order order, LineItem item) {\n        if (order.getStatus() == SUBMITTED)\n            throw new IllegalStateException();\n        order.getItems().add(item);\n        order.setTotal(order.getTotal().plus(item.price()));\n    }\n}",
+      "codeLanguage": "java",
+      "options": [
+        { "id": "a", "text": "The anemic model puts the 'submitted orders are frozen' invariant in one service, but the entity's setters and leaked list let any other code path mutate orders without that check." },
+        { "id": "b", "text": "IllegalStateException is the wrong exception type; a checked exception would have prevented it." },
+        { "id": "c", "text": "The total should be recomputed from items instead of maintained incrementally." },
+        { "id": "d", "text": "OrderService should be a singleton so all mutations flow through one instance." }
+      ],
+      "answer": ["a"],
+      "explanation": "The invariant lives in `OrderService.addItem`, but the *capability to violate it* is public on `Order` itself (setters + mutable `getItems()`). Any new service, batch job, or test helper mutates orders unchecked — enforced in one place means enforced nowhere. The fix is chapter 1 at scale: `order.addItem(item)` guards its own state. (b) exception flavor doesn't close the other doors. (c) would fix total-drift but not the frozen-order rule. (d) a singleton service can't stop code that never calls it.",
+      "tags": ["anemic-model", "invariants", "encapsulation"]
+    },
+    {
+      "id": "oop-10-q02",
+      "type": "mcq",
+      "difficulty": "staff",
+      "prompt": "In aggregate design, why should `Invoice` hold a `customerId` rather than a `Customer` object reference?",
+      "options": [
+        { "id": "a", "text": "ID references keep consistency scopes separate (one transaction per aggregate) and stop the object graph from becoming one giant connected ball where loading anything drags in everything." },
+        { "id": "b", "text": "Object references consume more memory than UUIDs." },
+        { "id": "c", "text": "ORMs cannot map object references between tables." },
+        { "id": "d", "text": "It makes the Invoice class serializable." }
+      ],
+      "answer": ["a"],
+      "explanation": "Two systemic payoffs: transactional isolation (invoice changes can't accidentally lock/modify customers, and cross-aggregate rules become explicitly eventual) and graph partitioning (repositories load one aggregate, not the transitive closure of the domain). It also marks a natural service-boundary candidate. (b) is trivia, not design. (c) ORMs map references happily — that's the lazy-loading trap, not a limitation. (d) serialization is unrelated.",
+      "tags": ["aggregates", "ddd", "boundaries"]
+    },
+    {
+      "id": "oop-10-q03",
+      "type": "mcq",
+      "difficulty": "staff",
+      "prompt": "Per the chapter, how do 6,000-line god classes actually form in professional teams?",
+      "options": [
+        { "id": "a", "text": "By gravity: each sprint, the class already touching the domain is the locally cheapest place for one more addition — every step rational, the sum pathological." },
+        { "id": "b", "text": "Junior developers who never learned SRP write them early in the project." },
+        { "id": "c", "text": "Architects design them deliberately for performance." },
+        { "id": "d", "text": "Automatic code generation tools produce them." }
+      ],
+      "answer": ["a"],
+      "explanation": "The drift model matters because it dictates the defense: if god objects grew from ignorance, training would fix them; since they grow from locally-rational incentives, only *structural* counters work — size/ownership tripwires and new-capability-defaults-to-new-module. (b) misses that seasoned teams grow them too, one reasonable PR at a time. (c) and (d) are not how it happens.",
+      "tags": ["god-object", "code-drift", "srp"]
+    },
+    {
+      "id": "oop-10-q04",
+      "type": "mcq",
+      "difficulty": "staff",
+      "prompt": "Two microservices both need `Money` and `CustomerId` types. A teammate proposes a shared `domain-common` library. What does the chapter advise, and why?",
+      "options": [
+        { "id": "a", "text": "Prefer duplicating small stable types: a shared domain library recouples deployments through the package manager — every change to it forces coordinated upgrades, resurrecting the distributed monolith." },
+        { "id": "b", "text": "Always share: duplication is the root of all software evil." },
+        { "id": "c", "text": "Share the library but never version it, so upgrades are automatic." },
+        { "id": "d", "text": "Neither service should have Money types; use BigDecimal primitives across boundaries." }
+      ],
+      "answer": ["a"],
+      "explanation": "Boundary strength is bought with duplication. Tiny, stable value types cost almost nothing to duplicate and change rarely; a shared domain library becomes a coupling superhighway — one team's change queues every team's deploy. Share genuinely stable *contracts* (wire schemas), duplicate the little value types behind them. (b) DRY-absolutism is exactly the instinct the trade-off corrects. (c) unversioned sharing maximizes the blast radius. (d) reintroduces primitive obsession (chapter 7) to dodge a build question.",
+      "tags": ["boundaries", "duplication", "microservices"]
+    },
+    {
+      "id": "oop-10-q05",
+      "type": "multi",
+      "difficulty": "senior",
+      "prompt": "Which items belong on the chapter's OOP-at-scale review checklist? Select all that apply.",
+      "options": [
+        { "id": "a", "text": "Can this rule be broken from outside the module that owns it?" },
+        { "id": "b", "text": "Would this change land as addition, or as surgery across many files?" },
+        { "id": "c", "text": "Is every GoF pattern in the design correctly named in class names?" },
+        { "id": "d", "text": "Is this abstraction backed by at least two real variations?" }
+      ],
+      "answer": ["a", "b", "d"],
+      "explanation": "(a) is the encapsulation/aggregate question — one enforced home per rule. (b) is OCP's outcome measure: blast radius of change. (d) is abstraction economy from chapter 5 — speculative interfaces cost forever. (c) is anti-guidance: pattern-name compliance is cargo cult (chapter 9); patterns are vocabulary for review conversations, not a checklist criterion.",
+      "tags": ["code-review", "checklist"]
+    },
+    {
+      "id": "oop-10-q06",
+      "type": "mcq",
+      "difficulty": "staff",
+      "prompt": "\"At scale, boundary quality dominates object quality.\" Which observation best supports this claim from the chapter?",
+      "options": [
+        { "id": "a", "text": "Mediocre code behind a crisp, narrow, stable API stays containable and refactorable, while excellent objects leaking across a sloppy boundary spread coupling that no local refactoring can undo." },
+        { "id": "b", "text": "Object-oriented programming is obsolete at scale; only APIs matter." },
+        { "id": "c", "text": "Well-designed objects make boundaries unnecessary." },
+        { "id": "d", "text": "Boundaries eliminate the need for tests inside services." }
+      ],
+      "answer": ["a"],
+      "explanation": "The asymmetry is about *containment*: a good boundary makes internal debt local — you can rewrite the inside next quarter without asking anyone. A bad boundary exports your internals into other teams' code (content coupling, chapter 8), and once callers depend on leaked details, no amount of internal elegance wins them back. (b) overstates it — the chapter argues priorities, not obsolescence; good objects still matter *inside*. (c) inverts the dependency: boundaries are where object principles converge, not what they replace. (d) is unrelated and false.",
+      "tags": ["boundaries", "architecture", "coupling"]
+    }
+  ]
+}

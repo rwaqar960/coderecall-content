@@ -1,0 +1,99 @@
+{
+  "schemaVersion": 1,
+  "chapterId": "oop-03",
+  "passScore": 0.7,
+  "questions": [
+    {
+      "id": "oop-03-q01",
+      "type": "code-review",
+      "difficulty": "senior",
+      "prompt": "Users report that `adds` is sometimes higher than the number of elements ever inserted. Why?",
+      "code": "class CountingSet<T> extends HashSet<T> {\n    private int adds = 0;\n\n    @Override public boolean add(T t) {\n        adds++;\n        return super.add(t);\n    }\n\n    @Override public boolean addAll(Collection<? extends T> c) {\n        adds += c.size();\n        return super.addAll(c);\n    }\n}",
+      "codeLanguage": "java",
+      "options": [
+        { "id": "a", "text": "`HashSet.addAll` internally calls `add`, so elements added via `addAll` are counted twice by the overrides." },
+        { "id": "b", "text": "`adds` is not `volatile`, so increments are lost under concurrency." },
+        { "id": "c", "text": "`c.size()` includes duplicates that the set rejects." },
+        { "id": "d", "text": "`super.addAll` must be called before incrementing `adds`." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is the fragile base class problem: `HashSet.addAll` is implemented in terms of `add`, so each element increments `adds` in *both* overrides. The subclass silently depends on the base's private call graph. (b) concurrency would cause *undercounting*, not systematic overcounting. (c) duplicates would also make `adds` too high — but that's true of the composition version too and isn't what makes counts double per element; the defining, reliably reproducible bug is the self-call. (d) ordering doesn't change the double count.",
+      "tags": ["fragile-base-class", "inheritance"]
+    },
+    {
+      "id": "oop-03-q02",
+      "type": "mcq",
+      "difficulty": "senior",
+      "prompt": "What is the most precise statement of what `class B extends A` couples B to, beyond A's public interface?",
+      "options": [
+        { "id": "a", "text": "A's self-usage pattern — which of its methods call which others — even though it is undocumented and can change in any release." },
+        { "id": "b", "text": "A's private field names, which B must not shadow." },
+        { "id": "c", "text": "A's package, since subclasses must live alongside their parents." },
+        { "id": "d", "text": "Nothing extra — inheritance and composition couple to exactly the same surface." }
+      ],
+      "answer": ["a"],
+      "explanation": "Overriding a method that the base also calls internally means B's correctness depends on *when and whether* A makes those self-calls — an implementation detail. That's the extra surface composition avoids. (b) shadowing is legal (if confusing) and not a contract. (c) false; subclasses can live anywhere the class is visible and non-final. (d) is exactly the claim the fragile-base-class problem disproves.",
+      "tags": ["inheritance", "coupling"]
+    },
+    {
+      "id": "oop-03-q03",
+      "type": "mcq",
+      "difficulty": "senior",
+      "prompt": "Which scenario is the strongest *legitimate* use of implementation inheritance?",
+      "options": [
+        { "id": "a", "text": "Extending a framework base class explicitly designed and documented for subclassing, with defined hook methods (e.g. a template-method lifecycle class)." },
+        { "id": "b", "text": "Extending a third-party utility class to add one convenience method." },
+        { "id": "c", "text": "Extending `ArrayList` so a domain class can be iterated directly." },
+        { "id": "d", "text": "Creating `Manager extends Employee` to model job roles." }
+      ],
+      "answer": ["a"],
+      "explanation": "Inheritance shines when the base is *designed for extension*: documented self-use, stable hooks, and subclassing as the intended API (servlets, widgets, template methods). (b) couples you to code you don't control — one library update can break you. (c) leaks 60+ list methods into a domain type; implement `Iterable` and compose. (d) roles change and combine — a person can be both — so the relationship isn't permanent; model role as data or composition.",
+      "tags": ["inheritance", "template-method", "design-for-extension"]
+    },
+    {
+      "id": "oop-03-q04",
+      "type": "multi",
+      "difficulty": "staff",
+      "prompt": "Which are real costs of the composition/decorator approach that a balanced design review should acknowledge? Select all that apply.",
+      "options": [
+        { "id": "a", "text": "Forwarding boilerplate for every delegated method (in languages without delegation support)." },
+        { "id": "b", "text": "The wrapper fails `instanceof`/identity checks against the concrete wrapped type." },
+        { "id": "c", "text": "The self problem: the inner object's internal self-calls and self-registrations bypass the wrapper's behavior." },
+        { "id": "d", "text": "Composition prevents the wrapped object from being tested in isolation." }
+      ],
+      "answer": ["a", "b", "c"],
+      "explanation": "(a) is the day-one annoyance — Java makes you write forwarders; Kotlin's `by` removes most of it. (b) and (c) are the subtle ones: a `CachingRepository` wrapping `SqlRepository` is not a `SqlRepository`, and if the inner object passes `this` to a callback or calls its own methods, the wrapper's added behavior is skipped. (d) is backwards — composition *improves* testability, since the inner object is reachable through its interface and easily substituted.",
+      "tags": ["composition", "decorator", "self-problem"]
+    },
+    {
+      "id": "oop-03-q05",
+      "type": "mcq",
+      "difficulty": "senior",
+      "prompt": "You need `Repository` behavior plus audit logging, and later probably caching and retry too, in varying combinations per deployment. Why is the decorator shape (`AuditedRepository implements Repository` wrapping a `Repository`) better than `AuditedRepository extends SqlRepository`?",
+      "options": [
+        { "id": "a", "text": "Decorators run faster because they avoid virtual dispatch." },
+        { "id": "b", "text": "Concerns stack and combine at runtime over any `Repository` implementation, without coupling to `SqlRepository`'s internals or exploding the class hierarchy." },
+        { "id": "c", "text": "Subclassing is deprecated in modern Java." },
+        { "id": "d", "text": "Decorators do not require interfaces, reducing the number of types." }
+      ],
+      "answer": ["b"],
+      "explanation": "With inheritance you'd need a subclass per combination (`AuditedCachingRetryingSqlRepository`…) and each couples to the concrete base. Decorators compose: wrap any `Repository` — SQL, in-memory, a mock — in any order, chosen at wiring time. (a) decorators add a delegation hop; they are not faster. (c) obviously false. (d) backwards — the shared interface is precisely what makes decorators work.",
+      "tags": ["decorator", "composition"]
+    },
+    {
+      "id": "oop-03-q06",
+      "type": "mcq",
+      "difficulty": "core",
+      "prompt": "\"Use inheritance when B is-a A\" fails as a design test because…",
+      "options": [
+        { "id": "a", "text": "is-a relationships in the domain don't guarantee behavioral substitutability in code — a square is-a rectangle, yet Square extends Rectangle breaks Rectangle's contract." },
+        { "id": "b", "text": "is-a can only be verified at runtime." },
+        { "id": "c", "text": "modern languages no longer support inheritance." },
+        { "id": "d", "text": "is-a applies to interfaces but never to classes." }
+      ],
+      "answer": ["a"],
+      "explanation": "The domain-language test checks vocabulary, not contracts. Code inheritance demands *substitutability*: every guarantee A makes, B must keep. Squares can't honor 'width and height vary independently,' so the geometric is-a doesn't survive translation into a mutable class hierarchy. (b), (c), (d) are simply false.",
+      "tags": ["is-a", "substitutability"]
+    }
+  ]
+}

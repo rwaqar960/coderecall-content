@@ -1,0 +1,99 @@
+{
+  "schemaVersion": 1,
+  "chapterId": "oop-07",
+  "passScore": 0.7,
+  "questions": [
+    {
+      "id": "oop-07-q01",
+      "type": "mcq",
+      "difficulty": "core",
+      "prompt": "What is the defining difference between an entity and a value object?",
+      "options": [
+        { "id": "a", "text": "Entities have identity and are compared by ID across state changes; value objects are entirely defined by their field contents." },
+        { "id": "b", "text": "Entities are stored in databases; value objects live only in memory." },
+        { "id": "c", "text": "Entities are classes; value objects must be records or structs." },
+        { "id": "d", "text": "Entities are large; value objects are small." }
+      ],
+      "answer": ["a"],
+      "explanation": "Identity vs content is the whole distinction: two Customers with identical fields are different people; two `Money(5, USD)` are the same money. (b) values are persisted constantly (as embedded columns, JSON, etc.). (c) records make values *convenient*, but a hand-written final class is just as much a value object. (d) size is irrelevant — a polygon value object can hold thousands of points.",
+      "tags": ["value-objects", "entities"]
+    },
+    {
+      "id": "oop-07-q02",
+      "type": "code-review",
+      "difficulty": "senior",
+      "prompt": "A cache uses `Money` keys and users report entries disappearing. What is the mechanism?",
+      "code": "class Money {\n    private BigDecimal amount;\n    private String currency;\n\n    void setAmount(BigDecimal a) { this.amount = a; }\n\n    @Override public boolean equals(Object o) { /* by amount+currency */ }\n    @Override public int hashCode() { return Objects.hash(amount, currency); }\n}\n\nMap<Money, Discount> cache = new HashMap<>();\nMoney key = new Money(...);\ncache.put(key, discount);\nkey.setAmount(newAmount);   // elsewhere, later\ncache.get(key);             // returns null",
+      "codeLanguage": "java",
+      "options": [
+        { "id": "a", "text": "Mutating a field used in hashCode after insertion leaves the entry in the old hash bucket, so lookups compute the new hash and search the wrong bucket." },
+        { "id": "b", "text": "HashMap requires keys to implement Comparable, which Money does not." },
+        { "id": "c", "text": "Objects.hash produces different values across JVM runs." },
+        { "id": "d", "text": "BigDecimal.equals compares scale, so 5.0 and 5.00 differ." }
+      ],
+      "answer": ["a"],
+      "explanation": "The entry was filed under the hash of the *old* amount; after mutation, `get` hashes the *new* state and probes a different bucket — the entry still exists but is unreachable (and even same-bucket lookups fail the equals check against the mutated key... actually the stored key IS the mutated object; the lookup fails because the bucket is wrong). This is why hash keys must be immutable — make `Money` a record and the bug is unrepresentable. (b) HashMap needs hashCode/equals, not Comparable. (c) false within a run, which is what matters here. (d) is a real BigDecimal gotcha but would cause consistent misses from the start, not entries that vanish after a set-call.",
+      "tags": ["immutability", "hashcode", "collections"]
+    },
+    {
+      "id": "oop-07-q03",
+      "type": "mcq",
+      "difficulty": "senior",
+      "prompt": "Why does replacing `transfer(String fromIban, String toIban, BigDecimal amount, String currency)` with `transfer(Iban from, Iban to, Money amount)` materially reduce defects?",
+      "options": [
+        { "id": "a", "text": "Validation happens once at construction, the compiler rejects argument-order mistakes between the two IBANs and rejects passing raw strings, and currency logic gets a single home." },
+        { "id": "b", "text": "Fewer parameters always means fewer bugs." },
+        { "id": "c", "text": "Objects are passed by reference, which is faster than passing strings." },
+        { "id": "d", "text": "It prevents SQL injection in the persistence layer." }
+      ],
+      "answer": ["a"],
+      "explanation": "Three concrete mechanisms: the constructor gate (invalid IBANs can't exist), type-checked call sites (swapping `amount` and `from` no longer compiles — though note from/to remain swappable with each other, which distinct types like `SourceAccount`/`TargetAccount` could fix), and one owner for money arithmetic instead of scattered `BigDecimal` handling. (b) parameter count barely changed. (c) performance is not the point and the claim is dubious. (d) injection protection lives elsewhere.",
+      "tags": ["primitive-obsession", "value-objects", "type-safety"]
+    },
+    {
+      "id": "oop-07-q04",
+      "type": "multi",
+      "difficulty": "senior",
+      "prompt": "Which benefits are genuinely caused by immutability (not merely correlated with good code)? Select all that apply.",
+      "options": [
+        { "id": "a", "text": "Objects can be shared across threads without locks, since data races require a writer." },
+        { "id": "b", "text": "Invariants validated at construction hold for the object's entire lifetime." },
+        { "id": "c", "text": "Methods on immutable objects cannot throw exceptions." },
+        { "id": "d", "text": "Handing a reference to external code can never corrupt internal state." }
+      ],
+      "answer": ["a", "b", "d"],
+      "explanation": "(a) no writes → no data races → no synchronization needed for safe publication (in Java, given `final` fields). (b) is immutability as encapsulation's endgame: one gate, checked once. (d) aliasing is only dangerous when someone can mutate through the alias. (c) is false — constructors and methods on immutable types throw freely (division by zero on Money, parse failures); immutability constrains *state*, not control flow.",
+      "tags": ["immutability", "thread-safety", "aliasing"]
+    },
+    {
+      "id": "oop-07-q05",
+      "type": "mcq",
+      "difficulty": "staff",
+      "prompt": "A service builds a 100k-character report by concatenating immutable Strings in a loop, and profiling shows GC pressure. What does the chapter's model recommend?",
+      "options": [
+        { "id": "a", "text": "Confine mutation locally: build with a mutable StringBuilder inside the method, publish the final immutable String — mutation invisible outside one stack frame costs nothing in reasoning." },
+        { "id": "b", "text": "Switch the whole codebase to mutable string buffers for consistency." },
+        { "id": "c", "text": "Accept the GC cost — immutability must never be compromised." },
+        { "id": "d", "text": "Cache and reuse a shared static StringBuilder to avoid allocations." }
+      ],
+      "answer": ["a"],
+      "explanation": "The builder pattern is immutability's designed escape hatch: locally scoped mutation, immutable result published. All reasoning benefits survive because no one else can observe the intermediate states. (b) globalizes a local optimization. (c) treats a default as a religion — the chapter explicitly prices this in. (d) introduces shared mutable state and a thread-safety bug to save an allocation: strictly worse.",
+      "tags": ["immutability", "builders", "performance"]
+    },
+    {
+      "id": "oop-07-q06",
+      "type": "mcq",
+      "difficulty": "senior",
+      "prompt": "For a mutable `Order` entity holding line items, which API design follows the 'immutable at the boundary' guidance?",
+      "options": [
+        { "id": "a", "text": "`void add(LineItem i)` for controlled mutation, plus `List<LineItem> items()` returning `List.copyOf(items)`" },
+        { "id": "b", "text": "`List<LineItem> items()` returning the internal list, documented as 'do not modify'" },
+        { "id": "c", "text": "Making Order a record so the whole entity is immutable, recreating it on every line change" },
+        { "id": "d", "text": "`void setItems(List<LineItem> items)` so callers replace the list wholesale" }
+      ],
+      "answer": ["a"],
+      "explanation": "One writer (the entity itself, enforcing its invariants), snapshots out (callers can't corrupt state or observe torn updates). This is the chapter-1 + chapter-7 synthesis. (b) documentation is not enforcement — chapter 1's leak. (c) is defensible in some architectures but forfeits entity identity-with-lifecycle and forces every collaborator to thread new instances; the chapter's default keeps entities mutable behind gates. (d) hands invariant enforcement to every caller and stores a caller-owned mutable reference — two leaks in one.",
+      "tags": ["immutability", "encapsulation", "api-design"]
+    }
+  ]
+}

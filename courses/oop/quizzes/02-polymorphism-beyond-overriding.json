@@ -1,0 +1,101 @@
+{
+  "schemaVersion": 1,
+  "chapterId": "oop-02",
+  "passScore": 0.7,
+  "questions": [
+    {
+      "id": "oop-02-q01",
+      "type": "code-review",
+      "difficulty": "senior",
+      "prompt": "What does this program print?",
+      "code": "void log(Object o) { System.out.println(\"object\"); }\nvoid log(String s) { System.out.println(\"string\"); }\n\nObject x = \"hello\";\nlog(x);",
+      "codeLanguage": "java",
+      "options": [
+        { "id": "a", "text": "`string` — the runtime type of `x` is `String`" },
+        { "id": "b", "text": "`object` — overload resolution uses the compile-time type of the argument" },
+        { "id": "c", "text": "It does not compile: the call is ambiguous" },
+        { "id": "d", "text": "It throws a `ClassCastException` at runtime" }
+      ],
+      "answer": ["b"],
+      "explanation": "Overloading is ad-hoc polymorphism resolved at **compile time**: `x` is declared `Object`, so `log(Object)` is chosen regardless of what `x` holds at runtime. (a) describes *overriding* semantics — dispatch on the runtime receiver — which doesn't apply to arguments. (c) there's no ambiguity; `Object` matches exactly one overload for a variable of static type `Object`. (d) nothing here casts.",
+      "tags": ["overloading", "static-dispatch"]
+    },
+    {
+      "id": "oop-02-q02",
+      "type": "mcq",
+      "difficulty": "senior",
+      "prompt": "Your codebase has an expression-tree AST (`Literal`, `Add`, `Mul`, …) that gains a **new operation** every sprint (evaluate, pretty-print, optimize, type-check) but almost never a new node type. Which design fits best?",
+      "options": [
+        { "id": "a", "text": "A sealed node hierarchy processed by exhaustive switches (or visitors) — new operations are added without touching node classes." },
+        { "id": "b", "text": "An abstract method per operation on the node base class, overridden in every node — the classic OO answer." },
+        { "id": "c", "text": "A single `Node` class with a `type` string field and a map of properties." },
+        { "id": "d", "text": "Reflection-based dispatch keyed on class names." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is the expression problem: the system grows along the *operations* axis, so switch-on-sealed-type (or Visitor) keeps each operation in one place and adding one touches nothing else. (b) optimizes the wrong axis — every new operation edits every node class. (c) throws away the type system entirely. (d) trades compile-time safety for runtime string matching — the worst of both worlds.",
+      "tags": ["expression-problem", "sealed-types"]
+    },
+    {
+      "id": "oop-02-q03",
+      "type": "mcq",
+      "difficulty": "senior",
+      "prompt": "Which situation is the strongest case for **subtype polymorphism** over a switch on a sealed hierarchy?",
+      "options": [
+        { "id": "a", "text": "Third parties ship new payment providers as plugins your code must call without being recompiled." },
+        { "id": "b", "text": "A protocol has exactly four message kinds, fixed by an RFC." },
+        { "id": "c", "text": "You want the compiler to flag every consumer when a new case is added." },
+        { "id": "d", "text": "The variants are pure data with no behavior differences." }
+      ],
+      "answer": ["a"],
+      "explanation": "An open, externally extensible set of *behaviors* is exactly what virtual dispatch is for: new providers are new classes, and no existing code changes or even knows about them. (b) is a closed set — sealed + exhaustive switch is safer. (c) describes the sealed-switch benefit, not virtual dispatch (which silently 'handles' new subtypes). (d) with no behavior variance there's nothing to dispatch on.",
+      "tags": ["subtype-polymorphism", "open-closed"]
+    },
+    {
+      "id": "oop-02-q04",
+      "type": "code-review",
+      "difficulty": "senior",
+      "prompt": "A teammate calls this method 'fully generic.' What should a reviewer flag?",
+      "code": "<T> BigDecimal totalOf(List<T> items) {\n    BigDecimal total = BigDecimal.ZERO;\n    for (T item : items) {\n        if (item instanceof Invoice inv) {\n            total = total.add(inv.amount());\n        } else if (item instanceof Receipt r) {\n            total = total.add(r.value());\n        }\n    }\n    return total;\n}",
+      "codeLanguage": "java",
+      "options": [
+        { "id": "a", "text": "It should use `stream().reduce()` instead of a loop." },
+        { "id": "b", "text": "The type parameter is fake: the method inspects concrete types, silently returns 0 for anything else, and the signature hides the real requirement." },
+        { "id": "c", "text": "`BigDecimal` is the wrong type for money." },
+        { "id": "d", "text": "`instanceof` pattern matching requires a newer JDK and should be avoided." }
+      ],
+      "answer": ["b"],
+      "explanation": "The `<T>` promises uniform treatment of any type, but the body is a disguised type switch — worse, unknown types are silently skipped, so `totalOf(List.of(creditNote))` returns 0 with no error. Honest designs: a bounded type (`<T extends Monetary>` with `amount()`), or an explicit sealed hierarchy. (a) is style, and reduce wouldn't fix the dishonest signature. (c) is backwards — BigDecimal is the conventional choice. (d) pattern matching is fine; the problem is what it's used for.",
+      "tags": ["generics", "parametric-polymorphism"]
+    },
+    {
+      "id": "oop-02-q05",
+      "type": "multi",
+      "difficulty": "staff",
+      "prompt": "Which statements about the expression problem are true? Select all that apply.",
+      "options": [
+        { "id": "a", "text": "Virtual dispatch makes adding new types cheap and adding new operations expensive." },
+        { "id": "b", "text": "Switch-on-sealed-type makes adding new operations cheap and adding new types expensive." },
+        { "id": "c", "text": "The Visitor pattern is one classical OO mechanism for choosing the 'operations grow' side." },
+        { "id": "d", "text": "Modern languages have solved the expression problem, so the trade-off no longer applies in practice." }
+      ],
+      "answer": ["a", "b", "c"],
+      "explanation": "(a) and (b) are the two sides of the trade-off: each approach is 'open' along one axis and 'closed' along the other. (c) Visitor is exactly the OO encoding of operation-centric growth — each visitor is one operation over a fixed node set. (d) is false in practice: research solutions exist (type classes, open multimethods), but in mainstream Java/Kotlin/C#/Dart you still pick an axis, and pretending otherwise leads to designs that fight the language.",
+      "tags": ["expression-problem", "visitor"]
+    },
+    {
+      "id": "oop-02-q06",
+      "type": "mcq",
+      "difficulty": "core",
+      "prompt": "Which is an example of **parametric** polymorphism?",
+      "options": [
+        { "id": "a", "text": "`Stack<T>` storing and returning elements of any type without inspecting them" },
+        { "id": "b", "text": "`Animal.speak()` overridden by `Dog` and `Cat`" },
+        { "id": "c", "text": "`print(int)` and `print(double)` overloads" },
+        { "id": "d", "text": "A switch statement over an enum" }
+      ],
+      "answer": ["a"],
+      "explanation": "`Stack<T>` is one implementation that works uniformly for every element type — the definition of parametric polymorphism. (b) is subtype polymorphism (runtime dispatch on the receiver). (c) is ad-hoc polymorphism (compile-time overload selection). (d) is ordinary control flow, not polymorphism at all.",
+      "tags": ["parametric-polymorphism", "generics"]
+    }
+  ]
+}

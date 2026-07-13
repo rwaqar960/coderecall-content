@@ -1,8 +1,8 @@
-{
+﻿{
   "schemaVersion": 1,
   "id": "oop",
   "title": "Object-Oriented Programming",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "level": "core",
   "bundled": true,
   "primaryLanguage": "java",
@@ -15,14 +15,14 @@
       "quiz": "quizzes/01-encapsulation-and-invariants.json",
       "status": "ready"
     },
-    { "id": "oop-02", "title": "Polymorphism Beyond Overriding", "file": "chapters/02-polymorphism-beyond-overriding.md", "quiz": "quizzes/02-polymorphism-beyond-overriding.json", "status": "planned" },
-    { "id": "oop-03", "title": "Inheritance vs Composition", "file": "chapters/03-inheritance-vs-composition.md", "quiz": "quizzes/03-inheritance-vs-composition.json", "status": "planned" },
-    { "id": "oop-04", "title": "Liskov and Behavioral Subtyping", "file": "chapters/04-liskov-and-behavioral-subtyping.md", "quiz": "quizzes/04-liskov-and-behavioral-subtyping.json", "status": "planned" },
-    { "id": "oop-05", "title": "SRP and OCP in Practice", "file": "chapters/05-srp-and-ocp-in-practice.md", "quiz": "quizzes/05-srp-and-ocp-in-practice.json", "status": "planned" },
-    { "id": "oop-06", "title": "ISP and DIP in Practice", "file": "chapters/06-isp-and-dip-in-practice.md", "quiz": "quizzes/06-isp-and-dip-in-practice.json", "status": "planned" },
-    { "id": "oop-07", "title": "Immutability and Value Objects", "file": "chapters/07-immutability-and-value-objects.md", "quiz": "quizzes/07-immutability-and-value-objects.json", "status": "planned" },
-    { "id": "oop-08", "title": "Coupling, Cohesion, and Dependency Direction", "file": "chapters/08-coupling-cohesion-dependency-direction.md", "quiz": "quizzes/08-coupling-cohesion-dependency-direction.json", "status": "planned" },
-    { "id": "oop-09", "title": "Design Patterns That Still Matter", "file": "chapters/09-design-patterns-that-still-matter.md", "quiz": "quizzes/09-design-patterns-that-still-matter.json", "status": "planned" },
-    { "id": "oop-10", "title": "OOP at Scale: Boundaries and Anti-Patterns", "file": "chapters/10-oop-at-scale-boundaries-anti-patterns.md", "quiz": "quizzes/10-oop-at-scale-boundaries-anti-patterns.json", "status": "planned" }
+    { "id": "oop-02", "title": "Polymorphism Beyond Overriding", "file": "chapters/02-polymorphism-beyond-overriding.md", "quiz": "quizzes/02-polymorphism-beyond-overriding.json", "status": "ready" },
+    { "id": "oop-03", "title": "Inheritance vs Composition", "file": "chapters/03-inheritance-vs-composition.md", "quiz": "quizzes/03-inheritance-vs-composition.json", "status": "ready" },
+    { "id": "oop-04", "title": "Liskov and Behavioral Subtyping", "file": "chapters/04-liskov-and-behavioral-subtyping.md", "quiz": "quizzes/04-liskov-and-behavioral-subtyping.json", "status": "ready" },
+    { "id": "oop-05", "title": "SRP and OCP in Practice", "file": "chapters/05-srp-and-ocp-in-practice.md", "quiz": "quizzes/05-srp-and-ocp-in-practice.json", "status": "ready" },
+    { "id": "oop-06", "title": "ISP and DIP in Practice", "file": "chapters/06-isp-and-dip-in-practice.md", "quiz": "quizzes/06-isp-and-dip-in-practice.json", "status": "ready" },
+    { "id": "oop-07", "title": "Immutability and Value Objects", "file": "chapters/07-immutability-and-value-objects.md", "quiz": "quizzes/07-immutability-and-value-objects.json", "status": "ready" },
+    { "id": "oop-08", "title": "Coupling, Cohesion, and Dependency Direction", "file": "chapters/08-coupling-cohesion-dependency-direction.md", "quiz": "quizzes/08-coupling-cohesion-dependency-direction.json", "status": "ready" },
+    { "id": "oop-09", "title": "Design Patterns That Still Matter", "file": "chapters/09-design-patterns-that-still-matter.md", "quiz": "quizzes/09-design-patterns-that-still-matter.json", "status": "ready" },
+    { "id": "oop-10", "title": "OOP at Scale: Boundaries and Anti-Patterns", "file": "chapters/10-oop-at-scale-boundaries-anti-patterns.md", "quiz": "quizzes/10-oop-at-scale-boundaries-anti-patterns.json", "status": "ready" }
   ]
 }
