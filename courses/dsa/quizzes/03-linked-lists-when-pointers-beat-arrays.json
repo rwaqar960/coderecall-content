@@ -1,0 +1,99 @@
+{
+  "schemaVersion": 1,
+  "chapterId": "dsa-03",
+  "passScore": 0.7,
+  "questions": [
+    {
+      "id": "dsa-03-q01",
+      "type": "mcq",
+      "difficulty": "senior",
+      "prompt": "Precisely when does a linked list's O(1) insertion claim actually hold?",
+      "options": [
+        { "id": "a", "text": "Only when you already hold a reference to the insertion point (e.g. a node or iterator) — inserting 'by value' still requires an O(n) search to find that point first." },
+        { "id": "b", "text": "Always, for any insertion into a linked list, regardless of how the position is specified." },
+        { "id": "c", "text": "Only for insertion at the head of the list." },
+        { "id": "d", "text": "Never — linked list insertion is O(n) in all realistic implementations." }
+      ],
+      "answer": ["a"],
+      "explanation": "The O(1) guarantee is about the pointer rewiring itself, not about locating the position. If you're told 'insert after node X' and already hold X, it's O(1). If you're told 'insert after the value 42' and must traverse to find it, the search dominates at O(n) — a distinction interview answers often skip. (b) overclaims — search cost is real when position isn't already known. (c) head insertion is one easy case, not the only one; any held reference works. (d) undersells it — the O(1) rewiring is real and useful in the right shape of problem.",
+      "tags": ["linked-lists", "complexity"]
+    },
+    {
+      "id": "dsa-03-q02",
+      "type": "code-review",
+      "difficulty": "senior",
+      "prompt": "A teammate's removeValue implementation has a bug where deleting the head node sometimes fails to update the caller's reference correctly across various call sites. What's the root design issue, and the standard fix?",
+      "code": "Node removeValue(Node head, int val) {\n    if (head != null && head.val == val) return head.next;\n    Node prev = head;\n    while (prev != null && prev.next != null) {\n        if (prev.next.val == val) { prev.next = prev.next.next; return head; }\n        prev = prev.next;\n    }\n    return head;\n}",
+      "codeLanguage": "java",
+      "options": [
+        { "id": "a", "text": "The head node is structurally asymmetric (it has no 'previous' node to update), forcing a special case; a sentinel/dummy node before the real head removes the asymmetry so one uniform loop handles every position." },
+        { "id": "b", "text": "The loop condition should use '<=' instead of '<' to avoid an off-by-one error." },
+        { "id": "c", "text": "The function should be made recursive instead of iterative." },
+        { "id": "d", "text": "Node should store a 'previous' pointer (doubly-linked) to fix this." }
+      ],
+      "answer": ["a"],
+      "explanation": "The special case exists because deleting the head requires updating the CALLER's head reference, while deleting any other node just requires updating the previous node's `next` — two different operations for what should be one uniform 'remove' concept. A sentinel node makes every real node (including the first) have a uniform predecessor, collapsing the two cases into one loop. (b) there's no off-by-one here — this is a structural bug, not an indexing bug. (c) recursion doesn't address the head-asymmetry at all. (d) doubly-linking adds a 'previous' pointer per node but still requires the caller to update its head reference when the first node is removed — sentinel is the standard, cheaper fix.",
+      "tags": ["linked-lists", "sentinel-node", "edge-cases"]
+    },
+    {
+      "id": "dsa-03-q03",
+      "type": "mcq",
+      "difficulty": "senior",
+      "prompt": "Why does Floyd's slow/fast pointer algorithm correctly detect a cycle, using only O(1) extra space?",
+      "options": [
+        { "id": "a", "text": "If a cycle exists, the fast pointer gains exactly one step on the slow pointer each iteration, so it cannot skip past it — they are guaranteed to meet within the cycle's length; if no cycle exists, fast simply reaches the end." },
+        { "id": "b", "text": "It works because linked lists are guaranteed to be sorted, so pointer positions can be compared numerically." },
+        { "id": "c", "text": "It relies on hashing each node's memory address to detect repeats." },
+        { "id": "d", "text": "It only works for cycles that include the head node." }
+      ],
+      "answer": ["a"],
+      "explanation": "The closing gap (fast gains 1 relative position per step) is the entire correctness argument — a gap that shrinks by exactly 1 each iteration must hit 0 (a meeting) before it can go negative (skip past). No memory beyond two pointers is needed, which is the whole point compared to a HashSet-of-visited-nodes approach. (b) linked lists have no sortedness assumption here. (c) hashing addresses is exactly the O(n)-space alternative this algorithm avoids. (d) the algorithm detects any cycle reachable from the head, not just ones containing it directly (a 'rho-shaped' list with a tail leading into a cycle is still correctly detected).",
+      "tags": ["floyds-algorithm", "cycle-detection"]
+    },
+    {
+      "id": "dsa-03-q04",
+      "type": "mcq",
+      "difficulty": "staff",
+      "prompt": "A HashSet-of-visited-nodes cycle detector and Floyd's slow/fast pointer detector solve the same problem. What is the accurate trade-off between them?",
+      "options": [
+        { "id": "a", "text": "HashSet is O(n) space and generally easier to read; Floyd's is O(1) space but requires understanding the closing-gap argument to verify correctness — prefer HashSet unless the space bound is actually load-bearing." },
+        { "id": "b", "text": "Floyd's algorithm is strictly better in every dimension, so it should always be preferred." },
+        { "id": "c", "text": "HashSet is faster in Big-O time complexity than Floyd's algorithm." },
+        { "id": "d", "text": "They solve different problems: HashSet detects cycles, Floyd's only detects self-loops." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is a direct instance of the course's recurring theme: a more resource-efficient algorithm often trades away readability, and the 'better' choice depends on whether the resource it saves is actually constrained in this context. Both run in O(n) time; Floyd's wins only on space. (b) ignores the readability cost, which matters for review/maintenance. (c) both are O(n) time — no time advantage either way. (d) both correctly detect any cycle, not just self-loops.",
+      "tags": ["floyds-algorithm", "tradeoffs", "space-complexity"]
+    },
+    {
+      "id": "dsa-03-q05",
+      "type": "mcq",
+      "difficulty": "staff",
+      "prompt": "In Java, ArrayDeque (array-backed) is the recommended default for stack/queue usage over LinkedList, despite LinkedList's name suggesting it should be the natural fit. Why?",
+      "options": [
+        { "id": "a", "text": "Stack/queue operations only ever touch the ends, which an array-backed ring buffer handles in O(1) with far better cache locality than a linked list's scattered nodes — LinkedList's extra flexibility (arbitrary-position insertion) goes unused for this access pattern." },
+        { "id": "b", "text": "LinkedList in Java does not actually support O(1) insertion at either end." },
+        { "id": "c", "text": "ArrayDeque uses less memory per element in every case." },
+        { "id": "d", "text": "LinkedList is deprecated in modern Java and should never be used." }
+      ],
+      "answer": ["a"],
+      "explanation": "Both structures offer O(1) push/pop at the ends in Big-O terms, but ArrayDeque's contiguous backing array wins on the same cache-locality grounds as chapter 1, and it avoids per-node pointer/object overhead entirely. LinkedList's distinguishing feature — O(1) insert given an already-held iterator position in the *middle* — simply isn't exercised by stack/queue usage. (b) LinkedList does support O(1) ends-insertion; that's not the issue. (c) LinkedList has additional per-node overhead (object header + two pointers) that ArrayDeque avoids, but 'in every case' overstates it if the array has significant unused spare capacity. (d) LinkedList isn't deprecated; it's simply the wrong default for this specific access pattern.",
+      "tags": ["arraydeque", "linkedlist", "design-tradeoffs"]
+    },
+    {
+      "id": "dsa-03-q06",
+      "type": "mcq",
+      "difficulty": "senior",
+      "prompt": "A code reviewer sees a request to implement 'a queue of pending jobs, frequently removed from the middle when a job is cancelled by ID' using a linked list, reasoning 'removal from the middle is O(1) for linked lists.' What's the flaw in that reasoning?",
+      "options": [
+        { "id": "a", "text": "Removal 'by ID' requires searching for the node first, which is O(n) regardless of structure — the linked list's O(1) removal only applies once the node is already found, so the array alternative (with better cache locality during that O(n) search) is likely just as good or better." },
+        { "id": "b", "text": "Linked lists cannot support removal from the middle at all." },
+        { "id": "c", "text": "The reasoning is entirely correct and the linked list is clearly the right choice." },
+        { "id": "d", "text": "Queues must always be FIFO, so removal from the middle is not a valid operation regardless of structure." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is exactly the chapter's 'honest counter-case': the O(1) removal claim is true only for the pointer-rewiring step, but finding the target node by ID is O(n) in a plain linked list just as in an array — and during that O(n) search, the array's cache locality wins. The linked list's theoretical advantage never gets exercised here. (b) is false, they can remove from the middle given a reference. (c) is the exact misconception the chapter is correcting. (d) is a definitional overreach; many real 'queues' (job queues, task queues) support cancellation/removal by ID in practice.",
+      "tags": ["linked-lists", "design-tradeoffs", "search-cost"]
+    }
+  ]
+}

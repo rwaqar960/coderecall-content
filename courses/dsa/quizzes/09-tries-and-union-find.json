@@ -1,0 +1,99 @@
+{
+  "schemaVersion": 1,
+  "chapterId": "dsa-09",
+  "passScore": 0.7,
+  "questions": [
+    {
+      "id": "dsa-09-q01",
+      "type": "mcq",
+      "difficulty": "senior",
+      "prompt": "A HashSet<String> and a trie can both check 'is this exact word present?' in comparable time. What can a trie do that a HashSet fundamentally cannot do efficiently?",
+      "options": [
+        { "id": "a", "text": "Return all stored words starting with a given prefix in O(prefix length), because the prefix's existence is literally a shared path in the tree; a HashSet would need to scan every stored string, O(n*k) for n strings of length k." },
+        { "id": "b", "text": "Check whether an exact word is present, since only tries support this operation." },
+        { "id": "c", "text": "Store duplicate words, which HashSet cannot do." },
+        { "id": "d", "text": "Use less memory than a HashSet in every case." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is the trie's entire value proposition — the prefix query is where the structural difference shows up; exact-word lookup is roughly a tie between the two structures. (b) both structures support exact-word lookup; that's not the differentiator. (c) neither structure is about duplicate storage — sets by definition don't store duplicates, and this isn't the relevant distinction. (d) memory usage is a genuine trade-off, not a trie advantage — the chapter notes tries can use MORE memory than a flat hash set unless strings share substantial prefixes.",
+      "tags": ["trie", "hashset", "prefix-search"]
+    },
+    {
+      "id": "dsa-09-q02",
+      "type": "mcq",
+      "difficulty": "senior",
+      "prompt": "When does a trie's memory usage advantage over a plain hash set of strings actually materialize?",
+      "options": [
+        { "id": "a", "text": "When stored strings share substantial common prefixes, since a trie stores each shared prefix's path only once; for many short, dissimilar strings with little shared structure, a trie can use more memory than a flat hash set." },
+        { "id": "b", "text": "Always — tries are strictly more memory-efficient than hash sets in every situation." },
+        { "id": "c", "text": "Only when the strings are sorted before insertion." },
+        { "id": "d", "text": "Tries and hash sets always use identical memory, since both store the same set of strings." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is the honest cost side of the trade-off: the space saving is specifically a function of prefix sharing, not an inherent property of the structure — a dictionary of many related words (un-, re-, -ing suffixes etc.) shares heavily and saves memory; a set of random unrelated tokens doesn't. (b) overclaims a universal advantage the chapter explicitly does not make. (c) insertion order doesn't affect the trie's memory footprint. (d) ignores the real, sometimes-significant memory difference caused by shared vs. non-shared prefix structure.",
+      "tags": ["trie", "memory-tradeoffs"]
+    },
+    {
+      "id": "dsa-09-q03",
+      "type": "mcq",
+      "difficulty": "senior",
+      "prompt": "Union-find's amortized time complexity is described as O(inverse-Ackermann(n)), often called 'near-constant.' What two optimizations, used together, are required to reach this bound?",
+      "options": [
+        { "id": "a", "text": "Path compression (flattening the tree during find so future lookups are faster) and union by rank (always attaching the shorter tree under the taller one's root) — either alone still leaves O(log n)." },
+        { "id": "b", "text": "Path compression alone is sufficient; union by rank is an optional micro-optimization with negligible effect." },
+        { "id": "c", "text": "Sorting all elements before any union operations, plus path compression." },
+        { "id": "d", "text": "Using a hash map instead of an array to store parent pointers." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is the precise, complete answer the chapter tests for: both optimizations are individually valuable (each alone gives O(log n)), but the near-inverse-Ackermann bound specifically requires their combination. (b) understates union by rank's role — without it, naive unioning can still produce degenerate, linked-list-shaped trees before path compression gets a chance to flatten them, similar to chapter 5's unbalanced BST problem. (c) sorting has no role in union-find's mechanics. (d) the backing storage type (array vs. map) doesn't affect the asymptotic bound; it's the tree-shape-control optimizations that matter.",
+      "tags": ["union-find", "path-compression", "union-by-rank"]
+    },
+    {
+      "id": "dsa-09-q04",
+      "type": "code-review",
+      "difficulty": "staff",
+      "prompt": "A teammate implements union-find without union-by-rank (always attaching y's root under x's root, regardless of tree size), keeping only path compression. Under repeated unions in a specific adversarial order, what happens?",
+      "code": "int[] parent;\n\nint find(int x) {\n    if (parent[x] != x) parent[x] = find(parent[x]);  // path compression kept\n    return parent[x];\n}\n\nvoid union(int x, int y) {\n    int rootX = find(x), rootY = find(y);\n    if (rootX != rootY) parent[rootY] = rootX;   // no rank comparison at all\n}",
+      "codeLanguage": "java",
+      "options": [
+        { "id": "a", "text": "Without controlling which root becomes the parent, adversarial union order can still build a tall, linked-list-shaped tree before any find() call gets a chance to compress it, degrading that first find() toward O(n) — the same degenerate-height failure mode as an unbalanced BST." },
+        { "id": "b", "text": "Path compression alone fully compensates, so removing union-by-rank has no measurable effect on performance." },
+        { "id": "c", "text": "This code will produce incorrect connectivity results, not just slower ones." },
+        { "id": "d", "text": "This is actually faster than including union-by-rank, since it does less work per union call." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is the precise failure the chapter calls out: path compression only helps AFTER a find() traverses the tall chain once — but building that chain via repeated naive unions (always same direction) can itself take O(n) for a single early find() before any compression has happened, which is the same shape as inserting sorted values into a plain BST. Real-world impact is bounded (subsequent finds are fast), but the guarantee of near-constant EVERY operation is lost. (b) is the misconception this question exists to correct — the chapter explicitly says both are required for the tight bound. (c) correctness (connectivity results) is unaffected; only performance degrades. (d) 'less work per call' ignores that the resulting tree shape makes future find() calls much more expensive — a false economy.",
+      "tags": ["union-find", "union-by-rank", "degenerate-cases"]
+    },
+    {
+      "id": "dsa-09-q05",
+      "type": "mcq",
+      "difficulty": "senior",
+      "prompt": "A social network needs to repeatedly answer 'are these two users connected through some chain of friendships?' as new friendships (edges) are added over time, but friendships are never removed. What structure fits best, and why not just re-run BFS/DFS from scratch on each query?",
+      "options": [
+        { "id": "a", "text": "Union-find — it answers each incremental connectivity query in near-O(1), while re-running BFS/DFS after every new edge costs O(V+E) per check, which is far more expensive at scale for a repeatedly-queried, edges-only-added workload." },
+        { "id": "b", "text": "BFS/DFS should always be preferred because they can also reconstruct the actual connecting path, which union-find cannot." },
+        { "id": "c", "text": "Union-find only works on trees, not general graphs, so it cannot be used here." },
+        { "id": "d", "text": "There is no performance difference between the two approaches for this use case." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is exactly the shape union-find is built for: incremental, edges-only-added connectivity queries, answered repeatedly and efficiently. (b) is a real and legitimate reason to choose BFS/DFS INSTEAD when path reconstruction is actually needed — but the question specifically only asks 'are they connected,' where union-find's narrower, faster answer suffices; naming this trade-off correctly (not just picking BFS/DFS by default) is the point. (c) is false; union-find works over any graph's node set, it just doesn't preserve edge/path structure. (d) there is a substantial, real performance difference for large, frequently-queried graphs — that's the entire justification for using union-find here.",
+      "tags": ["union-find", "graph-connectivity", "incremental-queries"]
+    },
+    {
+      "id": "dsa-09-q06",
+      "type": "mcq",
+      "difficulty": "staff",
+      "prompt": "A system needs to answer 'are x and y connected?' where edges can be BOTH added and removed over time. Is union-find still the right tool?",
+      "options": [
+        { "id": "a", "text": "No — union-find's merge operation is effectively one-way; removing an edge can split a previously-merged group back into two, which union-find's structure doesn't support without rebuilding from scratch." },
+        { "id": "b", "text": "Yes — union-find handles edge removal in the same near-O(1) time as union, using a symmetric 'split' operation." },
+        { "id": "c", "text": "Yes, as long as path compression is disabled." },
+        { "id": "d", "text": "Yes, because union-find operations are always reversible." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is the boundary the chapter explicitly draws: union-find is a fit specifically for edges-only-added incremental connectivity, precisely because merging groups is easy but splitting them back apart (undoing a merge) isn't something the parent-pointer structure supports directly — you'd need to track enough history to know how to un-merge, which defeats the structure's simplicity and speed. (b) no such symmetric split operation exists in standard union-find. (c) disabling path compression doesn't address the fundamental one-way-merge limitation at all. (d) union-find's operations are specifically NOT reversible in the general case — that's the core limitation being tested here.",
+      "tags": ["union-find", "limitations", "edge-removal"]
+    }
+  ]
+}

@@ -1,0 +1,99 @@
+{
+  "schemaVersion": 1,
+  "chapterId": "dsa-06",
+  "passScore": 0.7,
+  "questions": [
+    {
+      "id": "dsa-06-q01",
+      "type": "mcq",
+      "difficulty": "senior",
+      "prompt": "What is the precise heap property, and what does it deliberately NOT guarantee?",
+      "options": [
+        { "id": "a", "text": "Every parent is <= (or >=) both its children; it does not guarantee any ordering between siblings, cousins, or any two arbitrary nodes — only parent-child relationships along a path are ordered." },
+        { "id": "b", "text": "The entire array is sorted in ascending order at all times." },
+        { "id": "c", "text": "Every node's left subtree is smaller and right subtree is larger, exactly like a BST." },
+        { "id": "d", "text": "Only the root and leaves have any defined ordering relationship." }
+      ],
+      "answer": ["a"],
+      "explanation": "The heap property is deliberately weak — parent/child only — which is precisely the source of its speed: less to maintain per operation than a full ordering. (b) confuses a heap with a sorted array; heapsort exists exactly because a heap is NOT already sorted, sorting requires repeated extraction. (c) that's the BST invariant from the previous chapter, a strictly stronger and different guarantee. (d) understates it backwards; every parent-child pair (not just root/leaves) is ordered, but siblings/cousins are not.",
+      "tags": ["heap-property", "invariants"]
+    },
+    {
+      "id": "dsa-06-q02",
+      "type": "mcq",
+      "difficulty": "senior",
+      "prompt": "Why can a binary heap be stored in a plain array with no explicit pointers, unlike a general binary tree?",
+      "options": [
+        { "id": "a", "text": "A heap is always a complete binary tree (every level full except possibly the last, filled left-to-right), so parent/child relationships are always the same fixed arithmetic on the index, regardless of the values stored." },
+        { "id": "b", "text": "Heaps are always small enough to fit in cache, so pointers are unnecessary." },
+        { "id": "c", "text": "Any binary tree can be stored in an array; this is not specific to heaps." },
+        { "id": "d", "text": "Because heap values are always integers, which can be indexed directly." }
+      ],
+      "answer": ["a"],
+      "explanation": "Completeness is the structural property that makes the mapping possible: because there are never 'gaps' in the tree's shape, index i's children are always at fixed positions 2i+1 and 2i+2, with no need to store where children actually are. (b) size has nothing to do with why the array representation works; it works identically for a heap of any size. (c) is false — a general (incomplete, arbitrarily shaped) binary tree has no fixed index arithmetic and generally does need pointers. (d) the data type stored is irrelevant to the structural property enabling array storage.",
+      "tags": ["heap-implementation", "array-representation"]
+    },
+    {
+      "id": "dsa-06-q03",
+      "type": "mcq",
+      "difficulty": "senior",
+      "prompt": "Building a heap from an already-populated array of n elements via `heapify` (sifting down from the last non-leaf node backward) runs in O(n), not O(n log n). What's the reason this surprises most people, correctly explained?",
+      "options": [
+        { "id": "a", "text": "Most nodes are near the bottom of the tree, where sift-down does very little work; only the few nodes near the root do O(log n) work, and summing decreasing work across all levels converges to O(n), not O(n log n)." },
+        { "id": "b", "text": "heapify actually runs in O(n log n); the O(n) claim is a common but incorrect simplification." },
+        { "id": "c", "text": "It's O(n) only for max-heaps, not min-heaps." },
+        { "id": "d", "text": "The array must already be sorted for heapify to achieve O(n)." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is the precise, provable reason (a standard result in algorithm analysis) — the naive intuition of 'n nodes times O(log n) sift-down each' overcounts, because the vast majority of nodes are leaves or near-leaves where sift-down terminates almost immediately. (b) O(n) for heapify is a rigorously proven bound, not a myth. (c) the bound is identical regardless of min/max orientation — the argument is purely structural, not value-dependent. (d) heapify works on arbitrary unsorted input; sortedness plays no role.",
+      "tags": ["heapify", "complexity-analysis"]
+    },
+    {
+      "id": "dsa-06-q04",
+      "type": "mcq",
+      "difficulty": "senior",
+      "prompt": "Can a min-heap report its second-smallest element in O(1)?",
+      "options": [
+        { "id": "a", "text": "No — the second-smallest is guaranteed to be one of the root's two children, but determining which requires comparing exactly those two candidates; it isn't stored or tracked directly." },
+        { "id": "b", "text": "Yes, it's always stored at index 1 of the array." },
+        { "id": "c", "text": "Yes, because a heap is fully sorted." },
+        { "id": "d", "text": "No — finding the second-smallest requires a full O(n) scan of the heap, same as finding an arbitrary element." }
+      ],
+      "answer": ["a"],
+      "explanation": "This tests the exact contract boundary the chapter draws: the min is free (root, O(1)), but anything beyond the current minimum requires actual work — bounded, but not zero. The second-smallest must be one of the two children of the root (nothing smaller could be hiding deeper, since the heap property guarantees children are >= parent along every path), so it's a 2-candidate comparison, cheap but not literally O(1)-free like the root read. (b) index 1 in the array-backed representation is one specific child, not necessarily the second-smallest overall (it's the smaller of index-1 and index-2's values that matters). (c) heaps are explicitly not fully sorted, that's the entire point of this chapter's distinction from BSTs. (d) overstates the cost — the search space is exactly 2 candidates, not the whole heap, precisely because of the heap invariant.",
+      "tags": ["heap-contract", "heap-limitations"]
+    },
+    {
+      "id": "dsa-06-q05",
+      "type": "code-review",
+      "difficulty": "senior",
+      "prompt": "This finds the K largest elements from a huge stream. Why is a min-heap the correct choice here, rather than a max-heap?",
+      "code": "int[] topKLargest(int[] stream, int k) {\n    PriorityQueue<Integer> minHeap = new PriorityQueue<>();\n    for (int x : stream) {\n        minHeap.offer(x);\n        if (minHeap.size() > k) minHeap.poll();\n    }\n    return minHeap.stream().mapToInt(i -> i).toArray();\n}",
+      "codeLanguage": "java",
+      "options": [
+        { "id": "a", "text": "The heap needs O(1) access to the SMALLEST of the current top-k candidates, since that's the one to evict when a larger new element arrives — a min-heap gives O(1) peek at exactly that element; a max-heap would give O(1) access to the wrong end." },
+        { "id": "b", "text": "A max-heap would use more memory than a min-heap for the same k." },
+        { "id": "c", "text": "PriorityQueue in Java can only be constructed as a min-heap; max-heaps aren't supported at all." },
+        { "id": "d", "text": "Min-heaps have better average-case time complexity than max-heaps for all operations." }
+      ],
+      "answer": ["a"],
+      "explanation": "The algorithm maintains 'the current best k seen so far' and must repeatedly find and discard the WEAKEST member of that set as stronger candidates arrive — that's the smallest of the top-k-so-far, which is exactly what a min-heap exposes at its root in O(1). Using a max-heap here would give fast access to the current largest, which is not what needs to be evicted. (b) memory usage is identical between min-heap and max-heap implementations — same node count, same structure. (c) is false; `new PriorityQueue<>(Collections.reverseOrder())` creates a max-heap in Java. (d) there's no inherent asymmetry in operation cost between min- and max-heaps — the choice is entirely about which extreme the algorithm needs, not raw performance.",
+      "tags": ["priority-queue", "top-k", "min-heap-vs-max-heap"]
+    },
+    {
+      "id": "dsa-06-q06",
+      "type": "mcq",
+      "difficulty": "staff",
+      "prompt": "You need to find the top 10 trending items out of a stream of 50 million events, without holding all 50 million in memory. Compare the heap approach to sorting the entire stream.",
+      "options": [
+        { "id": "a", "text": "The min-heap-of-size-10 approach uses O(1) memory relative to the stream size (bounded by k=10) and O(n log k) time; sorting the full stream requires O(n) memory to hold it and O(n log n) time — for this shape (k much smaller than n), the memory difference is what makes the heap approach viable at all." },
+        { "id": "b", "text": "Sorting the full stream is always faster in practice, so it should be preferred whenever feasible." },
+        { "id": "c", "text": "Both approaches use identical memory, since they process the same number of events." },
+        { "id": "d", "text": "The heap approach requires the stream to be pre-sorted, while full sorting does not." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is the chapter's central real-world payoff: when k << n, bounding memory to O(k) rather than O(n) is often the difference between 'runs on one machine' and 'doesn't fit,' independent of which is asymptotically faster in time. (b) for large n, O(n log n) time is strictly worse than O(n log k) when k is small, and the memory cost is also worse — sorting the full stream is not generally preferable here. (c) memory usage is exactly the dimension that differs sharply between the two approaches — that's the whole point. (d) neither approach requires pre-sorted input; the heap approach explicitly works on unsorted streaming data, which is the scenario it's built for.",
+      "tags": ["top-k", "streaming", "memory-tradeoffs"]
+    }
+  ]
+}

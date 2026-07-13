@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "id": "dsa",
+  "title": "Data Structures",
+  "version": "1.0.0",
+  "level": "core",
+  "bundled": true,
+  "primaryLanguage": "java",
+  "description": "A senior-level refresher on data structures as engineering trade-offs — memory layout, complexity under real constraints, and the judgment calls behind picking the right structure in production.",
+  "chapters": [
+    { "id": "dsa-01", "title": "Arrays, Strings, and Memory Layout", "file": "chapters/01-arrays-strings-and-memory-layout.md", "quiz": "quizzes/01-arrays-strings-and-memory-layout.json", "status": "ready" },
+    { "id": "dsa-02", "title": "Hashing: From Hash Tables to Real Systems", "file": "chapters/02-hashing-from-hash-tables-to-real-systems.md", "quiz": "quizzes/02-hashing-from-hash-tables-to-real-systems.json", "status": "ready" },
+    { "id": "dsa-03", "title": "Linked Lists: When Pointers Beat Arrays", "file": "chapters/03-linked-lists-when-pointers-beat-arrays.md", "quiz": "quizzes/03-linked-lists-when-pointers-beat-arrays.json", "status": "ready" },
+    { "id": "dsa-04", "title": "Stacks, Queues, and Deques", "file": "chapters/04-stacks-queues-and-deques.md", "quiz": "quizzes/04-stacks-queues-and-deques.json", "status": "ready" },
+    { "id": "dsa-05", "title": "Trees: BSTs, Balance, and Traversal", "file": "chapters/05-trees-bsts-balance-and-traversal.md", "quiz": "quizzes/05-trees-bsts-balance-and-traversal.json", "status": "ready" },
+    { "id": "dsa-06", "title": "Heaps and Priority Queues", "file": "chapters/06-heaps-and-priority-queues.md", "quiz": "quizzes/06-heaps-and-priority-queues.json", "status": "ready" },
+    { "id": "dsa-07", "title": "Graphs: Representations and Traversal", "file": "chapters/07-graphs-representations-and-traversal.md", "quiz": "quizzes/07-graphs-representations-and-traversal.json", "status": "ready" },
+    { "id": "dsa-08", "title": "Graph Algorithms at Scale", "file": "chapters/08-graph-algorithms-at-scale.md", "quiz": "quizzes/08-graph-algorithms-at-scale.json", "status": "ready" },
+    { "id": "dsa-09", "title": "Tries and Union-Find", "file": "chapters/09-tries-and-union-find.md", "quiz": "quizzes/09-tries-and-union-find.json", "status": "ready" },
+    { "id": "dsa-10", "title": "Choosing Data Structures Under Real Constraints", "file": "chapters/10-choosing-data-structures-under-real-constraints.md", "quiz": "quizzes/10-choosing-data-structures-under-real-constraints.json", "status": "ready" }
+  ]
+}

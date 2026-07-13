@@ -1,0 +1,99 @@
+{
+  "schemaVersion": 1,
+  "chapterId": "dsa-04",
+  "passScore": 0.7,
+  "questions": [
+    {
+      "id": "dsa-04-q01",
+      "type": "mcq",
+      "difficulty": "senior",
+      "prompt": "A recursive function has correct O(n) time complexity but crashes with StackOverflowError on large input. What's the accurate explanation?",
+      "options": [
+        { "id": "a", "text": "Recursion depth is bounded by the call stack's fixed, comparatively small memory region; O(n) time complexity says nothing about whether n simultaneous stack frames will fit in that region." },
+        { "id": "b", "text": "This means the algorithm's time complexity was miscalculated and is actually exponential." },
+        { "id": "c", "text": "StackOverflowError only occurs due to infinite loops, so there must be a missing base case." },
+        { "id": "d", "text": "This is a JVM bug that should be reported." }
+      ],
+      "answer": ["a"],
+      "explanation": "Time complexity and stack depth are separate concerns: an algorithm can be provably O(n) time while still requiring O(n) simultaneously-alive stack frames, which is a memory constraint the call stack's fixed size (not the heap) enforces. (b) time complexity and crash cause are unrelated here. (c) a StackOverflowError can occur with a correct base case if recursion depth alone is too large for the stack — no infinite loop required. (d) this is expected, documented JVM behavior, not a bug.",
+      "tags": ["recursion", "call-stack", "stackoverflow"]
+    },
+    {
+      "id": "dsa-04-q02",
+      "type": "mcq",
+      "difficulty": "senior",
+      "prompt": "A teammate rewrites a deeply recursive Java function into 'tail-recursive' form, expecting this to fix stack overflow on large input. Will it?",
+      "options": [
+        { "id": "a", "text": "No — unlike some functional languages, the JVM does not perform tail-call elimination, so a tail-recursive Java function still consumes one stack frame per call and can still overflow." },
+        { "id": "b", "text": "Yes — all modern JVMs automatically optimize tail-recursive calls into loops." },
+        { "id": "c", "text": "Yes, but only if the method is marked with the @TailRecursive annotation." },
+        { "id": "d", "text": "It depends on whether the JIT compiler has warmed up." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is a specific, useful fact: Java (unlike Scala with @tailrec-verified optimization, or languages with mandated tail-call elimination) does not eliminate tail calls at the bytecode or JIT level — every call, tail-positioned or not, still pushes a frame. The real fix is converting to an explicit loop with your own heap-backed stack (e.g. ArrayDeque). (b) and (c) describe behavior Java does not have — no such annotation or automatic optimization exists in standard Java. (d) JIT warm-up affects speed, not stack frame allocation for recursive calls.",
+      "tags": ["tail-recursion", "jvm", "recursion"]
+    },
+    {
+      "id": "dsa-04-q03",
+      "type": "mcq",
+      "difficulty": "senior",
+      "prompt": "In modern Java, what is the recommended default class for stack or queue usage, and why not java.util.Stack or LinkedList?",
+      "options": [
+        { "id": "a", "text": "ArrayDeque — java.util.Stack is a legacy synchronized Vector subclass (unnecessary locking overhead, inconsistent API), and LinkedList has worse cache locality for the sequential end-only access that stacks/queues perform." },
+        { "id": "b", "text": "java.util.Stack, because it is specifically designed and optimized for stack operations." },
+        { "id": "c", "text": "LinkedList, because its name indicates it is the intended structure for sequential access patterns." },
+        { "id": "d", "text": "There is no meaningful difference between the three; any is an equally good default." }
+      ],
+      "answer": ["a"],
+      "explanation": "This connects directly to chapters 1 and 3: ArrayDeque's contiguous backing array wins on cache locality, and it avoids java.util.Stack's needless synchronization (a holdover from Java's earliest collection classes, predating the modern Collections Framework). (b) is the misleading-name trap the chapter calls out — Stack is legacy baggage, not the recommended tool. (c) LinkedList's name is equally misleading here — 'linked' describes its internal structure, not that it's ideal for every 'list-like' use case. (d) there is a measurable, real difference in both correctness-adjacent behavior (unwanted synchronization) and performance.",
+      "tags": ["arraydeque", "java-collections", "design-tradeoffs"]
+    },
+    {
+      "id": "dsa-04-q04",
+      "type": "code-review",
+      "difficulty": "senior",
+      "prompt": "Why does this 'next greater element' implementation run in O(n) total time despite the nested while loop, rather than O(n^2)?",
+      "code": "int[] nextGreater(int[] nums) {\n    int[] result = new int[nums.length];\n    Arrays.fill(result, -1);\n    Deque<Integer> stack = new ArrayDeque<>();\n    for (int i = 0; i < nums.length; i++) {\n        while (!stack.isEmpty() && nums[stack.peek()] < nums[i]) {\n            result[stack.pop()] = nums[i];\n        }\n        stack.push(i);\n    }\n    return result;\n}",
+      "codeLanguage": "java",
+      "options": [
+        { "id": "a", "text": "Each index is pushed onto the stack exactly once and popped at most once across the entire run, so total while-loop iterations over all outer-loop steps is bounded by n, not n per outer step." },
+        { "id": "b", "text": "The JIT compiler automatically detects and optimizes nested loops with this shape into O(n)." },
+        { "id": "c", "text": "It is actually O(n^2) in the worst case; the O(n) claim is a common misconception." },
+        { "id": "d", "text": "It's O(n) only because the array is assumed to be sorted beforehand." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is the amortized-cost argument behind every monotonic stack: bound the TOTAL work across the whole run, not the worst case of a single iteration — since every element enters the stack once and leaves at most once, total push+pop operations across all iterations is O(n), not O(n) per outer iteration. (b) no such general JIT optimization exists; the O(n) bound is an algorithmic property, not a compiler trick. (c) is incorrect — this is a textbook-verified O(n) technique, precisely because of the amortized argument in (a). (d) there is no sortedness assumption or requirement anywhere in this algorithm.",
+      "tags": ["monotonic-stack", "amortized-analysis"]
+    },
+    {
+      "id": "dsa-04-q05",
+      "type": "mcq",
+      "difficulty": "senior",
+      "prompt": "Which problem phrasing is the clearest signal to reach for a monotonic stack rather than a nested loop?",
+      "options": [
+        { "id": "a", "text": "\"For each day, find the number of days until a warmer temperature\" (a 'next greater element'-shaped problem)." },
+        { "id": "b", "text": "\"Sort an array of temperatures in ascending order.\"" },
+        { "id": "c", "text": "\"Find the sum of all temperatures in the array.\"" },
+        { "id": "d", "text": "\"Reverse the array of temperatures in place.\"" }
+      ],
+      "answer": ["a"],
+      "explanation": "This is a direct instance of the 'next greater element' pattern (find, for each position, the nearest future element satisfying a comparison) — the exact shape a monotonic stack collapses from O(n^2) to O(n). (b), (c), (d) are all well-served by simpler, standard techniques (sorting, a single accumulation pass, in-place index swapping) with no monotonic-stack structure to exploit.",
+      "tags": ["monotonic-stack", "pattern-recognition"]
+    },
+    {
+      "id": "dsa-04-q06",
+      "type": "mcq",
+      "difficulty": "staff",
+      "prompt": "The 'sliding window maximum' problem (max of every k-sized window as it slides across an array) can be solved in O(n) total using a deque holding candidate indices. What is the key invariant that makes this work?",
+      "options": [
+        { "id": "a", "text": "The deque is kept in decreasing value order: before pushing a new index, any indices at the back with smaller values are popped (they can never be the max again while the new, larger element is in range), and expired out-of-window indices are popped from the front." },
+        { "id": "b", "text": "The deque stores every element seen so far, and the maximum is recomputed by scanning the whole deque for each window." },
+        { "id": "c", "text": "The array must be sorted first, after which a simple two-pointer scan finds each window's maximum." },
+        { "id": "d", "text": "The deque holds only the current window's elements in their original order, and the front element is always assumed to be the maximum." }
+      ],
+      "answer": ["a"],
+      "explanation": "Maintaining decreasing order (evicting dominated smaller values from the back) means the front of the deque is always the current window's maximum without ever rescanning — each index is still pushed once and popped at most once total, giving the same amortized O(n) bound as any monotonic structure. (b) rescanning per window reintroduces O(n*k) cost, defeating the purpose. (c) sorting destroys the positional/window information needed and isn't part of this technique. (d) the front being 'assumed' the max without the decreasing-order invariant would be wrong — the invariant is what guarantees it, not the mere position in the deque.",
+      "tags": ["deque", "sliding-window-maximum", "monotonic-structures"]
+    }
+  ]
+}

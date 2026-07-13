@@ -1,0 +1,99 @@
+{
+  "schemaVersion": 1,
+  "chapterId": "dsa-05",
+  "passScore": 0.7,
+  "questions": [
+    {
+      "id": "dsa-05-q01",
+      "type": "mcq",
+      "difficulty": "senior",
+      "prompt": "Values 1, 2, 3, 4, 5 are inserted in order into a plain (non-self-balancing) BST. What happens, and why does it matter for real systems?",
+      "options": [
+        { "id": "a", "text": "Every node gets only a right child, degrading the tree into a linked list with O(n) height — a realistic case, since sorted or near-sorted input (timestamps, auto-increment IDs) is common in production data, not a rare adversarial edge case." },
+        { "id": "b", "text": "The BST automatically rebalances itself during insertion to maintain O(log n) height." },
+        { "id": "c", "text": "This causes a runtime error because BSTs cannot accept sorted input." },
+        { "id": "d", "text": "The tree remains balanced because insertion order does not affect BST shape." }
+      ],
+      "answer": ["a"],
+      "explanation": "Plain BSTs have no self-correction mechanism; sorted insertion is the textbook worst case, producing O(n) height and degrading every operation to O(n) — and unlike a contrived interview example, sorted-ish real data is genuinely common, which is precisely why production key-value structures use self-balancing variants. (b) plain BSTs (as distinct from AVL/red-black) have no rebalancing logic at all. (c) BSTs accept any input including sorted; there's no error, just a bad shape. (d) insertion order is exactly what determines BST shape when no rebalancing exists.",
+      "tags": ["bst", "worst-case", "balance"]
+    },
+    {
+      "id": "dsa-05-q02",
+      "type": "mcq",
+      "difficulty": "senior",
+      "prompt": "Java's TreeMap and C++'s std::map both use red-black trees rather than AVL trees, despite AVL trees offering tighter balance (faster lookups in theory). Why?",
+      "options": [
+        { "id": "a", "text": "Red-black trees require fewer rotations on insert/delete on average, favoring general-purpose write performance, while AVL's tighter balance mainly benefits read-heavy workloads — a general-purpose standard library defaults toward the more balanced (write vs. read) trade-off." },
+        { "id": "b", "text": "AVL trees cannot guarantee O(log n) search in the worst case, while red-black trees can." },
+        { "id": "c", "text": "Red-black trees use less memory per node than AVL trees in all cases." },
+        { "id": "d", "text": "This is purely a historical accident with no remaining technical justification." }
+      ],
+      "answer": ["a"],
+      "explanation": "Both structures guarantee O(log n) worst-case height — the difference is the constant-factor trade-off between insert/delete cost (rotations) and lookup speed, and standard libraries optimize for the general-purpose mixed workload rather than a read-only extreme. (b) is false; AVL also guarantees O(log n) worst-case search, that's the whole point of AVL's balance invariant. (c) memory-per-node is comparable between the two (a color bit vs. a height/balance field) — not the deciding factor. (d) there's a real, current, cited technical rationale (write-cost trade-off), not mere historical inertia.",
+      "tags": ["avl-tree", "red-black-tree", "self-balancing"]
+    },
+    {
+      "id": "dsa-05-q03",
+      "type": "mcq",
+      "difficulty": "senior",
+      "prompt": "You need to serialize a binary tree to a string such that it can be deserialized back into the exact same shape. Which traversal is required, and why?",
+      "options": [
+        { "id": "a", "text": "Preorder — visiting a node before its children means a parser reading the serialized output left-to-right encounters each parent before its subtrees, enabling top-down reconstruction." },
+        { "id": "b", "text": "Inorder — because it produces sorted output, which is easiest to parse." },
+        { "id": "c", "text": "Postorder — because children should always be created before their parent in any reconstruction algorithm." },
+        { "id": "d", "text": "Any traversal order works equally well for serialization, since all four visit every node exactly once." }
+      ],
+      "answer": ["a"],
+      "explanation": "Preorder's parent-before-children order is exactly what a recursive-descent deserializer needs: read a value, know it's the current subtree's root, then recursively build left and right from what follows. (b) inorder alone cannot reconstruct tree *shape* — it only recovers a BST's sorted values, not arbitrary tree structure, and for a general (non-BST) tree it carries no shape information at all. (c) postorder can also support reconstruction with a different (bottom-up) parsing strategy, but it's not the 'required' answer preorder is, and it's less directly aligned with top-down parsing. (d) traversal order materially changes what information is recoverable — they are not interchangeable for this purpose.",
+      "tags": ["tree-traversal", "serialization", "preorder"]
+    },
+    {
+      "id": "dsa-05-q04",
+      "type": "mcq",
+      "difficulty": "senior",
+      "prompt": "You need to compute, for every node, the size of its subtree (count of descendants including itself), where each node's answer depends on its children's answers. Which traversal fits?",
+      "options": [
+        { "id": "a", "text": "Postorder — children are fully resolved before the parent computes its own value, which is exactly the dependency direction this problem requires." },
+        { "id": "b", "text": "Preorder — because the parent's value should be computed first." },
+        { "id": "c", "text": "Inorder — because sorted order is required for any counting problem." },
+        { "id": "d", "text": "Level-order — because breadth-first processing is always required for aggregation problems." }
+      ],
+      "answer": ["a"],
+      "explanation": "Any 'a node's answer depends on its children's answers' problem is a postorder-shaped problem by definition — resolve the dependencies (children) before the dependent (parent). This is the same pattern as the chapter's balanced-height check. (b) preorder computes the parent first, before the children's sizes are even known — backwards for this dependency. (c) inorder's sorted-order property is irrelevant to a counting problem with no ordering requirement. (d) level-order processes by depth, not by dependency order, and doesn't naturally support 'children before parent' at all.",
+      "tags": ["tree-traversal", "postorder", "subtree-computation"]
+    },
+    {
+      "id": "dsa-05-q05",
+      "type": "code-review",
+      "difficulty": "staff",
+      "prompt": "A teammate's 'is this tree balanced' check calls a separate height(node) function (which recomputes height from scratch via full recursion) at every node during a traversal. What's the complexity flaw, and the fix?",
+      "code": "int height(TreeNode n) {\n    if (n == null) return 0;\n    return 1 + Math.max(height(n.left), height(n.right));\n}\n\nboolean isBalanced(TreeNode n) {\n    if (n == null) return true;\n    if (Math.abs(height(n.left) - height(n.right)) > 1) return false;\n    return isBalanced(n.left) && isBalanced(n.right);\n}",
+      "codeLanguage": "java",
+      "options": [
+        { "id": "a", "text": "height() is recomputed from scratch for every node visited by isBalanced(), making total work O(n^2); the fix is a single postorder pass that computes height and detects imbalance together, returning early (e.g. -1 sentinel) once an imbalance is found." },
+        { "id": "b", "text": "The recursion in height() is infinite and will never terminate." },
+        { "id": "c", "text": "isBalanced() should use BFS instead of recursion to correctly detect imbalance." },
+        { "id": "d", "text": "There is no performance issue; both functions are already O(n)." }
+      ],
+      "answer": ["a"],
+      "explanation": "Each call to isBalanced() at a node triggers a full height() recursion on both subtrees — and this happens again at every level of the tree, multiplying the redundant work; for a tree of height h, a node near the root triggers height() calls that redo work already done lower down, yielding O(n^2) total in the worst case (e.g., a balanced tree of depth log n still incurs this at every one of its n nodes). The chapter's fix computes height and balance in one bottom-up pass, propagating a sentinel value (-1) upward the instant an imbalance is found, so each node is visited once — O(n) total. (b) the recursion is well-founded (base case at null) and terminates normally. (c) BFS doesn't inherently fix the redundant recomputation; the fix is about avoiding repeated work, not traversal order. (d) is the misconception this question exists to correct.",
+      "tags": ["tree-balance", "complexity-analysis", "postorder"]
+    },
+    {
+      "id": "dsa-05-q06",
+      "type": "mcq",
+      "difficulty": "senior",
+      "prompt": "Why does an inorder traversal of a valid BST always produce values in sorted order?",
+      "options": [
+        { "id": "a", "text": "The BST invariant (left subtree all smaller, right subtree all larger) guarantees that visiting left-subtree, then node, then right-subtree at every level processes every value in strictly increasing order by construction." },
+        { "id": "b", "text": "Inorder traversal internally sorts the values before visiting them." },
+        { "id": "c", "text": "It only works if the tree happens to already be balanced." },
+        { "id": "d", "text": "It's a coincidence specific to small trees and doesn't hold for large ones." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is a direct, guaranteed consequence of the BST invariant itself, applied recursively at every node — it holds regardless of the tree's shape or balance, precisely because the invariant is enforced at every single node, not just the root. (b) inorder traversal does no sorting; it simply visits nodes in an order that a valid BST's invariant already guarantees is sorted. (c) balance affects height/performance, not this correctness property — even a completely degenerate (linked-list-shaped) BST still yields sorted inorder output. (d) the property holds for BSTs of any size, by the same recursive argument.",
+      "tags": ["bst", "inorder-traversal", "invariants"]
+    }
+  ]
+}

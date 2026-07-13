@@ -1,0 +1,99 @@
+{
+  "schemaVersion": 1,
+  "chapterId": "dsa-02",
+  "passScore": 0.7,
+  "questions": [
+    {
+      "id": "dsa-02-q01",
+      "type": "mcq",
+      "difficulty": "senior",
+      "prompt": "What is the most complete answer to \"why is HashMap.get() O(1)?\"",
+      "options": [
+        { "id": "a", "text": "Bucket index is computed by arithmetic on the hash code, average chain length per bucket stays short under a good hash function, and periodic resizing keeps load factor bounded — together giving average-case O(1)." },
+        { "id": "b", "text": "Because Java compiles HashMap access directly into a single CPU instruction." },
+        { "id": "c", "text": "Because all keys are pre-sorted, allowing binary search within each bucket." },
+        { "id": "d", "text": "Because HashMap never has collisions in practice." }
+      ],
+      "answer": ["a"],
+      "explanation": "All three mechanisms are required for the claim to hold: the index arithmetic (O(1) itself), a good hash function keeping buckets shallow, and load-factor-triggered resizing keeping bucket count proportional to entry count. Naming only one is an incomplete answer in review. (b), (c), (d) are all false claims about the mechanism.",
+      "tags": ["hashmap", "complexity"]
+    },
+    {
+      "id": "dsa-02-q02",
+      "type": "code-review",
+      "difficulty": "senior",
+      "prompt": "This class is used as a HashSet key. After insertion, code elsewhere calls `setId(newId)` on a stored instance. What happens on the next `set.contains(that same instance)`?",
+      "code": "class Tag {\n    private int id;\n    void setId(int newId) { this.id = newId; }\n    @Override public boolean equals(Object o) {\n        return o instanceof Tag && ((Tag) o).id == id;\n    }\n    @Override public int hashCode() { return Integer.hashCode(id); }\n}",
+      "codeLanguage": "java",
+      "options": [
+        { "id": "a", "text": "contains() likely returns false: the entry is still filed under the old id's bucket, but hashCode() now reflects the new id, so lookup computes a different bucket index and never finds it." },
+        { "id": "b", "text": "contains() will always return true, since equals() still works correctly regardless of mutation." },
+        { "id": "c", "text": "This code will throw a ConcurrentModificationException." },
+        { "id": "d", "text": "This is safe because HashSet automatically re-buckets entries whenever a field used in hashCode() changes." }
+      ],
+      "answer": ["a"],
+      "explanation": "The set stored the object under the bucket computed from the OLD hash; mutating id changes what hashCode() now returns, so a lookup with the mutated instance (or an equal() one) computes a NEW bucket index — the entry is orphaned in its original bucket, unreachable. This is the exact mechanism behind 'don't mutate hash-relevant fields of a live key.' (b) equals() alone doesn't help; the bucket is chosen by hashCode() before equals() is ever checked. (c) no concurrent modification is happening here, this is a single-threaded correctness bug. (d) HashSet does no such re-bucketing — there is no hook for it.",
+      "tags": ["hashcode", "mutability", "hashset"]
+    },
+    {
+      "id": "dsa-02-q03",
+      "type": "mcq",
+      "difficulty": "senior",
+      "prompt": "A class overrides equals() but not hashCode(). What breaks, specifically?",
+      "options": [
+        { "id": "a", "text": "The equals/hashCode contract's consistency rule is violated: two objects can be equal() yet have different inherited (identity-based) hash codes, so they'll be filed in different buckets and never found as matches in a HashMap/HashSet." },
+        { "id": "b", "text": "The code will fail to compile." },
+        { "id": "c", "text": "equals() will silently stop working and always return false." },
+        { "id": "d", "text": "Nothing breaks as long as the class is never used as a map key." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is precisely why 'override both or neither' is one of the three hard rules: without a matching hashCode(), equal objects (by your custom equals()) very likely hash differently (Object's default hashCode is identity-based), so hash-based collections can't locate them as duplicates. (b) this compiles fine — it's a semantic bug, not a syntax error. (c) equals() itself still runs correctly when directly invoked; the failure is specifically in hash-bucket lookup. (d) is technically true but misses the point — the whole reason to flag this in review is that such classes frequently DO end up as map/set keys later, often unknowingly (e.g., in third-party collection usage).",
+      "tags": ["equals-hashcode-contract"]
+    },
+    {
+      "id": "dsa-02-q04",
+      "type": "mcq",
+      "difficulty": "staff",
+      "prompt": "A public API accepts arbitrary user-supplied strings as HashMap keys. An attacker crafts thousands of strings that all collide into the same hash bucket. What is this attack, and what production mechanism mitigates it?",
+      "options": [
+        { "id": "a", "text": "A hash-flooding denial-of-service attack; Java 8+ HashMap mitigates it by converting an overlong bucket chain from a linked list into a red-black tree, capping worst-case lookup at O(log n) instead of O(n)." },
+        { "id": "b", "text": "SQL injection; mitigated by parameterized queries." },
+        { "id": "c", "text": "A buffer overflow; mitigated by bounds checking." },
+        { "id": "d", "text": "This isn't a real attack vector since hash functions are deterministic and can't be targeted." }
+      ],
+      "answer": ["a"],
+      "explanation": "Forcing all keys into one bucket degrades every operation on that bucket toward O(n), turning a single request into a resource-exhaustion vector against the whole map — a documented, historically exploited class of attack against several languages' hash tables. Java's tree-fallback bucket (chapter's 'trees for balance, shipped in infrastructure') directly caps this worst case. (b), (c) are unrelated attack classes. (d) is false — deterministic hash functions are exactly what makes crafting colliding inputs possible if the function's internals are known or guessable, which is why some languages randomize hash seeds per-process as an additional mitigation.",
+      "tags": ["hash-flooding", "security", "worst-case"]
+    },
+    {
+      "id": "dsa-02-q05",
+      "type": "mcq",
+      "difficulty": "staff",
+      "prompt": "A distributed cache uses `hash(key) % node_count` to assign keys to nodes. What happens when a node is added or removed, and what's the standard fix?",
+      "options": [
+        { "id": "a", "text": "Nearly every key remaps to a different node (since node_count changed), causing a cache-wide stampede; consistent hashing fixes this by remapping only a small fraction of keys per node-count change." },
+        { "id": "b", "text": "Nothing changes; modulo hashing is stable under node-count changes by design." },
+        { "id": "c", "text": "Only the keys on the added/removed node are affected; all others stay put." },
+        { "id": "d", "text": "The cache automatically re-balances without any remapping, since hash values themselves don't change." }
+      ],
+      "answer": ["a"],
+      "explanation": "Changing the divisor in `hash(key) % node_count` changes the result for nearly all keys, not just those on the affected node — every key's target node shifts, causing a full cache miss storm exactly when the system is already stressed (a node just changed). Consistent hashing (mapping both nodes and keys onto a hash ring) bounds remapping to roughly 1/node_count of keys. (b) and (d) are false — plain modulo hashing is specifically NOT stable under node-count changes, which is the whole motivation for consistent hashing. (c) understates the blast radius; the shift affects essentially all keys, not just the changed node's.",
+      "tags": ["consistent-hashing", "distributed-systems"]
+    },
+    {
+      "id": "dsa-02-q06",
+      "type": "mcq",
+      "difficulty": "senior",
+      "prompt": "You need to check, before an expensive disk read, whether a key is *definitely absent* from a huge dataset, tolerating a small false-positive rate in exchange for large memory savings. What structure fits?",
+      "options": [
+        { "id": "a", "text": "A Bloom filter — a probabilistic structure where 'not present' is exact and 'possibly present' has a tunable false-positive rate, using far less memory than storing every key." },
+        { "id": "b", "text": "A standard HashSet, since it's already O(1)." },
+        { "id": "c", "text": "A sorted array with binary search." },
+        { "id": "d", "text": "A trie built over all keys." }
+      ],
+      "answer": ["a"],
+      "explanation": "Bloom filters are built exactly for this shape of problem: definite negatives at a fraction of the memory of storing full keys, by encoding multiple hash functions into a shared bit array. (b) a HashSet storing every key defeats the memory-savings goal that motivated the question. (c) works but costs far more memory (storing full keys) and O(log n) time instead of O(k) for k hash functions. (d) tries are excellent for prefix queries, not the 'compact definite-negative check' this question asks for.",
+      "tags": ["bloom-filter", "probabilistic-structures"]
+    }
+  ]
+}

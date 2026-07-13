@@ -1,0 +1,99 @@
+{
+  "schemaVersion": 1,
+  "chapterId": "dsa-10",
+  "passScore": 0.7,
+  "questions": [
+    {
+      "id": "dsa-10-q01",
+      "type": "mcq",
+      "difficulty": "senior",
+      "prompt": "What is the correct FIRST question to ask when choosing a data structure for a new production requirement?",
+      "options": [
+        { "id": "a", "text": "What operation happens most often, and what's its target complexity — not a list of all operations the structure must support, but which one is actually on the hot path." },
+        { "id": "b", "text": "Which structure has the best average-case Big-O across all its operations?" },
+        { "id": "c", "text": "Which structure is the team most familiar with?" },
+        { "id": "d", "text": "Which structure was used in a similar-sounding system elsewhere?" }
+      ],
+      "answer": ["a"],
+      "explanation": "This is the framework's ordering principle: a structure optimized for its hot operation often beats one that's 'good at everything' — a heap's O(1) min-read beats a balanced tree's O(log n) min-read precisely because the hot operation was correctly identified first. (b) 'best across all operations' is exactly the reflexive-default trap the chapter warns against — most real workloads don't need uniform performance across every possible operation. (c) and (d) are real-world factors worth weighing eventually, but starting there (rather than with the actual requirement) is how mismatched structures get chosen.",
+      "tags": ["decision-framework", "hot-path"]
+    },
+    {
+      "id": "dsa-10-q02",
+      "type": "mcq",
+      "difficulty": "staff",
+      "prompt": "Why does the chapter treat 'what does getting this wrong cost — silent or loud' as a distinct, weighted factor rather than folding it into raw performance comparison?",
+      "options": [
+        { "id": "a", "text": "Because a silently wrong answer (e.g. Dijkstra on negative weights, or a stale hash bucket after mutation) can run in production for a long time undetected, causing more real damage than a structure that fails loudly (an exception, an OOM) and gets fixed immediately." },
+        { "id": "b", "text": "Because silent failures are always slower than loud failures in Big-O terms." },
+        { "id": "c", "text": "Because loud failures never occur in well-tested production systems." },
+        { "id": "d", "text": "This factor is not actually meaningful; only raw performance should determine the choice." }
+      ],
+      "answer": ["a"],
+      "explanation": "This connects directly to chapter 8's negative-weight Dijkstra example: the danger isn't performance, it's that wrongness is invisible until someone notices bad output, possibly much later and at higher cost than an immediate crash would have caused. (b) failure mode (silent vs loud) has nothing to do with time complexity. (c) loud failures absolutely still occur in production regardless of test coverage; that's not the distinguishing claim here. (d) is precisely the position the chapter argues against — cost-of-being-wrong is presented as a genuine, separate weighting factor.",
+      "tags": ["silent-failure", "decision-framework", "risk"]
+    },
+    {
+      "id": "dsa-10-q03",
+      "type": "mcq",
+      "difficulty": "senior",
+      "prompt": "For the rate-limiter example (at most N requests per user per rolling 60-second window), why does a deque of timestamps fit better than a min-heap or a balanced tree?",
+      "options": [
+        { "id": "a", "text": "The actual access pattern is strict FIFO expiry (oldest timestamps expire first, newest are added at the other end) with no need for arbitrary min/max queries or ordering beyond that — exactly what a deque provides in O(1) amortized per operation, with memory bounded by N." },
+        { "id": "b", "text": "A deque is always faster than a heap or tree for any use case involving numbers." },
+        { "id": "c", "text": "A min-heap cannot store timestamps, since heaps only support integer keys." },
+        { "id": "d", "text": "Balanced trees cannot be used in rate limiting because they require the full dataset to be known upfront." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is the chapter's central worked-example lesson: the structure choice falls directly out of the access pattern (push newest, pop oldest-if-expired, count what remains) rather than from a generic 'numbers need a heap' instinct — a heap or tree would work correctly but add unused capability (arbitrary min/max or ordering queries) at needless cost. (b) is the reflexive-default trap in reverse — no structure is universally faster; fit depends on the actual operations needed. (c) heaps can store any comparable type, including timestamps — this is false. (d) balanced trees support dynamic insertion/deletion fine; this isn't a real limitation.",
+      "tags": ["rate-limiter", "deque", "structure-selection"]
+    },
+    {
+      "id": "dsa-10-q04",
+      "type": "code-review",
+      "difficulty": "senior",
+      "prompt": "A reviewer sees this pattern repeated across a codebase: a List<T> is linear-scanned inside a loop to check membership before insertion. What's the chapter's diagnosis and standard fix?",
+      "code": "List<String> processed = new ArrayList<>();\nfor (String item : incomingItems) {\n    if (!processed.contains(item)) {   // O(n) scan, every single item\n        processed.add(item);\n        handle(item);\n    }\n}",
+      "codeLanguage": "java",
+      "options": [
+        { "id": "a", "text": "This is the reflexive-default trap: List.contains() is O(n), turning the whole loop into O(n^2); a HashSet's O(1) average membership check is a one-line fix that doesn't change program logic at all." },
+        { "id": "b", "text": "The loop should be parallelized using multiple threads to improve performance." },
+        { "id": "c", "text": "This code is already optimal; List is the correct default choice for tracking processed items." },
+        { "id": "d", "text": "The fix is to sort the list first, then use binary search for each contains() check." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is one of the chapter's named 'tells' verbatim: linear-scanning a List for membership is a direct signal that a HashSet (chapter 2) was needed instead, and swapping the type requires no logic change since both support contains()/add(). (b) parallelizing doesn't fix the underlying O(n) scan per check; it just spreads a fundamentally wrong-shaped cost across threads. (c) is exactly the reflexive-default mistake this question is testing recognition of. (d) sorting-then-binary-search would reduce each check to O(log n), better than O(n) but still strictly worse than the O(1) average a hash set gives for zero extra complexity — the boring fix is also the correct fix here.",
+      "tags": ["reflexive-defaults", "hashset", "code-review"]
+    },
+    {
+      "id": "dsa-10-q05",
+      "type": "mcq",
+      "difficulty": "staff",
+      "prompt": "The chapter argues the discipline is 'let the actual operation and shape decide,' NOT 'always prefer the more sophisticated structure.' Which earlier example from this course supports the second half of that claim (that the boring structure sometimes wins)?",
+      "options": [
+        { "id": "a", "text": "Chapter 1's finding that array-backed structures often beat linked lists in practice, and chapter 5's point that a plain BST can outperform a self-balancing one when insertion order is guaranteed random (no rebalancing overhead needed)." },
+        { "id": "b", "text": "Chapter 6's heap-based top-K algorithm, which always beats sorting regardless of k." },
+        { "id": "c", "text": "Chapter 9's union-find, which is always the correct choice for any connectivity question." },
+        { "id": "d", "text": "Chapter 8's Dijkstra's algorithm, which should always be used instead of BFS." }
+      ],
+      "answer": ["a"],
+      "explanation": "These are the course's own examples of the 'boring/simpler structure wins' direction, cited directly to balance the 'don't reflexively default' guidance — the chapter is explicit that the discipline cuts both ways. (b) chapter 6 itself notes the heap approach specifically pays off when k << n; for k close to n, the benefit shrinks. (c) chapter 9 explicitly limits union-find to edges-only-added connectivity — not 'any' connectivity question (e.g., ones needing path reconstruction). (d) chapter 8 is explicit that Dijkstra requires non-negative weights and BFS remains correct and simpler for unweighted graphs — 'always' is exactly the overreach the course avoids throughout.",
+      "tags": ["decision-framework", "simplicity", "tradeoffs"]
+    },
+    {
+      "id": "dsa-10-q06",
+      "type": "mcq",
+      "difficulty": "staff",
+      "prompt": "A candidate is asked to 'design a leaderboard showing the top 100 players by score, updated in real time as millions of scores change.' Applying the four-question framework, what should the candidate identify as the hot operation and the fitting structure?",
+      "options": [
+        { "id": "a", "text": "Hot operation: maintain the current top 100 as scores update — a min-heap of size 100 (chapter 6's top-K pattern) tracks this in O(log 100) per update with O(100) memory, rather than re-sorting millions of scores on every change." },
+        { "id": "b", "text": "Hot operation: full sort of all scores on every request, since a leaderboard fundamentally requires a totally ordered list." },
+        { "id": "c", "text": "Hot operation: connectivity checks between players, best solved with union-find." },
+        { "id": "d", "text": "Hot operation: prefix search over player names, best solved with a trie." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is a direct, unstated application of chapter 6's top-K pattern from the worked-example discipline this chapter teaches: identify the actual hot operation (maintaining a bounded top-N under constant updates) and match it to the structure built for exactly that shape. (b) re-sorting millions of records on every single score change is the reflexive-default failure this chapter warns against — wildly more expensive than necessary for a bounded top-100 view. (c) and (d) misidentify the hot operation entirely; nothing in the stated problem involves connectivity or prefix matching.",
+      "tags": ["decision-framework", "top-k", "heap", "system-design"]
+    }
+  ]
+}

@@ -1,0 +1,99 @@
+{
+  "schemaVersion": 1,
+  "chapterId": "dsa-07",
+  "passScore": 0.7,
+  "questions": [
+    {
+      "id": "dsa-07-q01",
+      "type": "mcq",
+      "difficulty": "senior",
+      "prompt": "A social network graph has 1 billion nodes and roughly 200 billion edges (a few hundred connections per user). Which representation fits, and why?",
+      "options": [
+        { "id": "a", "text": "Adjacency list — the graph is sparse (E far smaller than V^2), so memory stays proportional to actual edges; an adjacency matrix would require O(V^2), which for a billion nodes is astronomically larger than the data actually present." },
+        { "id": "b", "text": "Adjacency matrix — it gives O(1) edge lookups, which is always worth the memory cost." },
+        { "id": "c", "text": "Either representation uses the same memory in practice, so the choice doesn't matter." },
+        { "id": "d", "text": "Adjacency matrix, because it is simpler to implement." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is a direct density calculation: V^2 for a billion nodes is ~10^18, vastly exceeding the actual 2×10^11 edges — a matrix would be almost entirely wasted false entries at a memory cost no real system could afford. Adjacency list memory scales with what's actually there. (b) 'always worth it' ignores exactly the cost this question is testing; O(1) lookup is not free when V is large and the graph is sparse. (c) is false — the memory difference here spans several orders of magnitude. (d) implementation simplicity doesn't override a many-orders-of-magnitude memory difference.",
+      "tags": ["graph-representation", "adjacency-list", "adjacency-matrix"]
+    },
+    {
+      "id": "dsa-07-q02",
+      "type": "mcq",
+      "difficulty": "senior",
+      "prompt": "You need to repeatedly answer 'does an edge exist between u and v?' on a graph with only 200 nodes, where nearly every pair might be connected. Which representation fits best?",
+      "options": [
+        { "id": "a", "text": "Adjacency matrix — the graph is small (V=200, so V^2=40,000, trivial memory) and dense, and the matrix gives O(1) edge-existence checks versus O(degree) for an adjacency list." },
+        { "id": "b", "text": "Adjacency list, because it is always the more memory-efficient choice regardless of density." },
+        { "id": "c", "text": "Neither representation supports O(1) edge-existence checks." },
+        { "id": "d", "text": "Adjacency matrix should never be used regardless of graph size or density." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is the matrix's actual sweet spot: small V keeps O(V^2) memory trivial, high density means an adjacency list's per-node neighbor lists are long anyway (so its usual advantage shrinks), and the O(1) lookup directly serves the stated query pattern. (b) is the misconception this chapter corrects — adjacency list's memory advantage specifically depends on sparsity, which doesn't hold here. (c) an adjacency matrix's whole purpose is O(1) edge checks via direct indexing. (d) contradicts the chapter's point that representation choice is a genuine trade-off, not a universal ranking.",
+      "tags": ["graph-representation", "density", "query-patterns"]
+    },
+    {
+      "id": "dsa-07-q03",
+      "type": "mcq",
+      "difficulty": "senior",
+      "prompt": "Both BFS and DFS visit every reachable node in O(V + E). What is the correct basis for choosing between them?",
+      "options": [
+        { "id": "a", "text": "The property the traversal needs to guarantee: BFS explores in strict distance order, guaranteeing shortest paths in unweighted graphs; DFS's stack-based structure naturally tracks 'the path so far,' fitting structural questions like cycle detection or topological ordering." },
+        { "id": "b", "text": "DFS should always be preferred because recursive code is simpler to write." },
+        { "id": "c", "text": "BFS should always be preferred because queues are faster than stacks." },
+        { "id": "d", "text": "The choice doesn't matter since both have identical time complexity." }
+      ],
+      "answer": ["a"],
+      "explanation": "Since both traversals share the same asymptotic complexity, the deciding factor is which structural guarantee the problem actually needs — this is the chapter's central point about picking traversal by property, not speed. (b) code simplicity is a real but secondary factor, and using DFS for a shortest-unweighted-path problem would be simply wrong, not just less simple. (c) there's no inherent speed difference between array-backed queues and stacks. (d) identical time complexity is exactly why the choice must be made on other grounds — the question is testing that reasoning, not contradicting it.",
+      "tags": ["bfs", "dfs", "algorithm-selection"]
+    },
+    {
+      "id": "dsa-07-q04",
+      "type": "mcq",
+      "difficulty": "senior",
+      "prompt": "Why does BFS, specifically, guarantee the shortest path in an unweighted graph, while DFS does not?",
+      "options": [
+        { "id": "a", "text": "BFS explores nodes in strict order of distance from the start (all distance-1 nodes before any distance-2 node), so the first time a node is reached is guaranteed to be via a shortest path; DFS can plunge deep down one branch, reaching a node via a long path long before a shorter path through another branch is even explored." },
+        { "id": "b", "text": "BFS always visits fewer nodes than DFS, so it finds the answer faster." },
+        { "id": "c", "text": "DFS cannot be used on graphs with more than one path between two nodes." },
+        { "id": "d", "text": "BFS uses recursion, which inherently favors shorter paths." }
+      ],
+      "answer": ["a"],
+      "explanation": "The queue-based, level-by-level exploration order is the entire mechanism — it's a direct structural guarantee, not a heuristic. (b) both traversals visit the same set of reachable nodes eventually (same O(V+E)); BFS's advantage is exploration ORDER, not node count. (c) DFS handles multiple paths between nodes fine; it just doesn't guarantee finding the shortest one first. (d) BFS is queue-based (not recursive) and DFS is typically the recursive one — this option has the mechanisms backwards.",
+      "tags": ["bfs", "shortest-path", "unweighted-graphs"]
+    },
+    {
+      "id": "dsa-07-q05",
+      "type": "code-review",
+      "difficulty": "staff",
+      "prompt": "This topological sort (Kahn's algorithm) is run on a graph, and the returned list has fewer than V elements. What does that mean, and why does the algorithm detect it correctly?",
+      "code": "List<Integer> topoSort(int V, Map<Integer, List<Integer>> adj) {\n    int[] inDegree = new int[V];\n    for (var neighbors : adj.values())\n        for (int v : neighbors) inDegree[v]++;\n\n    Queue<Integer> queue = new ArrayDeque<>();\n    for (int i = 0; i < V; i++) if (inDegree[i] == 0) queue.offer(i);\n\n    List<Integer> order = new ArrayList<>();\n    while (!queue.isEmpty()) {\n        int node = queue.poll();\n        order.add(node);\n        for (int neighbor : adj.getOrDefault(node, List.of())) {\n            if (--inDegree[neighbor] == 0) queue.offer(neighbor);\n        }\n    }\n    return order;\n}",
+      "codeLanguage": "java",
+      "options": [
+        { "id": "a", "text": "The graph contains a cycle — nodes inside a cycle always have at least one incoming edge from within the cycle that never gets removed (since their predecessor is also stuck in the cycle), so their in-degree never reaches zero and they never enter the queue." },
+        { "id": "b", "text": "This means the graph is disconnected, which always causes an incomplete result regardless of cycles." },
+        { "id": "c", "text": "This is a bug in the implementation; a correct topological sort always processes all V nodes." },
+        { "id": "d", "text": "It means the adjacency list has a memory allocation error." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is the elegant side-effect the chapter highlights: within a cycle, every node's in-degree contribution comes partly from another node also stuck in the same cycle, so no node in the cycle can ever reach in-degree zero — they're mutually blocked, and the algorithm naturally stalls with those nodes never entering the queue. (b) disconnection alone doesn't prevent completion — Kahn's algorithm handles multiple independent DAG components fine, processing all of them as long as no cycles exist. (c) is the misconception the chapter directly corrects: an incomplete result on a graph WITH a cycle is the algorithm working exactly as designed, not a bug. (d) there's no memory error implied by this behavior at all.",
+      "tags": ["topological-sort", "kahns-algorithm", "cycle-detection"]
+    },
+    {
+      "id": "dsa-07-q06",
+      "type": "mcq",
+      "difficulty": "staff",
+      "prompt": "A recursive DFS implementation is run on a graph representing a very long dependency chain (essentially a straight line of 500,000 nodes). What risk does this introduce, and what's the standard mitigation?",
+      "options": [
+        { "id": "a", "text": "The recursion depth reaches 500,000, risking a StackOverflowError regardless of the algorithm's correctness — the same call-stack-depth risk from chapter 4's recursion discussion; an explicit stack-based (iterative) DFS avoids this by using heap-allocated storage instead of the fixed-size call stack." },
+        { "id": "b", "text": "There is no risk; DFS is always safe to implement recursively regardless of graph size or shape." },
+        { "id": "c", "text": "The risk only applies to BFS, not DFS, since BFS uses a queue." },
+        { "id": "d", "text": "This can be fixed by converting the algorithm to use memoization." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is a direct callback to chapter 4: a long chain-shaped graph forces recursive DFS to maintain 500,000 simultaneously-alive stack frames, which can overflow the call stack even though the algorithm is correct and O(V+E) in time. Converting to an explicit stack (an ArrayDeque, heap-allocated) sidesteps the fixed-size call-stack limit entirely — exactly the fix chapter 4 recommended for deep recursion generally. (b) is the risk this question exists to flag — recursive DFS on adversarially deep/long graphs is a real, recurring production issue. (c) BFS is naturally iterative (queue-based) and doesn't carry this specific risk, but that's not a reason DFS is exempt — the risk is real for DFS specifically because of its typical recursive implementation. (d) memoization addresses redundant recomputation, not stack depth — it's the wrong fix for this problem.",
+      "tags": ["dfs", "recursion", "stack-overflow"]
+    }
+  ]
+}

@@ -1,0 +1,97 @@
+{
+  "schemaVersion": 1,
+  "chapterId": "dsa-08",
+  "passScore": 0.7,
+  "questions": [
+    {
+      "id": "dsa-08-q01",
+      "type": "mcq",
+      "difficulty": "senior",
+      "prompt": "Why does BFS stop guaranteeing shortest paths once graph edges have different weights?",
+      "options": [
+        { "id": "a", "text": "BFS's guarantee relies on exploring nodes in strict distance order, which only holds when every edge costs exactly one step; with weighted edges, a node reached via more hops can have a lower total cost than one reached via fewer hops, and a plain FIFO queue has no way to represent 'this path is cheaper, revisit.'" },
+        { "id": "b", "text": "BFS cannot be implemented at all on weighted graphs due to compiler limitations." },
+        { "id": "c", "text": "Weighted graphs are always directed, and BFS only works on undirected graphs." },
+        { "id": "d", "text": "BFS still works correctly on weighted graphs; this is a common misconception." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is the precise mechanism, not a vague 'weights break things' claim: BFS's FIFO queue processes nodes in hop-count order, which coincides with cost order only when all weights are equal. (b) BFS can be run on any graph structurally; it just won't give correct shortest-path answers when weighted. (c) weighted and directed are entirely independent properties of a graph. (d) is false — this is exactly the scenario where BFS's shortest-path guarantee breaks, motivating Dijkstra's algorithm.",
+      "tags": ["bfs", "weighted-graphs", "shortest-path"]
+    },
+    {
+      "id": "dsa-08-q02",
+      "type": "mcq",
+      "difficulty": "senior",
+      "prompt": "What is the single structural change that turns BFS into Dijkstra's algorithm?",
+      "options": [
+        { "id": "a", "text": "Replacing the plain FIFO queue with a min-heap (priority queue) ordered by current known distance, so the closest not-yet-finalized node is always expanded next." },
+        { "id": "b", "text": "Replacing recursion with iteration." },
+        { "id": "c", "text": "Adding a visited-set, which BFS does not use." },
+        { "id": "d", "text": "Reversing the direction of all graph edges before traversal." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is the chapter's core insight: Dijkstra is BFS with its queue upgraded to a priority queue, needed precisely because weighted edges break BFS's distance-order guarantee under plain FIFO processing. (b) BFS is typically already iterative (queue-based); this isn't the distinguishing change. (c) BFS also uses a visited/seen mechanism (implicitly via the distance array or an explicit visited set) — this isn't unique to Dijkstra. (d) edge reversal is unrelated to the BFS-to-Dijkstra generalization.",
+      "tags": ["dijkstra", "bfs", "priority-queue"]
+    },
+    {
+      "id": "dsa-08-q03",
+      "type": "mcq",
+      "difficulty": "staff",
+      "prompt": "A production routing system has a graph with some negative edge weights (representing rebates/discounts on certain routes) and no negative cycles. A developer applies Dijkstra's algorithm. What happens?",
+      "options": [
+        { "id": "a", "text": "Dijkstra can silently produce an incorrect shortest-path answer with no error, because its core assumption — a popped node's distance is final once processed — is violated when a later negative edge could retroactively improve an already-finalized distance." },
+        { "id": "b", "text": "Dijkstra will throw a runtime exception when it encounters a negative edge weight." },
+        { "id": "c", "text": "Dijkstra still produces correct results as long as there are no negative cycles." },
+        { "id": "d", "text": "Dijkstra automatically falls back to Bellman-Ford when negative weights are detected." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is the chapter's central warning: the failure mode is silent wrongness, not a crash — which is precisely why it's dangerous in production and why knowing this boundary matters more than memorizing pseudocode. Dijkstra has no built-in negative-weight detection or fallback. (b) there's no exception thrown; the algorithm runs to completion and returns a wrong answer. (c) is the specific misconception the chapter corrects — negative weights alone (even without cycles) break the finality assumption; Bellman-Ford, not Dijkstra, is required. (d) no such automatic fallback exists in a standard Dijkstra implementation.",
+      "tags": ["dijkstra", "negative-weights", "correctness"]
+    },
+    {
+      "id": "dsa-08-q04",
+      "type": "mcq",
+      "difficulty": "senior",
+      "prompt": "Why is 'shortest path' undefined in a graph containing a negative-weight cycle?",
+      "options": [
+        { "id": "a", "text": "A path could traverse the negative cycle repeatedly, reducing its total cost each time with no lower bound, making the 'minimum' cost negative infinity." },
+        { "id": "b", "text": "Negative cycles make the graph disconnected." },
+        { "id": "c", "text": "Negative cycles only affect BFS, not shortest-path algorithms in general." },
+        { "id": "d", "text": "It is defined, just computationally expensive to find, requiring exponential time." }
+      ],
+      "answer": ["a"],
+      "explanation": "Each additional loop through a negative cycle strictly decreases total path cost with no floor, so there is no well-defined minimum — this is exactly why Bellman-Ford's guarantee explicitly excludes negative cycles (it can only detect their existence, not produce a finite shortest path through one). (b) cycles (negative or not) don't inherently affect connectivity. (c) this is a fundamental property of the shortest-path problem itself, independent of which algorithm is used. (d) it isn't merely expensive — it's mathematically undefined, no algorithm (however slow) can return a finite correct answer.",
+      "tags": ["negative-cycles", "shortest-path", "bellman-ford"]
+    },
+    {
+      "id": "dsa-08-q05",
+      "type": "mcq",
+      "difficulty": "staff",
+      "prompt": "For finding a minimum spanning tree, when should Kruskal's algorithm be preferred over Prim's, and why?",
+      "options": [
+        { "id": "a", "text": "On sparse graphs, since Kruskal's cost is dominated by sorting E edges (O(E log E)), which is cheap when E is close to V; Prim's heap-based approach pays off more when E approaches V^2 (dense graphs)." },
+        { "id": "b", "text": "Kruskal's should always be preferred regardless of graph density, since it is simpler to reason about." },
+        { "id": "c", "text": "Prim's cannot be used on graphs with more than 1000 nodes." },
+        { "id": "d", "text": "Kruskal's is preferred whenever the graph is directed." }
+      ],
+      "answer": ["a"],
+      "explanation": "This mirrors the adjacency-list-vs-matrix and BFS-vs-DFS pattern throughout this course: the right choice is a function of graph density, not a universal ranking. Kruskal's edge-sort-dominated cost scales well when edges are few; Prim's heap-growth cost scales better as edges approach the dense extreme. (b) there's no such universal preference — it's density-dependent, which is the whole point of this question. (c) there's no node-count limitation specific to Prim's. (d) MST algorithms are defined for undirected graphs; directedness isn't the deciding factor between Kruskal's and Prim's.",
+      "tags": ["kruskals-algorithm", "prims-algorithm", "minimum-spanning-tree"]
+    },
+    {
+      "id": "dsa-08-q06",
+      "type": "mcq",
+      "difficulty": "senior",
+      "prompt": "Kruskal's algorithm sorts all edges by weight, then adds each edge unless it would create a cycle. What data structure efficiently answers 'would adding this edge create a cycle,' and why does that structure fit?",
+      "options": [
+        { "id": "a", "text": "Union-find (disjoint set) — it tracks which nodes are already connected in near-O(1) per query, so checking whether an edge's two endpoints are already in the same connected component (which would mean adding the edge creates a cycle) is fast and doesn't require re-traversing the growing tree." },
+        { "id": "b", "text": "A binary search tree, since it can quickly search for whether two nodes are related." },
+        { "id": "c", "text": "A hash map alone, without any additional structure, since checking membership is already O(1)." },
+        { "id": "d", "text": "A separate BFS traversal of the current tree-so-far for every candidate edge." }
+      ],
+      "answer": ["a"],
+      "explanation": "Union-find is purpose-built for exactly this query pattern — 'are these two elements in the same group' with near-constant-time union and find operations (the next chapter covers its mechanics in detail) — which is precisely what cycle detection during MST construction needs, without the overhead of re-scanning the tree built so far. (b) a BST doesn't naturally represent group/connectivity membership in the way this problem needs. (c) a plain hash map has no notion of 'group membership across merges' — it would require re-deriving connectivity from scratch each check. (d) would work correctly but reintroduces O(V+E) cost per edge check, defeating the near-O(1) efficiency union-find provides — exactly the naive alternative this pairing avoids.",
+      "tags": ["union-find", "kruskals-algorithm", "cycle-detection"]
+    }
+  ]
+}

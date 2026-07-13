@@ -1,0 +1,99 @@
+{
+  "schemaVersion": 1,
+  "chapterId": "dsa-01",
+  "passScore": 0.7,
+  "questions": [
+    {
+      "id": "dsa-01-q01",
+      "type": "mcq",
+      "difficulty": "senior",
+      "prompt": "Two algorithms are both O(n): one scans an array sequentially, the other traverses a linked list of the same length. Why can the array version run several times faster in practice despite identical Big-O?",
+      "options": [
+        { "id": "a", "text": "Array elements are contiguous, so the CPU's cache prefetcher loads upcoming elements before they're requested; linked-list nodes can live at scattered heap addresses, causing cache misses on each dereference." },
+        { "id": "b", "text": "Big-O notation is only an approximation and is frequently wrong for O(n) algorithms." },
+        { "id": "c", "text": "Linked lists always have a higher constant factor because they store two fields (value and pointer) per node." },
+        { "id": "d", "text": "Arrays are always allocated on the stack, which is faster than heap memory." }
+      ],
+      "answer": ["a"],
+      "explanation": "Big-O counts operations, not memory latency. Contiguous memory lets hardware prefetching hide most access latency; pointer-chasing defeats prefetching because the next address isn't known until the current node is read. (b) Big-O is exact for operation counts, not a wrong approximation. (c) extra field storage doesn't explain the access-pattern cost. (d) arrays are commonly heap-allocated too (e.g. `new int[n]`); the win is contiguity, not stack-vs-heap.",
+      "tags": ["cache-locality", "arrays", "big-o"]
+    },
+    {
+      "id": "dsa-01-q02",
+      "type": "mcq",
+      "difficulty": "senior",
+      "prompt": "What is the precise, defensible claim about `ArrayList.add`'s time complexity?",
+      "options": [
+        { "id": "a", "text": "It is amortized O(1): most calls are O(1), but any individual call may be O(n) when it triggers a backing-array resize." },
+        { "id": "b", "text": "It is O(1) in the worst case, because Java pre-allocates enough capacity for any list." },
+        { "id": "c", "text": "It is O(log n) because resizing uses a doubling strategy." },
+        { "id": "d", "text": "It is O(n) because every add() copies the whole array to check for space." }
+      ],
+      "answer": ["a"],
+      "explanation": "The amortized analysis: across n inserts, total copying work sums to a geometric series ≈ 2n, so average cost per insert is O(1) — but a specific call that triggers the resize does O(n) work copying every existing element. (b) there's no such universal pre-allocation. (c) confuses the number of resizes (O(log n) total resizes) with per-call complexity. (d) overstates — most calls do NOT copy the array, only resize-triggering ones do.",
+      "tags": ["dynamic-arrays", "amortized-analysis"]
+    },
+    {
+      "id": "dsa-01-q03",
+      "type": "code-review",
+      "difficulty": "senior",
+      "prompt": "A teammate wrote this to build a large CSV row from many field values. What's the performance flaw and the fix?",
+      "code": "String buildRow(List<String> fields) {\n    String row = \"\";\n    for (String f : fields) {\n        row = row + f + \",\";\n    }\n    return row;\n}",
+      "codeLanguage": "java",
+      "options": [
+        { "id": "a", "text": "Each `+` allocates a new string and copies both operands, making total cost O(n^2) in the number of fields; use a StringBuilder to make it O(n)." },
+        { "id": "b", "text": "The trailing comma is a bug that will break CSV parsing." },
+        { "id": "c", "text": "String concatenation in Java always uses StringBuilder internally, so there is no performance issue here." },
+        { "id": "d", "text": "The loop should use fields.stream().forEach() instead of a for-each loop for better performance." }
+      ],
+      "answer": ["a"],
+      "explanation": "Because strings are immutable, `row + f + \",\"` builds an entirely new string each iteration, copying everything accumulated so far — classic O(n^2) behavior for n fields. Replacing with `StringBuilder` (append in a loop, `toString()` once) makes it O(n) total. (b) is a real but separate issue, not a performance flaw. (c) is a common misconception — javac only auto-optimizes concatenation within a *single* expression/statement, not across loop iterations reassigning a variable. (d) stream/forEach doesn't change the underlying string-allocation cost at all.",
+      "tags": ["strings", "immutability", "stringbuilder"]
+    },
+    {
+      "id": "dsa-01-q04",
+      "type": "mcq",
+      "difficulty": "staff",
+      "prompt": "A dynamic array implementation grows its capacity by a fixed amount (+16) rather than doubling. What is the consequence for amortized insert cost?",
+      "options": [
+        { "id": "a", "text": "Amortized cost degrades to O(n) per insert, because resizes now happen O(n) times instead of O(log n) times, and each resize still copies O(n) elements." },
+        { "id": "b", "text": "There is no consequence; amortized cost is always O(1) regardless of growth strategy." },
+        { "id": "c", "text": "Memory usage becomes worse than doubling, since fixed growth always over-allocates more than doubling." },
+        { "id": "d", "text": "Insert cost becomes O(log n) because the growth is linear instead of exponential." }
+      ],
+      "answer": ["a"],
+      "explanation": "With +16 growth, reaching size n requires roughly n/16 resizes (O(n) resizes total), each copying up to n elements — total copying work becomes O(n^2)/16, i.e. O(n^2), making amortized cost per insert O(n), not O(1). This is precisely why standard libraries use a multiplicative growth factor. (b) is false — growth strategy is exactly what determines the amortized bound. (c) is backwards: fixed growth is memory-tight (the actual trade-off this chapter names), it's the time cost that suffers. (d) misstates the resulting complexity class.",
+      "tags": ["dynamic-arrays", "amortized-analysis", "growth-factor"]
+    },
+    {
+      "id": "dsa-01-q05",
+      "type": "mcq",
+      "difficulty": "senior",
+      "prompt": "Which problem is the best fit for a two-pointer or sliding-window approach rather than a nested loop?",
+      "options": [
+        { "id": "a", "text": "Finding the longest substring without repeating characters, where the window's left edge only ever needs to move forward as the right edge advances." },
+        { "id": "b", "text": "Finding all pairs of elements in an unsorted array that sum to a target, where every pair must be checked independently." },
+        { "id": "c", "text": "Sorting an array in place." },
+        { "id": "d", "text": "Computing the transpose of a 2D matrix." }
+      ],
+      "answer": ["a"],
+      "explanation": "The defining signal for two-pointer/sliding-window is monotonic movement: once a character repeats, the window's left edge advances and never needs to move backward, so total pointer movement across the whole scan is O(n) rather than O(n^2). (b) as stated (unsorted, all pairs) has no monotonic structure to exploit directly (though sorting first + two pointers is a different, valid technique) — checking every pair really is the naive shape here. (c) and (d) aren't two-pointer problems; they're different traversal patterns entirely.",
+      "tags": ["two-pointer", "sliding-window"]
+    },
+    {
+      "id": "dsa-01-q06",
+      "type": "mcq",
+      "difficulty": "staff",
+      "prompt": "Why do modern standard libraries (Java ArrayList, C++ std::vector, Python list) default to array-backed dynamic arrays rather than linked lists, even for workloads with frequent insertions?",
+      "options": [
+        { "id": "a", "text": "Contiguous memory layout gives strong cache locality for the by-far-most-common operation (iteration/random access), and amortized O(1) append is cheap enough that most 'frequent insertion' workloads don't actually need a linked list's O(1) worst-case insert-anywhere." },
+        { "id": "b", "text": "Linked lists cannot support insertion in less than O(n) time in any language." },
+        { "id": "c", "text": "Arrays use less total memory than linked lists in every case." },
+        { "id": "d", "text": "It's purely historical convention with no remaining technical justification." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is the chapter's central judgment call: real workloads read/iterate far more than they insert-in-the-middle, and cache locality dominates at realistic sizes — so the general-purpose default optimizes for the common case, while linked lists remain the right tool for specific patterns (frequent middle-insertion/deletion with iterators already positioned, as in some queue/LRU implementations). (b) linked lists genuinely do offer O(1) insert given a reference to the node — that's not the issue. (c) arrays can over-allocate (spare capacity) and linked lists pay per-node pointer overhead — neither always wins on memory. (d) there's a concrete, current technical reason (cache behavior), not just convention.",
+      "tags": ["arrays", "linked-lists", "cache-locality", "design-tradeoffs"]
+    }
+  ]
+}

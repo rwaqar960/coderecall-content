@@ -8,7 +8,7 @@ import styles from './index.module.css';
 
 const courses = [
   {id: 'oop', title: 'Object-Oriented Programming', available: true, blurb: '10 chapters · encapsulation to architecture at scale'},
-  {id: 'dsa', title: 'Data Structures', available: false, blurb: 'Coming soon'},
+  {id: 'dsa', title: 'Data Structures', available: true, blurb: '10 chapters · memory layout to choosing structures under real constraints'},
   {id: 'algorithms', title: 'Algorithms', available: false, blurb: 'Coming soon'},
   {id: 'flutter', title: 'Flutter', available: false, blurb: 'Coming soon'},
 ];

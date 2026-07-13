@@ -10,6 +10,15 @@
       "url": null,
       "sizeBytes": null,
       "minAppVersion": "1.0.0"
+    },
+    {
+      "id": "dsa",
+      "title": "Data Structures",
+      "version": "1.0.0",
+      "bundled": true,
+      "url": null,
+      "sizeBytes": null,
+      "minAppVersion": "1.0.0"
     }
   ]
 }
