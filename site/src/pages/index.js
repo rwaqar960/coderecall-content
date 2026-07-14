@@ -11,6 +11,7 @@ const courses = [
   {id: 'dsa', title: 'Data Structures', available: true, blurb: '10 chapters · memory layout to choosing structures under real constraints'},
   {id: 'algorithms', title: 'Algorithms', available: true, blurb: '10 chapters · complexity analysis to NP-hardness and approximation'},
   {id: 'flutter', title: 'Flutter', available: true, blurb: '10 chapters · rendering pipeline to shipping (downloadable pack)'},
+  {id: 'kotlin', title: 'Kotlin', available: true, blurb: '10 chapters · null safety to multiplatform (downloadable pack)'},
 ];
 
 const principles = [

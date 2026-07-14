@@ -37,6 +37,15 @@
       "url": "https://github.com/rwaqar960/coderecall-content/releases/download/content-flutter-v1.0.0/flutter.zip",
       "sizeBytes": 74334,
       "minAppVersion": "1.0.0"
+    },
+    {
+      "id": "kotlin",
+      "title": "Kotlin",
+      "version": "1.0.0",
+      "bundled": false,
+      "url": "https://github.com/rwaqar960/coderecall-content/releases/download/content-kotlin-v1.0.0/kotlin.zip",
+      "sizeBytes": 74768,
+      "minAppVersion": "1.0.0"
     }
   ]
 }
