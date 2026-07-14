@@ -28,6 +28,15 @@
       "url": null,
       "sizeBytes": null,
       "minAppVersion": "1.0.0"
+    },
+    {
+      "id": "flutter",
+      "title": "Flutter",
+      "version": "1.0.0",
+      "bundled": false,
+      "url": "https://github.com/rwaqar960/coderecall-content/releases/download/content-flutter-v1.0.0/flutter.zip",
+      "sizeBytes": 74334,
+      "minAppVersion": "1.0.0"
     }
   ]
 }

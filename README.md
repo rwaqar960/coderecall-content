@@ -53,7 +53,7 @@ Courses are built strictly one at a time:
 | 1 | Object-Oriented Programming | **Complete (v1.0.0)** | Bundled |
 | 2 | Data Structures | **Complete (v1.0.0)** | Bundled |
 | 3 | Algorithms | **Complete (v1.0.0)** | Bundled |
-| 4 | Flutter | Planned | Downloadable pack |
+| 4 | Flutter | **Complete (v1.0.0)** | Downloadable pack |
 | — | Kotlin · React Native · Swift · .NET Core · Cloud & DevOps · PHP/Laravel · Data Analyst · AI/ML | Backlog (demand-driven) | Downloadable packs |
 
 ## Contributing
