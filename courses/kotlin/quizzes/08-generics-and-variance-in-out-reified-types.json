@@ -1,0 +1,101 @@
+{
+  "schemaVersion": 1,
+  "chapterId": "kotlin-08",
+  "passScore": 0.7,
+  "questions": [
+    {
+      "id": "kotlin-08-q01",
+      "type": "mcq",
+      "difficulty": "staff",
+      "prompt": "Why would allowing a mutable list of dogs to be used wherever a mutable list of animals is expected be unsound, even though it seems intuitively safe?",
+      "options": [
+        { "id": "a", "text": "Code holding the reference as a mutable list of animals could call add() with a Cat (a valid Animal), silently inserting a Cat into what is actually the underlying list of dogs — a real type-safety violation, which is exactly why mutable collection types are NOT covariant." },
+        { "id": "b", "text": "This substitution is actually completely safe in all cases, and the chapter's discussion of unsoundness is purely theoretical with no real consequence." },
+        { "id": "c", "text": "The issue only arises when the list has more than a fixed number of elements, unrelated to mutability." },
+        { "id": "d", "text": "This is unsound only because Dog and Animal are hypothetical example names; using real domain types avoids the problem entirely." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is the chapter's precise motivating example for why variance rules exist at all — a concrete, demonstrable type-safety hole (inserting a Cat via an Animal-typed reference into an actually-Dog-only list) that mutability specifically enables. (b) directly contradicts the chapter's explicit point that this exact scenario is why mutable collections are invariant, not covariant. (c) fabricates an unrelated size-based condition; the unsoundness is about TYPE mixing, not element count. (d) misunderstands that this is a structural type-system issue, not something tied to the specific example names chosen for illustration.",
+      "tags": ["variance", "type-safety", "covariance"]
+    },
+    {
+      "id": "kotlin-08-q02",
+      "type": "code-review",
+      "difficulty": "staff",
+      "prompt": "Why is it safe for a Producer of Dog to be usable wherever a Producer of Animal is expected, when Producer is declared with 'out T'?",
+      "code": "interface Producer<out T> {\n    fun produce(): T\n}\n\nval dogProducer: Producer<Dog> = object : Producer<Dog> {\n    override fun produce() = Dog()\n}\nval animalProducer: Producer<Animal> = dogProducer",
+      "codeLanguage": "kotlin",
+      "options": [
+        { "id": "a", "text": "The out declaration is a compiler-checked promise that T can only appear in return positions, never as a parameter — this guarantees nothing can ever ask the dog-producer to ACCEPT an Animal it can't handle, since out forbids T from being a parameter type at all, making the substitution provably safe." },
+        { "id": "b", "text": "This is safe only because Dog and Animal happen to share the same set of methods; if they had different methods, this substitution would fail at runtime." },
+        { "id": "c", "text": "The safety comes from Kotlin performing a runtime check on every call to produce(), verifying the returned type matches what's expected." },
+        { "id": "d", "text": "This works because Producer is a class, not an interface; interfaces do not support the out modifier in Kotlin." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is the chapter's precise causal explanation: the compiler ENFORCES the out restriction (rejecting any attempt to use T as a parameter type in the interface), and that enforcement is exactly what makes the covariant substitution provably sound rather than merely assumed. (b) fabricates an irrelevant method-matching requirement; the safety argument is purely about POSITION (return-only) of the type parameter, unrelated to what methods Dog/Animal happen to share. (c) fabricates a runtime verification mechanism; this is a compile-time guarantee with zero runtime checking overhead — that's precisely the value of static variance checking. (d) is false; interfaces are exactly where out is commonly used, as shown in the chapter's own example — Producer here IS declared as an interface with out.",
+      "tags": ["covariance", "out-keyword", "variance-safety"]
+    },
+    {
+      "id": "kotlin-08-q03",
+      "type": "mcq",
+      "difficulty": "staff",
+      "prompt": "A Consumer of Animal is usable wherever a Consumer of Dog is expected, when Consumer is declared with 'in T'. Why does the substitution direction go this way rather than the reverse (as with out)?",
+      "options": [
+        { "id": "a", "text": "Something that can consume ANY animal (the general case) can obviously handle a dog (a specific case) too — in declares that T only appears as a parameter, never a return type, so a consumer typed for the broader category is safely usable wherever the narrower category's consumer is expected." },
+        { "id": "b", "text": "The direction is arbitrary and could equally have been defined the opposite way; Kotlin's designers simply chose this convention without an underlying safety reason." },
+        { "id": "c", "text": "in and out actually produce identical substitution directions; the distinction described in the chapter is inaccurate." },
+        { "id": "d", "text": "This direction only applies when the consuming function has no return type at all." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is the chapter's precise, intuitive-yet-rigorous explanation for why contravariance's direction is the mirror image of covariance's — 'handles the general case' safely implies 'handles the specific case,' which is exactly the substitution in reasons in a Consumer of Animal being usable as a Consumer of Dog. (b) is false; the direction follows directly and necessarily from the position-safety argument, it isn't an arbitrary convention. (c) directly contradicts the chapter's explicit statement that in is 'the mirror image' with the direction correctly reversed relative to out. (d) fabricates an irrelevant return-type condition; the in restriction concerns T's role as a parameter specifically, regardless of what (non-generic) return type the function might have.",
+      "tags": ["contravariance", "in-keyword", "variance-safety"]
+    },
+    {
+      "id": "kotlin-08-q04",
+      "type": "mcq",
+      "difficulty": "staff",
+      "prompt": "What is the actual trade-off Kotlin made by moving variance annotation to the declaration site, compared to Java's use-site wildcards?",
+      "options": [
+        { "id": "a", "text": "Declaration-site variance is annotated once and applies everywhere the type is used (less repetition, more ergonomic), but commits the type to ONE variance everywhere it's used; Java's use-site wildcards allow different variance choices at different call sites for the same unannotated generic type, a flexibility Kotlin trades away." },
+        { "id": "b", "text": "There is no real trade-off; declaration-site variance is strictly superior to use-site variance in every respect with no corresponding cost." },
+        { "id": "c", "text": "Declaration-site variance only works for interfaces, while Java's use-site wildcards only work for classes, making them non-comparable approaches." },
+        { "id": "d", "text": "The trade-off is purely about compilation speed, with declaration-site variance compiling faster at the cost of runtime performance." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is the chapter's explicit, honest trade-off statement — ergonomic win (annotate once) traded against flexibility loss (one committed variance for the whole type) — presented as a genuine trade-off, not a strict improvement. (b) is precisely the 'no real cost' overclaim the chapter's explicit trade-off framing argues against. (c) fabricates an interface/class restriction that doesn't reflect either language's actual capabilities; both approaches apply to generic types generally. (d) fabricates an unrelated compilation-speed/runtime-performance trade-off never mentioned in the chapter; the actual trade-off is about annotation location and per-use-site flexibility.",
+      "tags": ["declaration-site-variance", "use-site-variance", "tradeoffs"]
+    },
+    {
+      "id": "kotlin-08-q05",
+      "type": "code-review",
+      "difficulty": "staff",
+      "prompt": "Why does 'this is T' work correctly inside this function, when generic type checks against a bare type parameter normally aren't possible in Kotlin due to type erasure?",
+      "code": "inline fun <reified T> Any?.isInstance(): Boolean = this is T\n\n\"hello\".isInstance<String>()   // true",
+      "codeLanguage": "kotlin",
+      "options": [
+        { "id": "a", "text": "Because the function is inline, its body is copied into the call site at compile time, literally substituting the type parameter with the real type (String) textually — by the time this executes, there's no generic code or runtime erasure left at all, just an ordinary, direct type check." },
+        { "id": "b", "text": "reified is a runtime reflection mechanism that looks up the type parameter's actual class at the moment the function executes, regardless of whether the function is inline." },
+        { "id": "c", "text": "This works because Any? is a special type in Kotlin that is exempt from type erasure rules that apply to other types." },
+        { "id": "d", "text": "The reified keyword alone is sufficient; the inline modifier on the function is unrelated to why this compiles and works correctly." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is the chapter's precise mechanical explanation: reified isn't a runtime feature at all — it's entirely a compile-time code-generation trick, only possible because inlining eliminates the generic function body before runtime ever begins, replacing it with type-specific code at each call site. (b) directly contradicts the chapter's explicit statement that this is NOT a runtime reflection mechanism — it critically DOES depend on inline, not runtime lookup. (c) fabricates a special-case exemption for Any? that doesn't exist; type erasure applies uniformly, and reified's workaround is about inlining, not the receiver type. (d) directly contradicts the chapter's explicit statement that 'reified requires inline' — the two are inseparable; reified cannot be used on a non-inline function at all.",
+      "tags": ["reified-types", "inline-functions", "type-erasure"]
+    },
+    {
+      "id": "kotlin-08-q06",
+      "type": "mcq",
+      "difficulty": "staff",
+      "prompt": "A team marks a large, complex function (used in hundreds of call sites throughout the codebase) as inline purely to make the code 'feel more optimized,' with no reified type parameter need. What does the chapter's trade-off say about this?",
+      "options": [
+        { "id": "a", "text": "This is likely a poor trade — inline avoids function-call overhead at the cost of code size (the body is duplicated at every call site), and inlining a LARGE function used in HUNDREDS of places bloats the compiled output significantly for no corresponding benefit, especially with no reified requirement driving the need." },
+        { "id": "b", "text": "This is always beneficial; marking any function inline strictly improves both performance and code size regardless of function size or call-site count." },
+        { "id": "c", "text": "inline has no effect on code size whatsoever; it only affects runtime performance." },
+        { "id": "d", "text": "The chapter states that inline should only ever be used for functions with zero parameters, making this scenario irrelevant to its guidance." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is a direct application of the chapter's explicit trade-off statement: the specific combination of 'large function' and 'many call sites' is exactly the scenario the chapter names as the cost side of the trade-off ('bloats the compiled output for no corresponding benefit'), especially absent the reified justification that would otherwise motivate it. (b) is exactly the false 'always beneficial' claim the chapter's trade-off explicitly refutes by naming a real cost (code size at call sites). (c) directly contradicts the chapter's explicit statement that 'the function's body is duplicated at every call site' — this IS a code-size effect. (d) fabricates an arbitrary parameter-count restriction that doesn't appear anywhere in the chapter's actual guidance.",
+      "tags": ["inline-functions", "tradeoffs", "code-size"]
+    }
+  ]
+}

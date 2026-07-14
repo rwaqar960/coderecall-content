@@ -1,0 +1,101 @@
+{
+  "schemaVersion": 1,
+  "chapterId": "kotlin-07",
+  "passScore": 0.7,
+  "questions": [
+    {
+      "id": "kotlin-07-q01",
+      "type": "mcq",
+      "difficulty": "senior",
+      "prompt": "What does the Interface by delegate syntax actually generate, and what real cost does this solve relative to the OOP course's composition discussion?",
+      "options": [
+        { "id": "a", "text": "Forwarding implementations for every interface method not explicitly overridden — this solves the OOP course's honest cost accounting for composition (hand-written forwarding boilerplate), moving it from a manual, error-prone chore to a compiler-generated guarantee." },
+        { "id": "b", "text": "It generates a completely new interface implementation from scratch, ignoring the delegate object entirely and requiring every method to be manually overridden anyway." },
+        { "id": "c", "text": "by delegation only works for interfaces with a single method; interfaces with multiple methods require manual forwarding for all but one." },
+        { "id": "d", "text": "This syntax has no effect on generated code; it's purely a documentation annotation with no runtime behavior." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is the chapter's precise mechanical claim, directly tied to a specific prior-course cost: forwarding boilerplate (identified as composition's real cost in the OOP course) is generated automatically for every non-overridden method, which is the concrete difference between composition being 'theoretically better' and having no practical downside left. (b) is false and directly contradicts the point of delegation — the whole mechanism is that the delegate DOES the real work, forwarded automatically, not reimplemented. (c) fabricates a method-count restriction; by delegation forwards ALL non-overridden methods regardless of interface size. (d) is false; by generates real forwarding call implementations at compile time, not merely a documentation marker.",
+      "tags": ["class-delegation", "by-keyword", "composition"]
+    },
+    {
+      "id": "kotlin-07-q02",
+      "type": "code-review",
+      "difficulty": "senior",
+      "prompt": "A tenth method is added to the Repository interface. What happens to AuditedRepository (which uses 'Repository by inner') without any code changes to AuditedRepository itself?",
+      "code": "interface Repository { fun save(item: Item) /* + 9 more methods, now 10 */ }\n\nclass AuditedRepository(\n    private val inner: Repository,\n    private val log: AuditLog\n) : Repository by inner {\n    override fun save(item: Item) {\n        log.record(\"save\", item)\n        inner.save(item)\n    }\n}",
+      "codeLanguage": "kotlin",
+      "options": [
+        { "id": "a", "text": "AuditedRepository automatically and correctly forwards the new tenth method to inner as well, with zero code changes required — this is the chapter's stated ongoing maintenance benefit of by delegation, not just a one-time convenience at declaration time." },
+        { "id": "b", "text": "AuditedRepository fails to compile until the new method is manually added and forwarded by hand." },
+        { "id": "c", "text": "The new method silently does nothing when called on an AuditedRepository instance, since only save() was explicitly declared." },
+        { "id": "d", "text": "This scenario requires re-declaring 'Repository by inner' explicitly to pick up the change; it doesn't happen automatically." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is the chapter's explicitly stated ongoing benefit — the forwarding is generated based on the CURRENT interface definition every time the code compiles, so interface growth is automatically, correctly handled without any changes to the delegating class. (b) is false and contradicts the entire premise of the feature — no manual forwarding code is required at all. (c) is false; by delegation ensures every non-overridden method IS properly forwarded and functional, not silently inert. (d) fabricates an unnecessary re-declaration requirement; the existing 'Repository by inner' declaration automatically covers new interface methods without modification.",
+      "tags": ["class-delegation", "maintenance", "interface-evolution"]
+    },
+    {
+      "id": "kotlin-07-q03",
+      "type": "mcq",
+      "difficulty": "senior",
+      "prompt": "What is the relationship between 'by lazy { ... }' and 'by inner' (class delegation) — are they the same mechanism or unrelated features?",
+      "options": [
+        { "id": "a", "text": "The same underlying mechanism (intercepting an operation and routing it through a delegate object) applied at two different granularities — by lazy intercepts a single PROPERTY's get/set, while by inner intercepts an entire INTERFACE's method calls." },
+        { "id": "b", "text": "They are completely unrelated features that happen to share the same by keyword coincidentally, with no shared underlying mechanism." },
+        { "id": "c", "text": "by lazy is a special compiler built-in with no relationship to the general delegate mechanism, while by inner uses ordinary Kotlin operator functions." },
+        { "id": "d", "text": "by lazy is deprecated in favor of by inner-style class delegation and should not be used in new Kotlin code." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is the chapter's explicit unifying point: property delegates and class delegation are 'the same underlying mechanism... applied to individual properties instead of whole interfaces' — recognizing this connection is what demystifies both as instances of one general pattern rather than two arbitrary, unrelated keyword uses. (b) directly contradicts the chapter's explicit statement of shared mechanism. (c) reverses the actual relationship — the chapter explains lazy is implemented via the SAME general operator-function-based delegate mechanism as any custom delegate, not as separate special-cased compiler magic. (d) fabricates a deprecation status; both delegation forms are current, actively used, non-deprecated Kotlin features serving different purposes.",
+      "tags": ["property-delegates", "class-delegation", "lazy"]
+    },
+    {
+      "id": "kotlin-07-q04",
+      "type": "code-review",
+      "difficulty": "staff",
+      "prompt": "This custom delegate class is used as 'var tracked: Int by LoggingDelegate(0)' without implementing any particular interface. Why does this compile and work correctly?",
+      "code": "class LoggingDelegate<T>(private var value: T) {\n    operator fun getValue(thisRef: Any?, property: KProperty<*>): T {\n        println(\"read ${property.name}\")\n        return value\n    }\n    operator fun setValue(thisRef: Any?, property: KProperty<*>, newValue: T) {\n        println(\"wrote ${property.name} = $newValue\")\n        value = newValue\n    }\n}",
+      "codeLanguage": "kotlin",
+      "options": [
+        { "id": "a", "text": "Kotlin's delegate mechanism is structurally typed — any class providing operator fun getValue/setValue with the correct signature can serve as a delegate, with no requirement to implement a specific named interface; the compiler checks for the right operator function SHAPE, not a declared type relationship." },
+        { "id": "b", "text": "This code actually requires LoggingDelegate to implement a hidden, undocumented Delegate interface that Kotlin adds automatically behind the scenes." },
+        { "id": "c", "text": "This only works because the class is generic (uses a type parameter T); non-generic classes cannot be used as property delegates." },
+        { "id": "d", "text": "This is invalid Kotlin and would not actually compile; the example in the chapter is illustrative pseudocode, not real syntax." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is the chapter's precise, explicit point about the delegate mechanism's extensibility: structural typing based on operator function shape (not nominal interface implementation) is exactly what makes it possible to write ANY custom delegate without needing to implement a fixed, named contract. (b) fabricates a hidden interface requirement; no such interface exists — the compiler checks for the operator functions directly, structurally. (c) fabricates a generics requirement; non-generic delegate classes (fixed to one specific type) are equally valid, the generic form is just a common convenience for reusability across types. (d) is false; this is real, valid, compiling Kotlin syntax, exactly as the chapter presents it — not pseudocode.",
+      "tags": ["property-delegates", "structural-typing", "operator-functions"]
+    },
+    {
+      "id": "kotlin-07-q05",
+      "type": "mcq",
+      "difficulty": "senior",
+      "prompt": "What specific behavior does by lazy provide beyond simply deferring computation until first access?",
+      "options": [
+        { "id": "a", "text": "By default, it is thread-safe — synchronized so that concurrent first-access from multiple threads still only computes the value once, rather than each thread racing to compute (and potentially overwrite) it independently." },
+        { "id": "b", "text": "by lazy automatically re-computes the value every time it's accessed, rather than caching it after the first computation." },
+        { "id": "c", "text": "by lazy has no thread-safety guarantees whatsoever and is explicitly unsafe to use from multiple threads under any configuration." },
+        { "id": "d", "text": "by lazy only works for properties of primitive types (Int, Boolean, etc.), not for object references." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is the chapter's specific, stated additional guarantee — deferred computation ALONE wouldn't be safe under concurrent first access without this synchronization, so naming it explicitly matters for anyone relying on lazy in multi-threaded code. (b) directly contradicts lazy's defining behavior — computing once and caching thereafter is the entire point; recomputing every access would defeat its purpose entirely. (c) is false and the opposite of the chapter's stated default; thread-safety is the DEFAULT mode (other modes like LazyThreadSafetyMode.NONE exist for opting out when synchronization overhead isn't needed, but that's not the default). (d) fabricates a type restriction that doesn't exist; lazy works uniformly for any property type, primitive or object reference.",
+      "tags": ["lazy", "property-delegates", "thread-safety"]
+    },
+    {
+      "id": "kotlin-07-q06",
+      "type": "mcq",
+      "difficulty": "staff",
+      "prompt": "Two classes need to share behavior that doesn't naturally fit 'forward to one interface, override a few methods' — the shared logic is more like a cross-cutting utility both need in different ways. Per the chapter's closing trade-off, is by-delegation still the right tool here just because it's cheap to write?",
+      "options": [
+        { "id": "a", "text": "Not necessarily — the chapter explicitly distinguishes delegation's BOILERPLATE cost (which by removes) from its CONCEPTUAL FIT requirement (which by does NOT change) — forcing an awkward shape onto by delegation because it's now cheap to write is still the wrong tool if plain composition or a shared base class fits the actual reuse problem better." },
+        { "id": "b", "text": "Yes, always — since by makes delegation free to write, it should be the default choice for any code reuse scenario in Kotlin regardless of the actual relationship between the classes." },
+        { "id": "c", "text": "This scenario is impossible; any code-sharing need can always be perfectly expressed as class delegation with the by keyword." },
+        { "id": "d", "text": "The choice should be based entirely on which approach results in the fewest total lines of code, regardless of conceptual fit." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is the chapter's explicit closing distinction, worth taking seriously precisely because by's convenience could tempt overuse: removing a COST (boilerplate) doesn't answer a separate FIT question (is 'forward-with-overrides' the right shape for this particular reuse problem) — plain composition or a genuine base class may still be the better-fitting tool even when by is available and cheap. (b) is exactly the 'cheap therefore default' mistake the chapter's trade-off paragraph is written to prevent. (c) overclaims delegation's universality; the chapter explicitly names cases (cross-cutting behavior that doesn't map to 'one interface, forward with overrides') where it's an awkward fit. (d) substitutes a shallow, code-golf-style metric for the chapter's actual, substantive criterion (conceptual fit to the reuse problem's actual shape).",
+      "tags": ["delegation", "tradeoffs", "composition"]
+    }
+  ]
+}

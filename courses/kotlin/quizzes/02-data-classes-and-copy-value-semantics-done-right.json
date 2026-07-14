@@ -1,0 +1,101 @@
+{
+  "schemaVersion": 1,
+  "chapterId": "kotlin-02",
+  "passScore": 0.7,
+  "questions": [
+    {
+      "id": "kotlin-02-q01",
+      "type": "mcq",
+      "difficulty": "senior",
+      "prompt": "Why does the chapter argue that a data class's generated equals()/hashCode() pair is safer than hand-writing them, beyond just saving typing?",
+      "options": [
+        { "id": "a", "text": "Hand-written equals()/hashCode() pairs can drift out of sync when a property is added and one method is updated but the other forgotten; the generated pair is derived from the same constructor property list and regenerated together, so it structurally cannot drift." },
+        { "id": "b", "text": "Generated equals()/hashCode() run faster at execution time than any hand-written implementation could." },
+        { "id": "c", "text": "Hand-written equals()/hashCode() are always functionally incorrect, regardless of how carefully they're written." },
+        { "id": "d", "text": "This is purely a stylistic preference with no correctness implications either way." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is the chapter's precise correctness argument, directly tying back to the DSA course's equals/hashCode contract chapter: the DANGER with hand-written pairs is drift after a later edit touches one method but not the other — generation from a single source (the property list) structurally prevents that specific class of bug. (b) fabricates an unsupported runtime performance claim not made anywhere in the chapter. (c) overstates the case; a carefully hand-written pair CAN be correct, the chapter's point is about drift risk over TIME as code changes, not immediate correctness. (d) directly contradicts the chapter's explicit correctness-risk framing.",
+      "tags": ["data-class", "equals-hashcode", "code-generation"]
+    },
+    {
+      "id": "kotlin-02-q02",
+      "type": "code-review",
+      "difficulty": "senior",
+      "prompt": "A teammate is confused: calling cartCopy.items.add(extraItem) after copy() also affects the original Cart's items. Is this a bug in copy(), and what's the actual root cause?",
+      "code": "data class Cart(val userId: String, val items: MutableList<Item>)\n\nval cartCopy = original.copy()\ncartCopy.items.add(extraItem)   // also mutates original.items",
+      "codeLanguage": "kotlin",
+      "options": [
+        { "id": "a", "text": "This is not a copy() bug — copy() correctly performs a shallow copy, sharing the same MutableList reference; the actual design mistake was declaring items as MutableList in a data class at all, which is exactly the mutable-reference-leak pattern the OOP course's encapsulation chapter warns against." },
+        { "id": "b", "text": "This is a genuine bug in Kotlin's copy() implementation that will be fixed in a future compiler release." },
+        { "id": "c", "text": "copy() always performs a deep copy in Kotlin, so this behavior is impossible and the example must be incorrect." },
+        { "id": "d", "text": "The fix is to call copy(deep = true), a parameter that forces deep copying of mutable collections." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is the chapter's explicit diagnosis: shallow copy is CORRECT behavior, not a flaw — the actual mistake happened one line earlier, choosing a mutable collection type for a data class property, which reintroduces the shared-mutable-reference hazard regardless of copy() being involved. (b) mischaracterizes intentional, documented shallow-copy semantics as an unfixed bug. (c) is false and contradicts the chapter's explicit, worked example showing exactly this shared-reference behavior. (d) fabricates a nonexistent copy() parameter; no such deep-copy option exists in Kotlin's generated copy() function.",
+      "tags": ["copy", "shallow-copy", "mutable-state"]
+    },
+    {
+      "id": "kotlin-02-q03",
+      "type": "code-review",
+      "difficulty": "senior",
+      "prompt": "Why does 'a == b' evaluate to true here, even though label differs between the two instances?",
+      "code": "data class Point(val x: Int, val y: Int) {\n    var label: String = \"\"\n}\n\nval a = Point(1, 2).apply { label = \"A\" }\nval b = Point(1, 2).apply { label = \"B\" }\na == b   // true",
+      "codeLanguage": "kotlin",
+      "options": [
+        { "id": "a", "text": "Generated equals()/hashCode() only consider properties declared in the PRIMARY CONSTRUCTOR (x and y here); label is declared in the class body, so it's silently excluded from generated equality entirely, regardless of its value." },
+        { "id": "b", "text": "This is a bug; == should compare all properties of an object, including label, and this behavior indicates a compiler defect." },
+        { "id": "c", "text": "label is excluded from equals() only because it's a var; if it were declared as a val in the class body, it would be included." },
+        { "id": "d", "text": "This only happens when the class body property is a String type; other types declared in the class body are included in equals()." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is the chapter's precisely stated rule: the scope of generated equals()/hashCode()/toString() is the primary constructor property list, full stop — body-declared properties (var or val) are excluded consistently, by design, not by accident. (b) mischaracterizes intentional, documented Kotlin behavior as a compiler bug. (c) fabricates a var/val distinction that doesn't exist — the exclusion is based on WHERE the property is declared (constructor vs. body), not its mutability. (d) fabricates a type-specific exception with no basis; the exclusion rule applies uniformly regardless of the excluded property's type.",
+      "tags": ["data-class", "equals", "primary-constructor"]
+    },
+    {
+      "id": "kotlin-02-q04",
+      "type": "mcq",
+      "difficulty": "staff",
+      "prompt": "Why does the chapter argue that Kotlin's choice to make copy() shallow (rather than deep) by default is the RIGHT engineering choice, not merely a limitation to work around?",
+      "options": [
+        { "id": "a", "text": "For the overwhelming majority of data class properties (which should be immutable per good design), sharing a reference via shallow copy is free and completely safe — deep-copying by default would make every copy() call needlessly expensive to guard against a scenario (mutable properties) that shouldn't occur in well-designed data classes anyway." },
+        { "id": "b", "text": "Deep copying is technically impossible to implement in Kotlin's compiler, so shallow copy was the only available option." },
+        { "id": "c", "text": "Shallow copy was chosen purely for historical compatibility with Java's Object.clone(), with no performance rationale." },
+        { "id": "d", "text": "The chapter takes no position on whether shallow copy is the right default; it only describes the behavior neutrally." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is the chapter's explicit trade-off argument: optimizing the common case (immutable properties, where shallow=safe=free) rather than paying a universal performance tax to guard against a case (mutable properties in a data class) that represents a design mistake in the first place. (b) is false; deep copying is entirely implementable (many libraries and manual implementations do it) — it's a design choice, not a technical impossibility. (c) fabricates an unrelated historical rationale never mentioned in the chapter. (d) understates the chapter's explicit, argued position — it doesn't merely describe the behavior, it defends WHY it's correct.",
+      "tags": ["copy", "shallow-copy", "design-tradeoffs"]
+    },
+    {
+      "id": "kotlin-02-q05",
+      "type": "mcq",
+      "difficulty": "staff",
+      "prompt": "A team models a User class (compared by database ID across the application) as a data class with fields for id, name, and email. What problem does this create, per the chapter's identity-vs-value distinction?",
+      "options": [
+        { "id": "a", "text": "Data class equals() is content-based across ALL primary-constructor properties, so two User instances with the same name and email but different (or even matching, coincidentally) field values could compare incorrectly relative to identity semantics — for an entity that should be compared by ID alone, content-based equality misrepresents what 'the same user' actually means." },
+        { "id": "b", "text": "There is no problem; data class is always the correct choice for any class in Kotlin, including entities with identity." },
+        { "id": "c", "text": "This only causes an issue if the User class also implements Comparable, which is unrelated to entity/value modeling." },
+        { "id": "d", "text": "The fix is to make User a sealed class instead of a data class, which automatically restores identity-based equality." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is the chapter's explicit application of the OOP course's entity-vs-value distinction: an entity's identity (its ID) is what determines sameness, not the totality of its current field values — using data class's content-based equals() for an identity type is a category error, risking incorrect equality in edge cases like test fixtures or data corrections that happen to produce identical field content for genuinely different entities. (b) directly contradicts the chapter's explicit warning against using data class for identity-based entities. (c) introduces an irrelevant unrelated interface with no bearing on the actual identity/value distinction being discussed. (d) misapplies the fix — sealed classes solve a different problem (closed type hierarchies, chapter 3), not identity-based equality; the correct fix is a regular class with identity-based equals()/hashCode() (or none at all, relying on default reference identity).",
+      "tags": ["data-class", "entities-vs-values", "identity"]
+    },
+    {
+      "id": "kotlin-02-q06",
+      "type": "mcq",
+      "difficulty": "staff",
+      "prompt": "Why does the chapter recommend sealed hierarchies (rather than data class inheritance) when you need both data-class-like properties AND a type hierarchy?",
+      "options": [
+        { "id": "a", "text": "Data class's generated equals() uses exact class checks (not 'is' checks), which interacts awkwardly with subclassing — instances of a subclass rarely compare equal to a parent instance the way developers intuitively expect, so sealed hierarchies (covered in chapter 3) are the idiomatic Kotlin way to combine structured data with a closed type hierarchy." },
+        { "id": "b", "text": "Data classes cannot be subclassed at all in Kotlin under any circumstances, making this purely a compiler restriction rather than a design recommendation." },
+        { "id": "c", "text": "Sealed classes and data classes are entirely interchangeable, and the recommendation is purely stylistic with no behavioral difference." },
+        { "id": "d", "text": "This recommendation only applies to classes with more than 10 properties." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is the chapter's precise, stated reason: exact-class-check equality is the specific mechanical surprise that makes data class inheritance awkward, and it's exactly why the idiomatic Kotlin pattern (sealed hierarchies, explored next chapter) exists as the better fit for 'structured data plus type hierarchy' needs. (b) overstates the restriction — data classes CAN inherit from a non-data open/abstract class or sealed class, though a data class inheriting from ANOTHER data class specifically has restrictions; the chapter's point is about equality behavior being surprising, not absolute prohibition. (c) directly contradicts the chapter's explicit distinction between the two and its behavioral reasoning. (d) fabricates an arbitrary property-count threshold that doesn't exist.",
+      "tags": ["data-class", "sealed-classes", "inheritance"]
+    }
+  ]
+}

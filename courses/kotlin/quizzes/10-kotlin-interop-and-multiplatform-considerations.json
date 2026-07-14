@@ -1,0 +1,99 @@
+{
+  "schemaVersion": 1,
+  "chapterId": "kotlin-10",
+  "passScore": 0.7,
+  "questions": [
+    {
+      "id": "kotlin-10-q01",
+      "type": "mcq",
+      "difficulty": "senior",
+      "prompt": "What is the recommended discipline when receiving a platform type from a Java API call, per the chapter?",
+      "options": [
+        { "id": "a", "text": "Explicitly annotate the nullability you're assuming (String? if genuinely unsure, String if backed by real knowledge of the API's contract) rather than letting the unverified platform type silently propagate as an unchecked assumption through more of the codebase." },
+        { "id": "b", "text": "Always declare platform types as non-null (String), since Java APIs virtually never return null in practice." },
+        { "id": "c", "text": "Platform types should always be immediately converted to a Kotlin-native type using a runtime reflection call to check actual nullability." },
+        { "id": "d", "text": "There is no meaningful action to take; platform types are automatically resolved correctly by the Kotlin compiler in all cases." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is the chapter's precise, actionable discipline: making the nullability assumption EXPLICIT (via an explicit type annotation) converts a silent, unverified assumption into a visible, deliberate decision that downstream code must respect. (b) is a dangerous blanket assumption the chapter never endorses; nullability should be based on actual knowledge of the specific API, not a general rule about Java behavior. (c) fabricates a runtime reflection mechanism that isn't how Kotlin actually handles platform types. (d) directly contradicts the entire premise of the chapter's platform-types discussion — this is precisely the unresolved gap requiring explicit developer discipline.",
+      "tags": ["platform-types", "java-interop", "null-safety"]
+    },
+    {
+      "id": "kotlin-10-q02",
+      "type": "mcq",
+      "difficulty": "senior",
+      "prompt": "How does Kotlin honor Java's @Nullable/@NotNull annotations, if the Java API has them?",
+      "options": [
+        { "id": "a", "text": "Kotlin reads these annotations and automatically converts the annotated Java API's platform types into real, enforced Kotlin nullability — the platform-type ambiguity disappears specifically because the Java code made its nullability contract explicit and machine-readable." },
+        { "id": "b", "text": "Kotlin ignores all Java annotations entirely; @Nullable/@NotNull have no effect on how Kotlin treats the resulting type." },
+        { "id": "c", "text": "These annotations only affect Java-to-Java calls and have no bearing whatsoever on Kotlin code calling the same API." },
+        { "id": "d", "text": "Kotlin requires a separate, manual configuration file to map each annotated Java method to its Kotlin nullability equivalent." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is the chapter's explicit, positive counterpoint to the general platform-type problem: when a Java API DOES document nullability via these standard annotations, Kotlin's compiler uses that information directly, converting an otherwise-ambiguous platform type into a genuinely enforced nullable or non-null Kotlin type. (b) directly contradicts the chapter's explicit statement about Kotlin honoring these annotations automatically. (c) is false; these annotations meaningfully change how KOTLIN specifically treats the resulting type, which is exactly the chapter's point. (d) fabricates an unnecessary manual configuration step; this happens automatically based on the annotations already present in the Java code.",
+      "tags": ["platform-types", "java-annotations", "null-safety"]
+    },
+    {
+      "id": "kotlin-10-q03",
+      "type": "code-review",
+      "difficulty": "staff",
+      "prompt": "This Kotlin function calls a Java method with a 'throws IOException' declaration, with no try/catch. Why does this compile without error, and what real risk does that create?",
+      "code": "// Java: void readFile() throws IOException { ... }\n\nfun loadConfig() {\n    javaFileReader.readFile()   // no try/catch\n}",
+      "codeLanguage": "kotlin",
+      "options": [
+        { "id": "a", "text": "Kotlin has no concept of checked exceptions at all — even exceptions Java's compiler would enforce handling for are treated as ordinary unchecked exceptions from Kotlin's perspective, so nothing forces this call to be wrapped; the real risk is an unhandled IOException propagating at runtime with no compile-time warning that it was even possible." },
+        { "id": "b", "text": "This code actually fails to compile, since Kotlin enforces Java's checked exceptions identically to how javac does." },
+        { "id": "c", "text": "The Kotlin compiler automatically wraps this call in an implicit try/catch that silently swallows any IOException." },
+        { "id": "d", "text": "This only compiles without error because readFile() happens to be a void-returning method; checked exceptions would be enforced if it returned a value." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is the chapter's precise, explicitly named gap: Kotlin's compiler simply doesn't track checked exceptions, full stop — a deliberate language design choice that creates a real, easy-to-miss risk when calling into Java code that DOES use them, since nothing in Kotlin surfaces the possibility. (b) directly contradicts the chapter's explicit statement that Kotlin has 'no such concept' of checked exceptions. (c) fabricates a silent auto-wrapping behavior; no such implicit try/catch exists — an unhandled exception here genuinely propagates uncaught. (d) fabricates an irrelevant return-type-based condition; checked-exception enforcement (or its absence) in Kotlin has nothing to do with whether the called method returns a value.",
+      "tags": ["checked-exceptions", "java-interop", "kotlin-limitations"]
+    },
+    {
+      "id": "kotlin-10-q04",
+      "type": "mcq",
+      "difficulty": "senior",
+      "prompt": "A Kotlin-only codebase (no Java consumers at all) adds @JvmStatic and @JvmOverloads defensively to every companion object function and default-parameter function, 'just in case.' Is this useful, per the chapter?",
+      "options": [
+        { "id": "a", "text": "No — these annotations exist entirely for the Java-calling-Kotlin direction; Kotlin code already understands companion objects and default parameters natively without any help, so a Kotlin-only codebase gains zero benefit from adding them." },
+        { "id": "b", "text": "Yes — these annotations improve runtime performance for Kotlin-to-Kotlin calls as well, independent of any Java interop concerns." },
+        { "id": "c", "text": "Yes — without these annotations, Kotlin code itself cannot call companion object functions or use default parameters at all." },
+        { "id": "d", "text": "This is required by the Kotlin compiler for any public API, regardless of whether Java consumers exist." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is the chapter's explicit, precise scoping: these annotations solve a specific interop-ergonomics problem for Java callers, and 'clarifies when they're actually needed' by naming exactly this — a Kotlin-only codebase has no Java-calling-Kotlin direction to smooth over, so the annotations do nothing useful there. (b) fabricates a performance benefit that has no basis; these annotations affect JVM bytecode SHAPE for interop purposes, not execution speed for Kotlin-to-Kotlin calls. (c) is false; Kotlin code calls companion functions and uses default parameters natively and fully without either annotation — that's precisely why the annotations are described as Java-interop-specific. (d) fabricates a compiler requirement that doesn't exist; neither annotation is mandatory for any Kotlin API, public or otherwise.",
+      "tags": ["jvmstatic", "jvmoverloads", "java-interop"]
+    },
+    {
+      "id": "kotlin-10-q05",
+      "type": "mcq",
+      "difficulty": "staff",
+      "prompt": "What is Kotlin Multiplatform's expect/actual mechanism actually for, and what does the code example (currentTimeMillis) illustrate about it?",
+      "options": [
+        { "id": "a", "text": "expect in commonMain declares 'every platform must provide this,' and actual in each platform-specific source set supplies the real implementation — this is precisely for genuinely platform-specific needs (like accessing each platform's native time API) that can't be expressed in pure, platform-independent Kotlin." },
+        { "id": "b", "text": "expect/actual is used to duplicate identical logic across platforms for redundancy, rather than to bridge genuinely platform-specific implementations." },
+        { "id": "c", "text": "expect declarations contain a full, working default implementation that actual declarations may optionally override." },
+        { "id": "d", "text": "This mechanism is exclusively for UI code; business logic in commonMain never needs expect/actual." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is the chapter's precise description, illustrated exactly by the worked example: getting the current time requires calling a genuinely different, platform-specific API on Android (System.currentTimeMillis) versus iOS (NSDate) — expect/actual is the mechanism for bridging exactly this kind of unavoidable platform divergence while keeping the calling code in commonMain platform-independent. (b) misunderstands the purpose entirely; the point is bridging DIFFERENT platform-specific implementations of the same contract, not redundant duplication of identical logic. (c) is false; expect declarations have NO implementation at all (they're a contract/signature only) — actual declarations must supply the real, platform-specific code. (d) is backwards; the chapter explicitly frames commonMain as the natural home for shared business logic, with expect/actual specifically for the platform-specific EDGES that logic sometimes needs to touch, not exclusively UI concerns.",
+      "tags": ["kotlin-multiplatform", "expect-actual", "platform-specific-code"]
+    },
+    {
+      "id": "kotlin-10-q06",
+      "type": "mcq",
+      "difficulty": "staff",
+      "prompt": "A team building a KMP app decides to force ALL UI code into shared commonMain, reasoning 'if we can share logic, we should share everything for maximum code reuse.' What does the chapter say about this, connecting to the Flutter course's architecture chapter?",
+      "options": [
+        { "id": "a", "text": "KMP's honest scope is sharing LOGIC (validation, business rules, data models, networking), not necessarily UI — forcing platform-specific UX differences into a single shared shape fights the grain of what's naturally platform-independent, the same domain-layer-vs-presentation-layer distinction the Flutter course's architecture chapter drew." },
+        { "id": "b", "text": "This is exactly the correct approach; KMP is explicitly designed so that 100% of an app's code, including all UI, should always be shared across every platform with no exceptions." },
+        { "id": "c", "text": "UI code cannot technically be placed in commonMain at all; the Kotlin compiler would reject any attempt to do so." },
+        { "id": "d", "text": "This decision has no connection to any concept covered elsewhere in this course; it is an isolated KMP-specific consideration." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is the chapter's explicit trade-off, deliberately drawing the same domain-vs-presentation distinction as the Flutter course's architecture chapter — logic is naturally platform-independent (the domain layer), while UI often legitimately differs by platform (the presentation layer), and forcing uniformity where platforms genuinely differ works against the architecture rather than with it. (b) is exactly the 'share everything for maximum reuse' overreach the chapter's trade-off explicitly cautions against, while also noting Compose Multiplatform is changing this for SOME UI cases, not blanket-mandating full UI sharing. (c) is technically imprecise as an absolute prohibition — Compose Multiplatform explicitly enables sharing more UI code than before, but the chapter's point is about whether it's the RIGHT call given platform-specific UX differences, not a hard technical wall. (d) directly contradicts the chapter's explicit, deliberate cross-course connection to the Flutter architecture chapter.",
+      "tags": ["kotlin-multiplatform", "architecture", "code-sharing-tradeoffs"]
+    }
+  ]
+}

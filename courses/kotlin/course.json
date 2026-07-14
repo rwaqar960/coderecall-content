@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "id": "kotlin",
+  "title": "Kotlin",
+  "version": "1.0.0",
+  "level": "core",
+  "bundled": false,
+  "primaryLanguage": "kotlin",
+  "description": "A senior-level refresher on idiomatic Kotlin — null safety as a type-system guarantee, structured concurrency, sealed types, delegation, and the judgment calls that separate Kotlin-as-better-Java from Kotlin used the way it was designed.",
+  "chapters": [
+    { "id": "kotlin-01", "title": "Null Safety as a Type System Feature", "file": "chapters/01-null-safety-as-a-type-system-feature.md", "quiz": "quizzes/01-null-safety-as-a-type-system-feature.json", "status": "ready" },
+    { "id": "kotlin-02", "title": "Data Classes and copy(): Value Semantics Done Right", "file": "chapters/02-data-classes-and-copy-value-semantics-done-right.md", "quiz": "quizzes/02-data-classes-and-copy-value-semantics-done-right.json", "status": "ready" },
+    { "id": "kotlin-03", "title": "Sealed Classes and Exhaustive when", "file": "chapters/03-sealed-classes-and-exhaustive-when.md", "quiz": "quizzes/03-sealed-classes-and-exhaustive-when.json", "status": "ready" },
+    { "id": "kotlin-04", "title": "Extension Functions and Scope Functions", "file": "chapters/04-extension-functions-and-scope-functions.md", "quiz": "quizzes/04-extension-functions-and-scope-functions.json", "status": "ready" },
+    { "id": "kotlin-05", "title": "Coroutines: Structured Concurrency Fundamentals", "file": "chapters/05-coroutines-structured-concurrency-fundamentals.md", "quiz": "quizzes/05-coroutines-structured-concurrency-fundamentals.json", "status": "ready" },
+    { "id": "kotlin-06", "title": "Coroutines in Practice: Flow, Channels, and Cancellation Pitfalls", "file": "chapters/06-coroutines-in-practice-flow-channels-and-cancellation-pitfalls.md", "quiz": "quizzes/06-coroutines-in-practice-flow-channels-and-cancellation-pitfalls.json", "status": "ready" },
+    { "id": "kotlin-07", "title": "Delegation: by, Property Delegates, and Composition Over Inheritance", "file": "chapters/07-delegation-by-property-delegates-and-composition-over-inheritance.md", "quiz": "quizzes/07-delegation-by-property-delegates-and-composition-over-inheritance.json", "status": "ready" },
+    { "id": "kotlin-08", "title": "Generics and Variance: in/out, Reified Types", "file": "chapters/08-generics-and-variance-in-out-reified-types.md", "quiz": "quizzes/08-generics-and-variance-in-out-reified-types.json", "status": "ready" },
+    { "id": "kotlin-09", "title": "Kotlin Idioms and Anti-Patterns", "file": "chapters/09-kotlin-idioms-and-anti-patterns.md", "quiz": "quizzes/09-kotlin-idioms-and-anti-patterns.json", "status": "ready" },
+    { "id": "kotlin-10", "title": "Kotlin Interop and Multiplatform Considerations", "file": "chapters/10-kotlin-interop-and-multiplatform-considerations.md", "quiz": "quizzes/10-kotlin-interop-and-multiplatform-considerations.json", "status": "ready" }
+  ]
+}

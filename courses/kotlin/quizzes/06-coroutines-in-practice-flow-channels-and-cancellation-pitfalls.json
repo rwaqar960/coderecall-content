@@ -1,0 +1,103 @@
+{
+  "schemaVersion": 1,
+  "chapterId": "kotlin-06",
+  "passScore": 0.7,
+  "questions": [
+    {
+      "id": "kotlin-06-q01",
+      "type": "mcq",
+      "difficulty": "senior",
+      "prompt": "What is the precise cold-vs-hot distinction between Flow and Channel, and what does it determine?",
+      "options": [
+        { "id": "a", "text": "Flow is cold: its code doesn't run until collected, and each collector gets an independent execution from scratch; Channel is hot: it exists and can send/receive regardless of listeners, and values sent with no active receiver are simply lost — this decides whether a source should be 'run per subscriber' (Flow) or 'broadcast to whoever's currently listening' (Channel)." },
+        { "id": "b", "text": "Flow always runs on a background thread while Channel always runs on the main thread; this is purely a threading distinction." },
+        { "id": "c", "text": "Channel can only emit a single value total across its entire lifetime, while Flow can emit unlimited values." },
+        { "id": "d", "text": "The cold/hot distinction is a deprecated concept from early Kotlin coroutines versions and no longer applies to modern Flow/Channel usage." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is the chapter's central distinction and its stated practical consequence — cold means re-executed per collector (each gets their own independent run), hot means shared/broadcast (late listeners miss what already happened) — directly determining which fits a given use case. (b) fabricates an unrelated threading rule; neither Flow nor Channel has an inherent thread affinity by default, threading is a separate Dispatchers concern (chapter 5). (c) fabricates an arbitrary emission-count restriction; Channel can send any number of values over its lifetime, same as Flow. (d) is false; cold/hot remains the current, actively relevant distinction in modern Kotlin coroutines.",
+      "tags": ["flow", "channel", "cold-vs-hot"]
+    },
+    {
+      "id": "kotlin-06-q02",
+      "type": "code-review",
+      "difficulty": "senior",
+      "prompt": "Why does logCount increase by 2 (not 1) and fetchConfig() run twice after these two collect() calls?",
+      "code": "val requests = flow { emit(fetchConfig()) }\n    .onEach { logCount++ }\n\nrequests.collect { }\nrequests.collect { }",
+      "codeLanguage": "kotlin",
+      "options": [
+        { "id": "a", "text": "Because Flow is cold, each collect() call triggers an entirely independent execution of the whole flow chain from scratch — including re-running fetchConfig() and re-incrementing logCount — this is not a caching mechanism, it's the defining, by-design behavior of a cold stream." },
+        { "id": "b", "text": "This is a bug; onEach should only execute once regardless of how many times the flow is collected, and this behavior indicates a Kotlin coroutines defect." },
+        { "id": "c", "text": "logCount increases by 2 only because onEach was used; if map had been used instead, the flow would execute only once regardless of collect() call count." },
+        { "id": "d", "text": "fetchConfig() only actually runs once; the appearance of it running twice is a logging artifact, not real re-execution." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is the chapter's explicit, worked demonstration of cold Flow's re-execution behavior — the entire chain, side effects included, reruns per collection, which is precisely why it's 'not a caching mechanism, by design.' (b) mischaracterizes intentional, documented, and useful cold-stream semantics as a defect. (c) fabricates an operator-specific exception; ALL Flow operators (map, filter, onEach, etc.) participate in the same per-collection re-execution, since the entire upstream chain reruns, not just the specific operator used. (d) is false and contradicts the chapter's explicit statement that fetchConfig() genuinely reruns — this is real re-execution with real (potentially expensive) consequences, not a logging illusion.",
+      "tags": ["flow", "cold-streams", "side-effects"]
+    },
+    {
+      "id": "kotlin-06-q03",
+      "type": "code-review",
+      "difficulty": "senior",
+      "prompt": "What specific guarantee does this code deliberately opt out of, and why is that almost always a mistake?",
+      "code": "fun onButtonClick() {\n    GlobalScope.launch {\n        syncData()\n    }\n}",
+      "codeLanguage": "kotlin",
+      "options": [
+        { "id": "a", "text": "Structured concurrency's core guarantee — GlobalScope has application lifetime and no meaningful parent, so this coroutine cannot be cancelled by any enclosing scope (e.g. the screen's lifecycle); it can outlive the button, the screen, even the activity that created it, reproducing exactly the leaked-work problem structured concurrency exists to prevent." },
+        { "id": "b", "text": "GlobalScope.launch is functionally identical to launching within any properly scoped CoroutineScope; there is no meaningful difference in cancellation behavior." },
+        { "id": "c", "text": "This code will fail to compile, since GlobalScope was removed from recent versions of the Kotlin coroutines library." },
+        { "id": "d", "text": "GlobalScope only affects logging behavior, with no impact on coroutine cancellation or lifetime." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is the chapter's explicit warning about the exact escape hatch that bypasses structured concurrency's entire guarantee — GlobalScope coroutines have no meaningful parent to be cancelled by, directly reproducing the 'fire and forget, leaks silently' failure mode chapter 5 described as structured concurrency's whole reason for existing. (b) directly contradicts the chapter's explicit point that this is a deliberate opt-out with real, different (and dangerous) cancellation behavior. (c) is false; GlobalScope remains a valid, compiling API in current Kotlin coroutines, just one the chapter strongly discourages using casually. (d) is false and trivializes a real lifecycle/cancellation hazard as a mere logging concern.",
+      "tags": ["globalscope", "structured-concurrency", "coroutine-leaks"]
+    },
+    {
+      "id": "kotlin-06-q04",
+      "type": "mcq",
+      "difficulty": "senior",
+      "prompt": "Per the chapter, what is the recommended alternative when work genuinely needs to outlive a specific UI component and run for a longer duration?",
+      "options": [
+        { "id": "a", "text": "A purpose-built, explicitly-scoped application-level CoroutineScope — even for genuinely long-lived work, this is almost always better than GlobalScope because it can still be cancelled on app shutdown, unlike GlobalScope which has no such hook at all." },
+        { "id": "b", "text": "GlobalScope is always the correct and only choice for any work outliving a single screen; there is no better alternative in Kotlin." },
+        { "id": "c", "text": "Using Dispatchers.IO instead of Dispatchers.Default automatically provides the equivalent of a longer-lived scope." },
+        { "id": "d", "text": "Wrapping the coroutine in a try/catch block resolves the lifetime concern entirely." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is the chapter's specific, stated recommendation for the narrow legitimate case GlobalScope seems to address — a real application-scoped CoroutineScope preserves at least some cancellation hook (app shutdown), which GlobalScope structurally cannot offer at all. (b) directly contradicts the chapter's explicit statement that even in GlobalScope's 'vanishingly small legitimate use case,' a purpose-built scope is 'almost always better.' (c) confuses Dispatchers (a threading concern, chapter 5) with CoroutineScope (a lifetime concern) — they solve entirely different problems and swapping dispatchers has no bearing on lifetime/cancellation. (d) is unrelated; exception handling doesn't address WHEN or WHETHER a coroutine can be cancelled, which is the actual concern here.",
+      "tags": ["globalscope", "coroutine-scope", "application-lifetime"]
+    },
+    {
+      "id": "kotlin-06-q05",
+      "type": "code-review",
+      "difficulty": "staff",
+      "prompt": "A dashboard scope uses SupervisorJob, launching five independent widget-loading coroutines. One throws an exception. What happens to the other four, and why is this the correct choice here specifically?",
+      "code": "val scope = CoroutineScope(SupervisorJob())\nscope.launch { loadWidgetA() }  // throws\nscope.launch { loadWidgetB() }\nscope.launch { loadWidgetC() }\nscope.launch { loadWidgetD() }\nscope.launch { loadWidgetE() }",
+      "codeLanguage": "kotlin",
+      "options": [
+        { "id": "a", "text": "The other four continue running unaffected — SupervisorJob changes failure propagation so siblings fail independently, which is correct here because the five widgets are independent operations that merely happen to share a scope, not one logical operation that should fail together." },
+        { "id": "b", "text": "All five coroutines are cancelled immediately, since SupervisorJob makes failure propagation stricter than the default behavior, not looser." },
+        { "id": "c", "text": "SupervisorJob has no effect on this code; the behavior would be identical with or without it." },
+        { "id": "d", "text": "Only the two widgets launched immediately before and after the failing one are affected; the others are unaffected due to SupervisorJob's proximity-based isolation." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is the chapter's precise, worked SupervisorJob scenario: independent siblings sharing a scope are exactly the case where fail-together (the DEFAULT structured concurrency behavior) would be wrong, and SupervisorJob's sibling-isolation is exactly right — a genuinely different, deliberate trade-off from ordinary structured concurrency, not a strictly 'safer' universal default. (b) reverses SupervisorJob's actual effect — it makes propagation LOOSER (siblings survive), not stricter; the DEFAULT (without SupervisorJob) is what would cancel everything. (c) is false; SupervisorJob's entire purpose is to change this specific behavior relative to a plain Job/coroutineScope. (d) fabricates a nonexistent 'proximity-based' isolation mechanism; SupervisorJob's isolation applies uniformly to ALL direct children, not based on launch order or adjacency.",
+      "tags": ["supervisorjob", "failure-propagation", "structured-concurrency"]
+    },
+    {
+      "id": "kotlin-06-q06",
+      "type": "mcq",
+      "difficulty": "staff",
+      "prompt": "A screen fetches a user, then (only if that succeeds) fetches and renders their orders — genuinely one logical operation where the second step is meaningless without the first. Should this use SupervisorJob?",
+      "options": [
+        { "id": "a", "text": "No — regular structured concurrency's default fail-together behavior is CORRECT here, per the chapter's explicit example ('if fetching the user fails, don't bother rendering their orders') — SupervisorJob's sibling-independence would be the wrong choice for children that are genuinely part of one logical operation." },
+        { "id": "b", "text": "Yes — SupervisorJob should always be used for any coroutine scope containing more than one launch call, regardless of the relationship between the children." },
+        { "id": "c", "text": "SupervisorJob and plain structured concurrency behave identically in this scenario, so the choice doesn't matter." },
+        { "id": "d", "text": "This decision should be based solely on how many total coroutines are involved, not on their logical relationship." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is a direct application of the chapter's own explicit contrast — the user-then-orders example is the chapter's stated illustration of when fail-together (the DEFAULT, non-SupervisorJob behavior) is correct, precisely because the second operation is meaningless without the first succeeding. (b) is exactly the 'always use it' overgeneralization the chapter's trade-off framing argues against — SupervisorJob is presented as situational, not a universal default. (c) directly contradicts the chapter's central point that the two behave differently specifically in failure scenarios, which is the whole reason the choice matters. (d) misidentifies the deciding factor — the chapter's criterion is the LOGICAL RELATIONSHIP between children (dependent vs. independent), not their count.",
+      "tags": ["supervisorjob", "structured-concurrency", "failure-propagation"]
+    }
+  ]
+}

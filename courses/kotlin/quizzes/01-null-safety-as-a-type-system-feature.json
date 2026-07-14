@@ -1,0 +1,99 @@
+{
+  "schemaVersion": 1,
+  "chapterId": "kotlin-01",
+  "passScore": 0.7,
+  "questions": [
+    {
+      "id": "kotlin-01-q01",
+      "type": "mcq",
+      "difficulty": "senior",
+      "prompt": "Why is calling greet(null) a compile error rather than a runtime NullPointerException, given a function fun greet(name: String)?",
+      "options": [
+        { "id": "a", "text": "String and String? are different types in Kotlin's type system; a parameter declared as String is a compile-time-checked guarantee that null can never be passed, verified at every call site by the type checker, the same way passing a string where an int is expected would be rejected." },
+        { "id": "b", "text": "Kotlin performs a runtime null check before every function call and throws a compile-time-style error message, even though the check itself happens while the program is running." },
+        { "id": "c", "text": "This is purely a lint warning that can be suppressed or ignored; the code still compiles and runs with null passed through." },
+        { "id": "d", "text": "greet(null) only fails to compile if the function is called from a different file than where it's defined." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is the chapter's central claim: nullability is part of the TYPE, not a runtime convention, so the type checker rejects the call before the program ever runs — a genuine static guarantee. (b) mischaracterizes a compile-time type check as a disguised runtime check; the rejection happens during compilation, with no code ever executing. (c) is false and directly contradicts the chapter's explicit distinction between this and 'syntax sugar' — the code does NOT compile at all, this isn't a suppressible warning. (d) fabricates an irrelevant file-location dependency; the type check applies uniformly regardless of caller location.",
+      "tags": ["null-safety", "type-system", "compile-time-guarantee"]
+    },
+    {
+      "id": "kotlin-01-q02",
+      "type": "mcq",
+      "difficulty": "senior",
+      "prompt": "What is the precise difference between the safe call operator (?.) and the not-null assertion operator (!!)?",
+      "options": [
+        { "id": "a", "text": "?. propagates null safely through a chain instead of throwing (null in, null out); !! is a manual assertion that a value is non-null, converting a potential compile-time question into a potential runtime NullPointerException if the assertion is wrong." },
+        { "id": "b", "text": "They are functionally identical; !! is simply a shorter, more concise way to write ?.." },
+        { "id": "c", "text": "?. always throws an exception on null, while !! always returns a default value on null." },
+        { "id": "d", "text": "!! can only be used on var properties, while ?. can only be used on val properties." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is the chapter's precise distinction, directly setting up why !! is treated as an anti-pattern later (chapter 9): safe call is a null-safe operation with no crash risk, while !! deliberately reintroduces the exact NullPointerException risk the whole feature exists to eliminate. (b) directly contradicts their behavior — they do opposite things (propagate safely vs. assert and risk crashing). (c) reverses both operators' actual behavior entirely. (d) fabricates a var/val restriction that doesn't exist; both operators work regardless of whether the underlying value is a var or val.",
+      "tags": ["safe-call", "not-null-assertion", "null-safety"]
+    },
+    {
+      "id": "kotlin-01-q03",
+      "type": "code-review",
+      "difficulty": "senior",
+      "prompt": "A teammate has a nullable var property on a class and writes 'if (this.cachedUser != null) { println(this.cachedUser.name) }' expecting a smart cast, but the compiler rejects it with a smart-cast error. Why?",
+      "code": "class Session {\n    var cachedUser: User? = null\n\n    fun printUser() {\n        if (cachedUser != null) {\n            println(cachedUser.name)  // compiler error here\n        }\n    }\n}",
+      "codeLanguage": "kotlin",
+      "options": [
+        { "id": "a", "text": "Smart casts require the compiler to prove the value can't change between the check and the use; a mutable var class property could be modified (e.g. by another thread, or reentrant code) between the null check and its use, so the compiler can't soundly guarantee it's still non-null and refuses to smart-cast it." },
+        { "id": "b", "text": "This is a compiler bug; the code is logically correct and should be allowed to compile without changes." },
+        { "id": "c", "text": "Smart casts only work inside top-level functions, never inside class methods." },
+        { "id": "d", "text": "The fix requires marking cachedUser with the !! operator instead of a null check." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is exactly the chapter's named limitation: smart-cast soundness requires the compiler to prove immutability between check and use, and a mutable var class property can't offer that guarantee in general — the idiomatic fix is copying to a local val first (val user = cachedUser; if (user != null) { println(user.name) }), which CAN be smart-cast since locals can't be reassigned out from under the check. (b) is false; this is documented, intentional compiler behavior protecting a real soundness guarantee, not a bug. (c) is false; smart casts work in both top-level functions and class methods — the restriction is about mutability, not location. (d) misapplies the fix — replacing the check with !! abandons the null check's safety entirely rather than fixing the smart-cast issue.",
+      "tags": ["smart-cast", "mutable-properties", "null-safety"]
+    },
+    {
+      "id": "kotlin-01-q04",
+      "type": "mcq",
+      "difficulty": "staff",
+      "prompt": "What is a 'platform type' in Kotlin, and why does it represent a genuine hole in the null-safety guarantee rather than a design flaw?",
+      "options": [
+        { "id": "a", "text": "A value obtained from Java code, whose nullability Kotlin cannot verify because Java's type system doesn't express it — Kotlin lets you treat it as either nullable or non-null with no compiler enforcement, since null safety is fundamentally a Kotlin-to-Kotlin guarantee that necessarily stops at a Java boundary." },
+        { "id": "b", "text": "A platform type is any type that behaves differently on Android versus a JVM server application, unrelated to nullability." },
+        { "id": "c", "text": "Platform types only occur when using Kotlin Multiplatform for iOS targets, not in ordinary JVM/Android Kotlin code." },
+        { "id": "d", "text": "This is a bug that Kotlin's compiler team has stated will be fixed in a future release, eliminating platform types entirely." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is the chapter's explicit, honest framing: the guarantee's scope is Kotlin-to-Kotlin by necessity, since Java simply has no way to express nullability in its type signatures for Kotlin to read — this isn't a Kotlin design mistake, it's an inherent limit of interoperating with a language lacking that information. (b) fabricates an unrelated platform-behavior definition with no connection to nullability. (c) is false; platform types occur in ANY Kotlin code calling Java (JVM/Android interop), independent of Kotlin Multiplatform. (d) fabricates a nonexistent compiler roadmap claim; platform types are an inherent, permanent consequence of Java interop, not a bug slated for removal.",
+      "tags": ["platform-types", "java-interop", "null-safety-limitations"]
+    },
+    {
+      "id": "kotlin-01-q05",
+      "type": "mcq",
+      "difficulty": "staff",
+      "prompt": "A team wraps every single Java API call result in a defensive null check, even for a small, well-documented, stable internal utility library maintained by their own team for years with a clear no-null contract. Per the chapter's trade-off framing, is this the right default?",
+      "options": [
+        { "id": "a", "text": "Not necessarily — the chapter frames defensive wrapping as 'the safe default' with 'real ceremony' as its cost, and trusting well-documented, stable APIs as a 'pragmatic, common choice'; the risk the chapter says to concentrate defensive effort on is specifically third-party or legacy code with an UNCLEAR nullability contract, which this internal library isn't." },
+        { "id": "b", "text": "Yes, absolutely — every single Java interop call must always be defensively null-checked with no exceptions, regardless of the API's documentation or stability." },
+        { "id": "c", "text": "No — defensive null checking should never be used anywhere in a codebase that has any Java interop at all." },
+        { "id": "d", "text": "The chapter provides no guidance on this trade-off; it's purely a matter of team preference with no stated criteria." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is a direct application of the chapter's explicit trade-off: the deciding factor is contract clarity, not merely 'is this Java code' — a well-documented, stable, clear-contract API is exactly the case the chapter identifies as reasonable to trust, reserving defensive ceremony for genuinely uncertain boundaries. (b) is the blanket-rule overcorrection the chapter's nuanced trade-off framing argues against. (c) overcorrects in the opposite direction, ignoring that genuinely uncertain third-party/legacy APIs DO warrant defensive treatment per the chapter. (d) is false; the chapter gives a specific, actionable criterion (documentation clarity and API stability) rather than leaving this unguided.",
+      "tags": ["platform-types", "tradeoffs", "java-interop"]
+    },
+    {
+      "id": "kotlin-01-q06",
+      "type": "mcq",
+      "difficulty": "senior",
+      "prompt": "Why does the chapter describe !! overuse as 'manually reintroducing the failure mode the whole feature exists to eliminate,' rather than just calling it 'risky'?",
+      "options": [
+        { "id": "a", "text": "Kotlin's null safety exists specifically to eliminate unchecked NullPointerExceptions at compile time; using !! deliberately opts back into that exact same runtime crash risk on a value-by-value basis, undoing the language's core guarantee at precisely the point it's used." },
+        { "id": "b", "text": "!! is described this way because it is a deprecated operator scheduled for removal in a future Kotlin version." },
+        { "id": "c", "text": "The phrase refers to !! causing memory leaks, unrelated to null-pointer exceptions." },
+        { "id": "d", "text": "This framing only applies when !! is used inside a loop, not in single-use contexts." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is the chapter's precise causal chain: null safety's entire value proposition is eliminating unchecked NPEs at compile time, and !! is the one operator that opts a specific value back into exactly that risk — 'reintroducing' is the accurate word because it's undoing, at that one point, the exact guarantee the type system otherwise provides everywhere else. (b) fabricates a deprecation status; !! remains a standard, supported (if generally discouraged in excess) Kotlin operator. (c) is a fabricated, unrelated claim; the chapter's concern is specifically about NullPointerException risk, not memory management. (d) fabricates an arbitrary loop-only restriction on a framing that applies to any use of !!, single or repeated.",
+      "tags": ["not-null-assertion", "null-safety", "anti-patterns"]
+    }
+  ]
+}

@@ -1,0 +1,101 @@
+{
+  "schemaVersion": 1,
+  "chapterId": "kotlin-09",
+  "passScore": 0.7,
+  "questions": [
+    {
+      "id": "kotlin-09-q01",
+      "type": "code-review",
+      "difficulty": "senior",
+      "prompt": "Why does the chapter describe 'val name = user!!.profile!!.displayName!!' as reintroducing a bug class Kotlin was designed to eliminate, rather than just calling it verbose?",
+      "code": "val name = user!!.profile!!.displayName!!\n\n// vs.\nval name = user?.profile?.displayName ?: \"Unknown\"",
+      "codeLanguage": "kotlin",
+      "options": [
+        { "id": "a", "text": "Each !! is a manual assertion that reintroduces NullPointerException risk at exactly that point — chained together, this opts large parts of the expression back into Java's null-handling risk profile while still paying Kotlin's type-annotation overhead, the worst of both worlds." },
+        { "id": "b", "text": "The only issue is that this line is longer to type than necessary; there is no correctness difference between the two versions." },
+        { "id": "c", "text": "!! and ?. are functionally identical in every way; the chapter's distinction is a matter of style preference only." },
+        { "id": "d", "text": "This pattern is always a compile error in modern Kotlin versions, making the comparison purely historical." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is a direct callback to chapter 1's core distinction: each !! is a genuine crash risk, not a stylistic verbosity issue — chaining several compounds the risk at multiple points, while the safe-call-plus-Elvis version eliminates the crash risk entirely with one explicit fallback. (b) trivializes a real correctness/safety difference as mere line length. (c) directly contradicts chapter 1's explicit, detailed distinction between these two operators' behavior. (d) is false; this code compiles fine in current Kotlin — the issue is a design/safety choice, not a compiler restriction.",
+      "tags": ["not-null-assertion", "anti-patterns", "null-safety"]
+    },
+    {
+      "id": "kotlin-09-q02",
+      "type": "mcq",
+      "difficulty": "senior",
+      "prompt": "What is the chapter's precise criterion for when lateinit is genuinely appropriate, versus when it's papering over a design problem?",
+      "options": [
+        { "id": "a", "text": "Appropriate when the value genuinely isn't available at construction time (a DI framework or lifecycle callback populates it later); an anti-pattern when the value IS available at construction but lateinit is used just to avoid a longer constructor parameter list." },
+        { "id": "b", "text": "lateinit should always be preferred over constructor parameters for any property, regardless of when the value becomes available." },
+        { "id": "c", "text": "lateinit is appropriate only for properties of primitive types like Int or Boolean, never for object references." },
+        { "id": "d", "text": "The criterion is purely about property visibility; lateinit is fine for public properties but never for private ones." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is the chapter's precise, stated distinction — the deciding factor is WHEN the value becomes available, not a general preference or convenience shortcut. (b) is exactly the anti-pattern the chapter warns against — using lateinit reflexively rather than for its genuine, narrow use case. (c) is factually backwards; lateinit specifically cannot be used with primitive types in Kotlin (it requires a nullable-reference-compatible type) — it's used for object references, not primitives. (d) fabricates an unrelated visibility-based rule with no basis in the chapter's actual criterion.",
+      "tags": ["lateinit", "anti-patterns", "dependency-injection"]
+    },
+    {
+      "id": "kotlin-09-q03",
+      "type": "mcq",
+      "difficulty": "senior",
+      "prompt": "What question does the chapter recommend asking to decide whether a type should be a data class, rather than 'does it need a constructor with some fields'?",
+      "options": [
+        { "id": "a", "text": "'Is this a value?' — meaning: are two instances interchangeable if their content matches? Using data class for identity-based entities (compared by ID, not content) is the same category error chapter 2 named, not a style choice." },
+        { "id": "b", "text": "'Does this class have more than three properties?' — a purely quantitative threshold for choosing data class." },
+        { "id": "c", "text": "'Will this class ever need to be serialized to JSON?' — data class should be reserved exclusively for serializable types." },
+        { "id": "d", "text": "There is no meaningful criterion; data class should be the default choice for every class in a Kotlin codebase." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is the chapter's precise restatement of chapter 2's value-vs-entity distinction, framed as a practical idiom check: content-interchangeability is the actual test, not superficial properties like field count. (b) fabricates an arbitrary numeric threshold unrelated to the actual semantic question. (c) fabricates an unrelated serialization criterion; data class's relevance is about equality/copy semantics, not JSON serializability specifically. (d) directly contradicts chapter 2's explicit warning against using data class for identity-based entities — it is emphatically not a universal default.",
+      "tags": ["data-class", "value-objects", "entities"]
+    },
+    {
+      "id": "kotlin-09-q04",
+      "type": "code-review",
+      "difficulty": "senior",
+      "prompt": "Why does the chapter call this companion object usage an anti-pattern, given that it compiles and works correctly?",
+      "code": "class StringUtils {\n    companion object {\n        fun capitalize(s: String) = s.replaceFirstChar { it.uppercase() }\n    }\n}\n\n// vs.\nfun capitalizeWord(s: String) = s.replaceFirstChar { it.uppercase() }",
+      "codeLanguage": "kotlin",
+      "options": [
+        { "id": "a", "text": "Kotlin allows functions to exist outside any class entirely, so a companion object used purely as a namespace (with no factory-method or privileged-constructor-access need) is importing a Java habit (simulating 'static' methods) into a language that has a more direct, simpler idiom available: a top-level function." },
+        { "id": "b", "text": "This code fails to compile; companion objects cannot contain functions, only properties." },
+        { "id": "c", "text": "There is no meaningful difference; the chapter's preference for top-level functions here is purely arbitrary with no stated rationale." },
+        { "id": "d", "text": "companion object usage is always wrong in Kotlin and should never appear in any codebase under any circumstances." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is the chapter's precise diagnosis: the anti-pattern isn't companion objects generally, it's using one where NOTHING about it actually needs class association — Kotlin's top-level function support removes the reason Java developers reach for 'static-like' containers out of habit. (b) is false; companion objects can and do commonly contain functions — that's a normal, valid use. (c) understates the chapter's explicit, stated rationale (no genuine need for class association in this specific case). (d) overstates the chapter's position — it explicitly names legitimate companion object uses (factory methods needing constructor access, interface implementation), not a blanket prohibition.",
+      "tags": ["companion-object", "anti-patterns", "top-level-functions"]
+    },
+    {
+      "id": "kotlin-09-q05",
+      "type": "mcq",
+      "difficulty": "staff",
+      "prompt": "What is the precise, mechanistic reason a sealed result type is described as 'compiler-enforced' for error handling, while an exception is 'invisible in a function's signature'?",
+      "options": [
+        { "id": "a", "text": "A function's throws behavior isn't part of Kotlin's type system (unlike Java's checked exceptions) — nothing forces a caller to handle or even know about a possible exception without reading documentation/implementation; a sealed return type makes failure a real, visible part of the signature, and exhaustive when (chapter 3) forces every caller to address every case at compile time." },
+        { "id": "b", "text": "Kotlin exceptions are actually part of the type system and are just as visible/enforced as sealed result types; the chapter's distinction is inaccurate." },
+        { "id": "c", "text": "Sealed result types eliminate the possibility of runtime errors entirely, making them strictly superior with no trade-off." },
+        { "id": "d", "text": "This distinction only applies to checked exceptions, which Kotlin does not have at all, making the entire comparison moot." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is the chapter's precise mechanism, directly tying back to chapter 3's exhaustive-when guarantee: a return type is checked and enforced by the compiler at every call site, while Kotlin (having no checked exceptions) gives the compiler nothing to enforce about which exceptions a function might throw. (b) directly contradicts the chapter's explicit point — and Kotlin, notably, doesn't even have Java-style checked exceptions, making exception visibility purely a documentation/convention matter. (c) overclaims; sealed result types make EXPECTED failure visible and handled, they don't eliminate all possible runtime errors (a truly unexpected crash can still occur). (d) misses the actual point — the comparison is meaningful precisely BECAUSE Kotlin lacks checked exceptions, making unchecked exceptions genuinely invisible to the type system, which is exactly the gap sealed result types fill.",
+      "tags": ["error-handling", "sealed-types", "exceptions"]
+    },
+    {
+      "id": "kotlin-09-q06",
+      "type": "mcq",
+      "difficulty": "staff",
+      "prompt": "A team converts every single function in a small, one-off internal script to return sealed Result types instead of throwing exceptions, reasoning 'this is always safer.' Per the chapter's trade-off, is this the right default?",
+      "options": [
+        { "id": "a", "text": "Not necessarily — the chapter's explicit criterion is whether CALLERS NEED to be forced to handle the failure case; a quick internal script with a small number of callers doesn't need the ceremony of defining and exhaustively handling sealed cases everywhere, and exceptions remain simpler and appropriate for low-stakes, small-scope code." },
+        { "id": "b", "text": "Yes, always — sealed result types should replace exceptions universally in all Kotlin code regardless of scope or stakes." },
+        { "id": "c", "text": "This choice has no practical trade-off either way; the two approaches are functionally and ergonomically identical in all contexts." },
+        { "id": "d", "text": "Exceptions should never be used in Kotlin under any circumstances, including for genuinely unexpected, unrecoverable errors." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is a direct application of the chapter's explicit trade-off statement: the deciding factor is whether callers genuinely need to be forced to handle the failure path, not a blanket 'safer is always better' rule — small-scope, low-stakes code doesn't need the ceremony sealed types add. (b) is exactly the uniform-application mistake the chapter's trade-off paragraph warns against. (c) ignores the chapter's explicit statement that sealed result types add 'real ceremony' exceptions don't require. (d) overstates the chapter's position — it explicitly preserves exceptions as 'the right tool for genuinely exceptional, unrecoverable, or programming-error conditions,' not eliminating them entirely.",
+      "tags": ["error-handling", "tradeoffs", "sealed-types"]
+    }
+  ]
+}

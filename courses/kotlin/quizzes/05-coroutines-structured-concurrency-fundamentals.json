@@ -1,0 +1,99 @@
+{
+  "schemaVersion": 1,
+  "chapterId": "kotlin-05",
+  "passScore": 0.7,
+  "questions": [
+    {
+      "id": "kotlin-05-q01",
+      "type": "mcq",
+      "difficulty": "senior",
+      "prompt": "Does marking a function suspend automatically make it run on a background thread?",
+      "options": [
+        { "id": "a", "text": "No — suspend only means the function can pause execution and resume later without blocking the calling thread; which thread actually runs the code is a completely separate, explicit choice made via Dispatchers." },
+        { "id": "b", "text": "Yes — suspend functions are always automatically scheduled onto a background thread pool by the Kotlin compiler." },
+        { "id": "c", "text": "Only if the function contains a delay() call; otherwise it runs synchronously on the calling thread with no suspension capability at all." },
+        { "id": "d", "text": "This depends on whether the function is called from Java or Kotlin code." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is the chapter's explicitly named 'single most common coroutines misconception' — suspendability and threading are orthogonal concerns; a suspend function called plainly runs on the caller's thread just like a regular function, with actual concurrency requiring an explicit Dispatchers choice. (b) directly contradicts the chapter's precise correction of this exact misconception. (c) fabricates an incorrect conditional rule; a suspend function's ability to suspend doesn't depend on which specific suspending calls it happens to make. (d) is irrelevant and unrelated; suspend/Dispatchers semantics are Kotlin-level concerns independent of the calling language.",
+      "tags": ["suspend-functions", "coroutines", "dispatchers"]
+    },
+    {
+      "id": "kotlin-05-q02",
+      "type": "mcq",
+      "difficulty": "senior",
+      "prompt": "What is the actual, load-bearing guarantee that 'structured concurrency' refers to?",
+      "options": [
+        { "id": "a", "text": "No coroutine can outlive the scope that launched it, and no scope can complete while it still has unfinished children — a strict, tree-shaped parent-child lifetime relationship enforced by the coroutine framework itself." },
+        { "id": "b", "text": "Coroutines launched within a structured scope always execute in a fixed, predetermined order, one after another." },
+        { "id": "c", "text": "Structured concurrency means all coroutines in an app share exactly one single thread, avoiding race conditions entirely." },
+        { "id": "d", "text": "It refers to a specific code formatting convention for coroutine-heavy files, unrelated to runtime behavior." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is the chapter's precise definition — a lifetime/containment guarantee, not an execution-order or threading guarantee — and it's exactly what prevents the 'fire and forget, leaks silently' failure mode common in unstructured concurrency models elsewhere. (b) is false; launch calls within a scope can and often do run concurrently, with no forced sequential ordering implied by structure alone. (c) is false; coroutines can and do run across multiple threads (via Dispatchers) while remaining structurally contained — structure is about lifetime, not thread count. (d) trivializes a genuine runtime guarantee as a mere style convention, missing the chapter's entire point.",
+      "tags": ["structured-concurrency", "coroutine-scope", "lifetime"]
+    },
+    {
+      "id": "kotlin-05-q03",
+      "type": "code-review",
+      "difficulty": "senior",
+      "prompt": "Calling job.cancel() on the outer job here cancels both inner launch blocks too, even though cancel() was never called on them directly. Why?",
+      "code": "val job = scope.launch {\n    launch { longRunningTask() }    // child\n    launch { anotherTask() }        // child\n}\njob.cancel()",
+      "codeLanguage": "kotlin",
+      "options": [
+        { "id": "a", "text": "Because the two inner launch calls create CHILD coroutines of the outer job, and structured concurrency's parent-child tracking means cancelling a parent recursively cancels its entire subtree automatically — a direct, deliberate payoff of the tree-shaped lifetime relationship." },
+        { "id": "b", "text": "This is a side effect specific to using longRunningTask() and anotherTask() as function names; cancellation propagation depends on naming convention." },
+        { "id": "c", "text": "cancel() cancels every coroutine running anywhere in the entire application, not just the ones related to this specific job." },
+        { "id": "d", "text": "The inner coroutines are not actually cancelled; they continue running to completion regardless of the outer cancel() call." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is the chapter's explicit, worked demonstration of structured concurrency's practical payoff — recursive cancellation through the parent-child tree is exactly why one cancel() call can correctly tear down an entire multi-coroutine operation, rather than needing to manually track and cancel each one. (b) fabricates a naming-based mechanism that has no basis in how Kotlin's coroutine cancellation actually works. (c) massively overstates the scope — cancellation propagates through the specific job's own subtree, not globally across unrelated coroutines elsewhere in the app. (d) directly contradicts the chapter's stated behavior and the entire point of the example.",
+      "tags": ["cancellation", "structured-concurrency", "coroutine-hierarchy"]
+    },
+    {
+      "id": "kotlin-05-q04",
+      "type": "mcq",
+      "difficulty": "staff",
+      "prompt": "A coroutine runs a tight, CPU-bound loop with no delay(), no network calls, and no other suspension points. cancel() is called on it, but it keeps running until the loop finishes. What's the cause, and the fix?",
+      "options": [
+        { "id": "a", "text": "Cancellation is COOPERATIVE, not preemptive — a coroutine only actually stops at a suspension point, and this loop has none; the fix is periodically calling ensureActive() or yield() inside the loop to explicitly opt into cancellation checks." },
+        { "id": "b", "text": "This indicates a bug in the Kotlin coroutines library; cancel() should always forcibly stop any coroutine immediately regardless of what it's doing." },
+        { "id": "c", "text": "Cooperative cancellation only applies to coroutines launched on Dispatchers.Main; switching to Dispatchers.Default would fix this automatically with no code changes needed." },
+        { "id": "d", "text": "This only happens if the coroutine was launched without a parent scope; adding a CoroutineScope wrapper would make cancel() preemptive." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is the chapter's explicit, named trade-off and its practical consequence: cooperative cancellation is a deliberate design choice (avoiding torn/inconsistent state from forced interruption), and the chapter directly states the fix for exactly this scenario — CPU-bound code without natural suspension points should add explicit cancellation checks. (b) mischaracterizes a deliberate, documented design trade-off as a library defect; forced/preemptive cancellation was explicitly rejected because of the state-corruption risk it would introduce. (c) fabricates a dispatcher-specific cancellation behavior that doesn't exist; cooperative cancellation applies uniformly regardless of which dispatcher is used. (d) fabricates a scope-presence-based distinction; cancellation cooperativeness is a property of the coroutine's own suspension points, not whether a CoroutineScope wraps it.",
+      "tags": ["cancellation", "cooperative-cancellation", "cpu-bound-work"]
+    },
+    {
+      "id": "kotlin-05-q05",
+      "type": "mcq",
+      "difficulty": "senior",
+      "prompt": "Why is Dispatchers.IO's thread pool designed to have many more threads than Dispatchers.Default's (which is sized to CPU core count)?",
+      "options": [
+        { "id": "a", "text": "IO-bound work (network, disk) spends most of its time WAITING rather than computing, so many more threads can be usefully in-flight simultaneously without CPU contention; Default's CPU-bound work actually competes for CPU cycles, so more threads than cores would just cause context-switching overhead with no throughput benefit." },
+        { "id": "b", "text": "Dispatchers.IO's larger pool size is an arbitrary historical default with no performance rationale behind the specific numbers chosen." },
+        { "id": "c", "text": "Dispatchers.IO and Dispatchers.Default actually use identical pool sizes; the chapter's distinction is inaccurate." },
+        { "id": "d", "text": "The pool size difference exists only to support Android devices with more than 8 CPU cores." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is the chapter's precise reasoning, mirroring the Flutter course's compute()/isolate distinction: waiting-dominated work benefits from high concurrency (more in-flight operations, since each spends little time actually using the CPU), while CPU-dominated work saturates at roughly the core count, where additional threads add overhead without added throughput. (b) dismisses a real, well-reasoned design decision as arbitrary. (c) is false and directly contradicts the chapter's explicit statement that IO has 'many more threads than CPU cores' while Default is 'sized to CPU core count.' (d) fabricates an irrelevant, oddly specific device-count justification unrelated to the actual I/O-vs-CPU-bound reasoning.",
+      "tags": ["dispatchers", "thread-pools", "io-bound-vs-cpu-bound"]
+    },
+    {
+      "id": "kotlin-05-q06",
+      "type": "mcq",
+      "difficulty": "staff",
+      "prompt": "A team runs heavy JSON parsing (CPU-bound) on Dispatchers.IO 'because it has more threads, so it should be faster.' What actually happens, per the chapter?",
+      "options": [
+        { "id": "a", "text": "No crash occurs, but this wastes IO's pool design intent (many threads mostly idle-waiting) without any error signal — the CPU-bound work still competes for the same limited CPU cores regardless of how many IO threads exist, so 'more threads' doesn't translate to more actual parsing throughput, and it can also starve genuinely IO-bound work sharing that pool." },
+        { "id": "b", "text": "This produces a compile-time error, since Kotlin's type system prevents CPU-bound functions from being dispatched to Dispatchers.IO." },
+        { "id": "c", "text": "This is actually the officially recommended pattern; Dispatchers.IO is the correct choice for all coroutine work regardless of its nature." },
+        { "id": "d", "text": "The JVM automatically detects the workload type and silently reroutes it to Dispatchers.Default regardless of what was specified in code." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is the chapter's explicit warning about dispatcher mismatch: the failure mode is silent performance degradation, not a crash or compiler error — precisely why it's dangerous, since nothing flags that the choice is wrong. (b) fabricates a compile-time enforcement mechanism that doesn't exist; Dispatchers choice is a runtime decision with no static type-level restriction tying it to workload category. (c) directly contradicts the chapter's explicit dispatcher-selection guidance, which distinguishes IO from Default specifically by workload nature. (d) fabricates an automatic-rerouting mechanism; the JVM/Kotlin runtime does not inspect and reroute coroutine work between dispatchers based on inferred workload type.",
+      "tags": ["dispatchers", "performance", "cpu-bound-work"]
+    }
+  ]
+}

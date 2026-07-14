@@ -1,0 +1,99 @@
+{
+  "schemaVersion": 1,
+  "chapterId": "kotlin-03",
+  "passScore": 0.7,
+  "questions": [
+    {
+      "id": "kotlin-03-q01",
+      "type": "mcq",
+      "difficulty": "senior",
+      "prompt": "What specific restriction does the sealed keyword impose, and why is that restriction the precondition for exhaustiveness checking?",
+      "options": [
+        { "id": "a", "text": "Subclassing is restricted to the same module (same package since Kotlin 1.5) — this gives the compiler complete, enumerable knowledge of every possible subtype, which is exactly what's required to verify a when covers every case; an open hierarchy could always gain a new subtype the compiler doesn't know about." },
+        { "id": "b", "text": "sealed prevents a class from having any properties, forcing all state to live in subclasses only." },
+        { "id": "c", "text": "sealed makes all subclasses automatically singletons, similar to Kotlin's object keyword." },
+        { "id": "d", "text": "sealed only restricts instantiation, not subclassing — any code anywhere can still create new subtypes." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is the chapter's precise causal chain: closed-world subclassing is the enabling condition for exhaustiveness checking, since the compiler can only guarantee 'every case handled' if it can enumerate every case that exists. (b) fabricates an unrelated, false restriction on properties. (c) confuses sealed with data object (covered later in the chapter) — sealed classes/interfaces themselves are not singletons. (d) directly contradicts the actual restriction — sealed specifically restricts SUBCLASSING (to the same module/package), which is the entire point.",
+      "tags": ["sealed-classes", "exhaustiveness", "compiler-guarantees"]
+    },
+    {
+      "id": "kotlin-03-q02",
+      "type": "code-review",
+      "difficulty": "senior",
+      "prompt": "A teammate adds an else branch 'just to be safe' to a when expression over a sealed PaymentResult. Why does the chapter call this a mistake rather than a defensive improvement?",
+      "code": "fun handle(result: PaymentResult): String = when (result) {\n    is Success -> \"Paid: ${result.transactionId}\"\n    is Declined -> \"Declined: ${result.reason}\"\n    NetworkError -> \"Retry needed\"\n    else -> \"Unknown result\"   // added \"defensively\"\n}",
+      "codeLanguage": "kotlin",
+      "options": [
+        { "id": "a", "text": "The else branch silently swallows the compiler's exhaustiveness check — when a new PaymentResult subtype is added later, this when will still compile (falling into else) instead of failing to compile, defeating the entire safety mechanism sealing the hierarchy was meant to provide." },
+        { "id": "b", "text": "This is a syntax error; else cannot be used in a when expression under any circumstances." },
+        { "id": "c", "text": "Adding else has no effect either way, since sealed classes ignore else branches entirely." },
+        { "id": "d", "text": "else is fine here, but only because PaymentResult is a sealed interface rather than a sealed class." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is the chapter's explicit warning, stated precisely: the safety net (a compile ERROR at every non-exhaustive when when a new case is added) is converted into a silent runtime fallthrough — the exact opposite of 'defensive,' since it hides exactly the gap that sealing was designed to surface. (b) is false; else is entirely valid Kotlin syntax in a when expression — the issue is a design/safety trade-off, not a compile error from using else itself. (c) is false; else does have a real effect — it's accepted by the compiler and DOES suppress the exhaustiveness error, which is precisely the problem. (d) fabricates an interface-vs-class distinction that has no bearing on this issue; the else-defeats-exhaustiveness problem applies identically to sealed classes and sealed interfaces.",
+      "tags": ["exhaustive-when", "sealed-classes", "else-branch"]
+    },
+    {
+      "id": "kotlin-03-q03",
+      "type": "mcq",
+      "difficulty": "senior",
+      "prompt": "A new subtype (Pending) is added to a sealed PaymentResult hierarchy. What happens to existing when expressions over PaymentResult that don't have an else branch?",
+      "options": [
+        { "id": "a", "text": "Every one of them fails to compile until updated to handle the new Pending case — the compiler enumerates exactly which call sites need attention, converting 'did I remember every place that switches on this type' from a manual/code-review concern into a guaranteed compiler check." },
+        { "id": "b", "text": "They continue to compile and run correctly with no changes needed, since Kotlin automatically infers a default handler for new sealed subtypes." },
+        { "id": "c", "text": "Only the when expression in the same file as the new subtype declaration is affected; all others compile unaffected." },
+        { "id": "d", "text": "This causes a runtime warning logged to the console, but the code still compiles without modification." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is the chapter's stated concrete payoff — the entire practical value of the sealed-plus-exhaustive-when combination is that it makes this specific scenario (a new case, forgotten call site) a compile-time certainty to catch, not a hope that code review notices it. (b) is false and directly contradicts exhaustiveness checking's whole purpose — there is no automatic default handler; the compiler requires explicit handling. (c) is false; the effect is codebase-wide, not scoped to the declaring file — every non-exhaustive when over that sealed type, anywhere in the module, is affected. (d) is false; this is a compile-time error, not a runtime warning, and the code specifically does NOT compile until fixed.",
+      "tags": ["sealed-classes", "exhaustive-when", "compile-time-safety"]
+    },
+    {
+      "id": "kotlin-03-q04",
+      "type": "mcq",
+      "difficulty": "senior",
+      "prompt": "What is the key structural difference between sealed class and sealed interface that would lead you to choose one over the other?",
+      "options": [
+        { "id": "a", "text": "sealed class subtypes can share state/behavior via inheritance from the sealed class itself; sealed interface allows a type to implement multiple sealed interfaces (no single-inheritance limitation) but shares no implementation — choose interface when variants are otherwise-unrelated types needing uniform treatment, class when variants share meaningful common properties." },
+        { "id": "b", "text": "sealed interface cannot have an exhaustive when performed over it; only sealed class supports exhaustiveness checking." },
+        { "id": "c", "text": "sealed class and sealed interface are functionally identical in every respect, and the choice is purely a naming convention." },
+        { "id": "d", "text": "sealed interface is deprecated in favor of sealed class and should not be used in new Kotlin code." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is the chapter's precise comparison: the deciding factor is whether variants need shared implementation (favoring class) or need to also implement other, unrelated sealed interfaces simultaneously (favoring interface, since Kotlin classes support only single inheritance from a class but multiple interface implementation). (b) is false; the chapter's own example (PaymentResult) uses sealed interface with a fully exhaustive when — exhaustiveness checking works identically for both. (c) ignores the real, chapter-stated structural difference in inheritance/implementation-sharing capability. (d) is fabricated; sealed interface is an actively used, non-deprecated, commonly recommended Kotlin feature, especially favored specifically for its multiple-implementation flexibility.",
+      "tags": ["sealed-class", "sealed-interface", "kotlin-syntax"]
+    },
+    {
+      "id": "kotlin-03-q05",
+      "type": "mcq",
+      "difficulty": "senior",
+      "prompt": "Why is data object the right choice for a sealed hierarchy case like NetworkError, which has no payload, rather than a data class with zero constructor parameters?",
+      "options": [
+        { "id": "a", "text": "data object represents a genuine singleton (exactly one instance ever exists, matching the semantics of a payload-free case that's just a distinguishable marker), while still getting data-class-quality toString() — a zero-parameter data class would create a new instance on every construction, semantically inappropriate for a case that carries no distinguishing state at all." },
+        { "id": "b", "text": "data object and a zero-parameter data class are functionally identical; the recommendation is purely a matter of code style." },
+        { "id": "c", "text": "data object cannot be used inside a sealed hierarchy at all; only data class and plain class are permitted as sealed subtypes." },
+        { "id": "d", "text": "data object is required specifically because PaymentResult is a sealed interface; sealed class hierarchies cannot use data object." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is the chapter's precise semantic argument: since a payload-free case has no state to distinguish one instance from another, a singleton is the conceptually correct representation, and data object was specifically added to modern Kotlin to replace the older idiom of zero-parameter data classes (which awkwardly implied multiple, pointlessly distinct instances could exist) for exactly this purpose. (b) understates a genuine semantic distinction the chapter explicitly draws (singleton vs. multiply-instantiable). (c) is false; data object is explicitly used as a sealed interface case in the chapter's own PaymentResult example. (d) fabricates a class/interface-specific restriction that doesn't exist; data object works identically as a case within either a sealed class or sealed interface hierarchy.",
+      "tags": ["data-object", "sealed-classes", "singletons"]
+    },
+    {
+      "id": "kotlin-03-q06",
+      "type": "mcq",
+      "difficulty": "staff",
+      "prompt": "A team is building a plugin system where third-party modules need to add new event types without modifying the core library's source code. Should the core event type be modeled as a sealed hierarchy?",
+      "options": [
+        { "id": "a", "text": "No — sealing is a deliberate closed-world choice appropriate for genuinely fixed, known case sets; a plugin architecture needs the OPEN side of the expression problem (third parties extending the type set without touching your source), which sealed structurally prevents by design." },
+        { "id": "b", "text": "Yes, always — sealed hierarchies should be used for every type hierarchy in Kotlin regardless of extensibility requirements, since exhaustiveness checking is strictly beneficial in all cases." },
+        { "id": "c", "text": "This decision has no bearing on extensibility; sealed and non-sealed hierarchies support third-party subclassing identically." },
+        { "id": "d", "text": "Sealed hierarchies can be extended by third parties as long as they're in a different Gradle module, so this works fine regardless of the plugin architecture's structure." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is the chapter's explicit trade-off, directly citing the expression problem from the Algorithms course: sealed is 'closed by design,' and a plugin architecture is precisely the open-extensibility use case sealing is wrong for — the right tool there is an open interface with virtual dispatch, not a sealed hierarchy. (b) is exactly the 'default to reach for everywhere' mistake the chapter's closing trade-off explicitly warns against. (c) directly contradicts the chapter's core definition of what sealed restricts — subclassing scope is exactly what differs between sealed and open hierarchies. (d) misunderstands the restriction; sealed subtyping is scoped to the same module (or package since 1.5), not merely 'a different module is fine' — third-party plugin modules are specifically what this restriction excludes.",
+      "tags": ["sealed-classes", "expression-problem", "extensibility"]
+    }
+  ]
+}

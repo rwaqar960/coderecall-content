@@ -1,0 +1,101 @@
+{
+  "schemaVersion": 1,
+  "chapterId": "kotlin-04",
+  "passScore": 0.7,
+  "questions": [
+    {
+      "id": "kotlin-04-q01",
+      "type": "mcq",
+      "difficulty": "senior",
+      "prompt": "What does an extension function actually compile down to, and what does this reveal about what it does NOT do to the extended class?",
+      "options": [
+        { "id": "a", "text": "A regular static function taking the receiver as a hidden first parameter, with the compiler rewriting call sites accordingly — nothing is actually added to the extended class itself; it's pure syntactic sugar over a static function call." },
+        { "id": "b", "text": "It compiles to a new virtual method injected directly into the class's vtable, genuinely extending the class's member set at the bytecode level." },
+        { "id": "c", "text": "Extension functions are resolved entirely at runtime via reflection, checking the actual object's type dynamically before every call." },
+        { "id": "d", "text": "The extended class is recompiled and its .class file modified to include the new function as a permanent member." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is the chapter's precise mechanical explanation — a static function with a disguised first parameter — which is exactly why nothing is genuinely added to the class and why dispatch remains compile-time/static rather than becoming part of runtime polymorphism. (b) fabricates a vtable-injection mechanism that doesn't reflect how the JVM or Kotlin compiler actually implements extension functions. (c) inverts the actual mechanism — resolution happens at COMPILE time based on declared type, not at runtime via reflection. (d) fabricates a bytecode-modification claim; the extended class's own compiled form is untouched — the extension function is a separate, independent static function.",
+      "tags": ["extension-functions", "compilation", "static-dispatch"]
+    },
+    {
+      "id": "kotlin-04-q02",
+      "type": "code-review",
+      "difficulty": "senior",
+      "prompt": "Why does pet.sound() print '...' instead of 'Woof', even though pet actually holds a Dog instance at runtime?",
+      "code": "open class Animal\nclass Dog : Animal()\n\nfun Animal.sound() = \"...\"\nfun Dog.sound() = \"Woof\"\n\nval pet: Animal = Dog()\npet.sound()   // prints \"...\"",
+      "codeLanguage": "kotlin",
+      "options": [
+        { "id": "a", "text": "Extension function resolution is static, based on the variable's DECLARED type (Animal here), not its runtime type (Dog) — unlike a real member function override, which would honor the actual runtime type via dynamic dispatch." },
+        { "id": "b", "text": "This is a bug specific to this Kotlin version; extension functions were intended to support dynamic dispatch and this will be fixed in a future release." },
+        { "id": "c", "text": "The code fails to compile because two extension functions with the same name cannot coexist, so this output is impossible." },
+        { "id": "d", "text": "sound() resolves based on runtime type correctly, and the actual output would be 'Woof', not '...'." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is the chapter's core dispatch-trap example: extension function resolution mirrors overload resolution (chapter 2 of the OOP course) — decided by the compile-time/declared type, which for the pet variable is Animal, regardless of the Dog instance it actually holds at runtime. (b) mischaracterizes intentional, documented static-dispatch behavior as an unfixed bug. (c) is false; overloaded/overlapping extension function names on different receiver types compile and coexist fine, resolved by the declared type at each call site. (d) reverses the actual, documented output — the chapter explicitly states this prints '...', not 'Woof'.",
+      "tags": ["extension-functions", "static-dispatch", "polymorphism"]
+    },
+    {
+      "id": "kotlin-04-q03",
+      "type": "mcq",
+      "difficulty": "senior",
+      "prompt": "What are the two axes that distinguish let, run, with, apply, and also from each other?",
+      "options": [
+        { "id": "a", "text": "What the function returns (the block's result vs. the receiver itself) and how the receiver is referenced inside the block (this vs. it)." },
+        { "id": "b", "text": "Whether the function can be used with nullable types — only some of the five support the safe-call operator." },
+        { "id": "c", "text": "Execution speed — the five functions have meaningfully different runtime performance characteristics that determine which to choose." },
+        { "id": "d", "text": "Whether the function is a member function or an extension function — some of the five are members, others are extensions." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is the chapter's precise, stated distinction — a 2x2-ish matrix of return value and receiver-reference style — which is what makes each function's specific niche (transform vs. configure vs. observe) derivable rather than arbitrary. (b) fabricates a nullable-type restriction; all five scope functions work with both nullable and non-nullable receivers (that's exactly why null-safe chaining like name?.let works). (c) fabricates a performance distinction never mentioned or implied in the chapter; the difference is about return value and receiver reference, not speed. (d) is false; the chapter explicitly states all five are 'themselves ordinary extension functions.'",
+      "tags": ["scope-functions", "let-run-with-apply-also"]
+    },
+    {
+      "id": "kotlin-04-q04",
+      "type": "mcq",
+      "difficulty": "senior",
+      "prompt": "A block needs to configure several properties on a newly created object and then have the expression evaluate to that same configured object. Which scope function is the idiomatic choice, and why?",
+      "options": [
+        { "id": "a", "text": "apply — it returns the receiver itself (not the block's result) and uses this-style member access, which is exactly the 'build, configure, return the same object' pattern this scenario describes." },
+        { "id": "b", "text": "let — it is the idiomatic choice for any scope function usage regardless of what the block does or what should be returned." },
+        { "id": "c", "text": "also — it returns the block's result, making it the correct choice whenever the final expression should be a newly configured object." },
+        { "id": "d", "text": "with — because it is the only one of the five capable of accessing the receiver's properties without an explicit receiver name." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is exactly the chapter's stated 'idiomatic choice for object configuration' — returns-the-receiver plus this-style access matches this exact use case precisely, which is why the chapter uses this scenario as apply's defining example. (b) is false and directly contradicts the chapter's point that the choice should be deliberate, not a one-size-fits-all default. (c) misstates also's actual behavior — also returns the RECEIVER, not the block's result (that's let's and run's/with's behavior) — this option's own reasoning is self-contradictory relative to the chapter's stated definitions. (d) fabricates an exclusivity claim; run also uses this-style access, so with is not uniquely capable of it — and neither with nor run returns the receiver, making either a worse fit than apply for this specific scenario anyway.",
+      "tags": ["scope-functions", "apply", "object-configuration"]
+    },
+    {
+      "id": "kotlin-04-q05",
+      "type": "code-review",
+      "difficulty": "staff",
+      "prompt": "Inside the nested run blocks below, what does the bare 'name' reference resolve to, and why is this NOT a bug?",
+      "code": "class Outer { var name = \"outer\" }\nclass Inner { var name = \"inner\" }\n\nOuter().run {\n    Inner().run {\n        name   // resolves to...?\n    }\n}",
+      "codeLanguage": "kotlin",
+      "options": [
+        { "id": "a", "text": "It resolves to Inner's name (\"inner\") — the innermost this-based receiver shadows the outer one, following Kotlin's consistent, documented scoping rules; this is correct, predictable shadowing behavior, not a bug, though it's a genuine readability hazard the chapter explicitly warns about." },
+        { "id": "b", "text": "This code fails to compile due to an ambiguous reference error, since Kotlin cannot determine which name is intended." },
+        { "id": "c", "text": "It resolves to Outer's name (\"outer\"), since the outermost receiver always takes precedence over nested ones." },
+        { "id": "d", "text": "The result is nondeterministic and can vary between different compiler runs." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is the chapter's precise, worked example of this-based scope function nesting: innermost-receiver-wins shadowing is consistent and documented Kotlin behavior — not ambiguous, not a compile error — but it IS the specific readability trap the chapter names, which is exactly why it recommends preferring it-based functions or labeled receivers when nesting is likely. (b) is false; this compiles cleanly with a well-defined resolution (innermost wins), not an ambiguity error. (c) reverses the actual scoping rule — Kotlin's shadowing means the INNERMOST scope wins, not the outermost. (d) is false; Kotlin's scoping rules are fully deterministic and specified by the language, not dependent on compiler run variance.",
+      "tags": ["scope-functions", "shadowing", "nested-receivers"]
+    },
+    {
+      "id": "kotlin-04-q06",
+      "type": "mcq",
+      "difficulty": "staff",
+      "prompt": "Per the chapter, what is the recommended discipline for choosing between apply and also, given they have nearly identical mechanics (both return the receiver)?",
+      "options": [
+        { "id": "a", "text": "Choose by intent, not mechanics — apply signals 'I am configuring this object' (this-style access, fits fluent setup) while also signals 'I am observing/side-effecting on this value without altering the main flow' (it-style reference, fits logging/validation) — the choice communicates why the block exists." },
+        { "id": "b", "text": "There is no meaningful basis for choosing between them; apply and also are fully interchangeable in every respect including behavior." },
+        { "id": "c", "text": "Always prefer also over apply, since it is described as strictly more modern and apply is being phased out of Kotlin." },
+        { "id": "d", "text": "The choice should be based solely on which one requires fewer characters to type in the specific block being written." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is the chapter's explicit closing guidance on choosing scope functions by INTENT rather than surface mechanics — apply and also do share a return-the-receiver mechanic, but the receiver-reference style (this vs it) signals a different purpose (configure vs. observe), and the chapter argues this distinction should drive the choice even when either would technically 'work.' (b) understates the real, chapter-argued semantic distinction between the two functions' intended use cases. (c) fabricates a deprecation status for apply that has no basis; both remain equally standard, actively used Kotlin idioms. (d) is precisely the 'shortest reads best' anti-pattern the chapter's trade-off paragraph explicitly argues against as producing code that obscures rather than communicates intent.",
+      "tags": ["scope-functions", "apply", "also", "code-clarity"]
+    }
+  ]
+}
