@@ -1,0 +1,99 @@
+{
+  "schemaVersion": 1,
+  "chapterId": "flutter-06",
+  "passScore": 0.7,
+  "questions": [
+    {
+      "id": "flutter-06-q01",
+      "type": "mcq",
+      "difficulty": "senior",
+      "prompt": "Why does a const widget constructor provide a stronger optimization than an ordinary (non-const) widget, given that both are already 'cheap' per chapter 1?",
+      "options": [
+        { "id": "a", "text": "Const widgets are canonicalized at compile time as identical instances, so the framework can skip the diff entirely — not diff quickly, but not re-examine the widget at all, because it's provably the exact same object as before." },
+        { "id": "b", "text": "Const widgets are compiled to native machine code, while non-const widgets are interpreted at runtime." },
+        { "id": "c", "text": "There is no actual difference; 'const' is purely a stylistic convention with no performance effect." },
+        { "id": "d", "text": "Const widgets skip the build() method entirely, never being included in the widget tree." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is the precise mechanism the chapter describes: identity-provable sameness lets the diff be skipped outright, which is a stronger guarantee than 'cheap to recreate and diff' — the object literally isn't re-examined. (b) fabricates an unrelated compilation-model distinction that doesn't reflect how Dart/Flutter actually works. (c) directly contradicts the chapter's explicit performance claim and its recommendation to default to const wherever possible. (d) is false — const widgets are still part of the tree and participate in rendering normally; they just skip the diff step when unchanged.",
+      "tags": ["const-constructors", "performance", "widget-diffing"]
+    },
+    {
+      "id": "flutter-06-q02",
+      "type": "mcq",
+      "difficulty": "senior",
+      "prompt": "A setState() call rebuilds a large, mostly-unchanged widget subtree unnecessarily. What is the actual cost, given that chapter 1 established the diff correctly catches unchanged RenderObjects and skips their layout/paint?",
+      "options": [
+        { "id": "a", "text": "Wasted CPU time performing the diff itself — walking a large subtree to confirm nothing changed is real work, even though the conclusion (no layout/paint needed) is correct; this becomes visible at scale, e.g. a complex screen rebuilding every animation frame." },
+        { "id": "b", "text": "The output becomes visually incorrect, since large unnecessary rebuilds can cause rendering glitches." },
+        { "id": "c", "text": "There is no cost whatsoever; large rebuilds and small rebuilds have identical performance characteristics." },
+        { "id": "d", "text": "The app crashes if a subtree is rebuilt more than 60 times per second." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is the chapter's precise framing: correctness isn't at risk (the diff is accurate), but confirming 'nothing changed' across a large subtree still costs real CPU time — a cost invisible at small scale and significant at the scale of frequent, wide rebuilds. (b) is false; unnecessary rebuilds are a performance concern, not a correctness/rendering-glitch concern — the chapter explicitly separates these. (c) directly contradicts the entire chapter's premise that rebuild scope matters. (d) fabricates a crash threshold that doesn't exist; excessive rebuilds cause dropped frames (jank), not crashes.",
+      "tags": ["rebuild-cost", "performance", "widget-diffing"]
+    },
+    {
+      "id": "flutter-06-q03",
+      "type": "code-review",
+      "difficulty": "senior",
+      "prompt": "This timer widget rebuilds an expensive header every second, even though the header's content never changes. What's the fix, and why does it work?",
+      "code": "// Before: rebuilds ExpensiveHeader every tick\nColumn(children: [ExpensiveHeader(), Text('$_seconds s')])\n\n// After:\nColumn(children: [const ExpensiveHeader(), _TimerText(seconds: _seconds)])",
+      "codeLanguage": "dart",
+      "options": [
+        { "id": "a", "text": "Marking ExpensiveHeader const (skipping its diff entirely per its own const-ness) and extracting the changing text into its own small widget (_TimerText) scopes the rebuild to just that small widget — the same setState-scoping principle from chapter 2, deliberately applied for performance." },
+        { "id": "b", "text": "The fix has no actual effect; both versions of the code have identical rebuild behavior." },
+        { "id": "c", "text": "This fix only works if ExpensiveHeader is converted from a StatefulWidget to a StatelessWidget first." },
+        { "id": "d", "text": "The 's' suffix in the Text widget is the actual cause of the performance issue, unrelated to widget structure." }
+      ],
+      "answer": ["a"],
+      "explanation": "Two things combine here: const on ExpensiveHeader lets its diff be skipped outright (per this chapter's const discussion), and extracting the changing text into its own widget scopes what actually needs re-diffing to that small piece — directly connecting to chapter 2's setState-scoping idea, now applied intentionally as a performance technique. (b) is false and contradicts the entire point of the example. (c) is an unsupported, fabricated precondition; const-ness doesn't require converting between Stateless/Stateful — ExpensiveHeader could be either, as long as its constructor arguments are all compile-time constants. (d) is nonsensical; string formatting has no bearing on rebuild performance.",
+      "tags": ["rebuild-scoping", "const", "performance"]
+    },
+    {
+      "id": "flutter-06-q04",
+      "type": "mcq",
+      "difficulty": "senior",
+      "prompt": "Why is the difference between ListView and ListView.builder often invisible during local development but a real problem in production?",
+      "options": [
+        { "id": "a", "text": "ListView builds every item immediately regardless of visibility, which performs fine for short test lists but becomes expensive at real-world list lengths (e.g. thousands of items) that developers often don't test against locally; ListView.builder builds items lazily as they scroll into view." },
+        { "id": "b", "text": "ListView.builder is a completely different widget unrelated to ListView, with a different visual appearance." },
+        { "id": "c", "text": "ListView only supports fewer than 100 items total; beyond that, the app crashes regardless of which variant is used." },
+        { "id": "d", "text": "The difference is purely cosmetic (different scroll physics), with no performance implications either way." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is the chapter's explicit 'looks fine in the demo, breaks at real scale' example: eager-building the full list is only expensive when the list is actually long, which local test data often isn't. (b) mischaracterizes them as unrelated widgets; ListView.builder is a specialized construction mode of the same ListView concept, producing the same visual scrolling list, differing only in build strategy. (c) fabricates a crash threshold; ListView simply becomes slow/janky at scale, it doesn't hard-crash at a specific item count. (d) directly contradicts the chapter's stated performance distinction, which is the entire point of the section.",
+      "tags": ["listview", "lazy-loading", "performance"]
+    },
+    {
+      "id": "flutter-06-q05",
+      "type": "mcq",
+      "difficulty": "staff",
+      "prompt": "Per the chapter, what should be the FIRST step when diagnosing a janky Flutter screen — before applying any specific fix (const, ListView.builder, rebuild scoping)?",
+      "options": [
+        { "id": "a", "text": "Profile with Flutter DevTools' Performance view and rebuild-tracking tools to identify which frames are actually slow and why, rather than guessing which of several plausible causes is the real bottleneck." },
+        { "id": "b", "text": "Immediately add const to every widget constructor in the codebase, regardless of whether profiling has identified rebuild cost as the issue." },
+        { "id": "c", "text": "Rewrite all ListView usages as ListView.builder throughout the app before investigating anything else." },
+        { "id": "d", "text": "Assume the cause is always network latency, since that is the most common performance issue in mobile apps generally." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is the chapter's explicit, named discipline — profiling first, applying the specific fix the data actually points to — contrasted directly against the 'weak answer' of jumping to a specific intervention without evidence it's the real bottleneck. (b) and (c) are both named as examples of the weak, guess-first approach the chapter explicitly critiques, even though both are legitimate fixes WHEN the data actually supports them. (d) fabricates an unsupported general claim about mobile performance that has no basis in this chapter, which is specifically about rendering/rebuild performance, not network issues.",
+      "tags": ["profiling", "devtools", "performance-diagnosis"]
+    },
+    {
+      "id": "flutter-06-q06",
+      "type": "mcq",
+      "difficulty": "staff",
+      "prompt": "A developer proposes splitting every widget in the codebase into the smallest possible pieces preemptively, reasoning 'smaller widgets are always better for performance.' What does the chapter say about this?",
+      "options": [
+        { "id": "a", "text": "This has a real readability and indirection cost, the same over-abstraction risk the OOP and algorithms courses warn about generally — the recommended approach is to profile first, then scope the SPECIFIC subtree DevTools identifies as expensive, not preemptively fragment the entire codebase." },
+        { "id": "b", "text": "This is exactly the correct approach and should be applied uniformly across the entire codebase without further analysis." },
+        { "id": "c", "text": "Widget splitting has no performance implications at all, positive or negative, so the proposal is harmless but pointless." },
+        { "id": "d", "text": "This approach is required by the Flutter framework and will cause compile errors if not followed." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is the chapter's explicit trade-off warning, directly cross-referencing the course's recurring theme about premature/excessive abstraction — the fix should be targeted at what profiling actually identifies as expensive, not applied blanket-style out of general anxiety about performance. (b) is exactly the overcorrection the chapter's trade-off paragraph is written to prevent. (c) understates it — the chapter does connect widget granularity to rebuild scope (a real effect), it just argues AGAINST applying it indiscriminately everywhere. (d) is a fabricated, false technical constraint; there's no such compile-time requirement in Flutter.",
+      "tags": ["over-abstraction", "performance", "widget-splitting"]
+    }
+  ]
+}

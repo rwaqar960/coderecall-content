@@ -1,0 +1,99 @@
+{
+  "schemaVersion": 1,
+  "chapterId": "flutter-05",
+  "passScore": 0.7,
+  "questions": [
+    {
+      "id": "flutter-05-q01",
+      "type": "mcq",
+      "difficulty": "senior",
+      "prompt": "What is the fundamental limitation of imperative Navigator.push/pop navigation, precisely?",
+      "options": [
+        { "id": "a", "text": "The screen stack only exists at runtime inside the Navigator's memory — there is no data structure describing 'current screen' that exists independent of having actually performed the push calls that led there." },
+        { "id": "b", "text": "Navigator.push and Navigator.pop are deprecated APIs that no longer function in current Flutter versions." },
+        { "id": "c", "text": "Imperative navigation cannot display more than 5 screens deep in the stack." },
+        { "id": "d", "text": "Navigator.push always causes a full app restart, losing all in-memory state." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is the chapter's precise diagnosis: the stack is runtime-only memory, not externally-representable data — which is exactly the property deep linking, URL sync, and state restoration all need and don't get from this model. (b) is false; Navigator.push/pop remain fully functional, standard APIs, explicitly described as 'completely adequate' for many real apps. (c) fabricates an arbitrary depth limit that doesn't exist. (d) is false and would make basic navigation unusable; pushing a screen does not restart the app or lose state.",
+      "tags": ["navigator", "imperative-navigation", "limitations"]
+    },
+    {
+      "id": "flutter-05-q02",
+      "type": "mcq",
+      "difficulty": "senior",
+      "prompt": "Deep linking, web URL sync, and state restoration are named as three separate requirements. What single underlying property do all three actually need from the navigation system?",
+      "options": [
+        { "id": "a", "text": "Navigation state must exist as inspectable, reconstructible DATA — readable, constructible, and serializable — rather than only being the side effect of a sequence of imperative push calls that happened to run." },
+        { "id": "b", "text": "They each need a completely different, unrelated navigation mechanism, with no shared underlying requirement." },
+        { "id": "c", "text": "All three require the app to have no more than one screen in its navigation stack at any time." },
+        { "id": "d", "text": "They all require disabling the Navigator's back button entirely." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is the chapter's explicit unifying insight — three seemingly different feature requirements collapse into one structural need (navigation-state-as-data), which is precisely what motivates declarative routing as the shared solution to all three. (b) directly contradicts the chapter's stated point that these three requirements 'share a shape.' (c) fabricates an unrelated and impractical single-screen restriction. (d) is fabricated and unrelated to any of the three named requirements.",
+      "tags": ["deep-linking", "state-restoration", "declarative-routing"]
+    },
+    {
+      "id": "flutter-05-q03",
+      "type": "mcq",
+      "difficulty": "senior",
+      "prompt": "How does the Router API's declarative model relate to the chapter 1 concept of widget diffing?",
+      "options": [
+        { "id": "a", "text": "It applies the same declarative-diffing idea to the page stack that widgets apply to a UI subtree — you declare what the stack SHOULD look like as a function of current state, and the framework reconciles the actual Navigator to match, rather than imperatively issuing push/pop commands." },
+        { "id": "b", "text": "There is no meaningful relationship; the two systems use entirely unrelated underlying mechanisms." },
+        { "id": "c", "text": "The Router API replaces widget diffing entirely, meaning regular widgets no longer use the Element-based reconciliation described in chapter 1 once Router is adopted." },
+        { "id": "d", "text": "Widget diffing and the Router API were merged into a single system in a recent Flutter release, eliminating the distinction described here." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is the chapter's explicit, deliberate parallel: 'the stack of pages instead of a widget subtree' being described as 'the same declarative-diffing idea as widgets generally' — recognizing this connection is what makes go_router's API feel motivated rather than arbitrary. (b) directly contradicts the chapter's explicit stated parallel. (c) misunderstands the relationship — regular widget diffing (chapter 1's Element-based reconciliation) continues operating normally; the Router API applies an analogous IDEA to a different layer (page stacks), it doesn't replace or disable the widget-level mechanism. (d) is a fabricated claim about Flutter's release history.",
+      "tags": ["router-api", "declarative-routing", "widget-diffing"]
+    },
+    {
+      "id": "flutter-05-q04",
+      "type": "mcq",
+      "difficulty": "staff",
+      "prompt": "A small internal tool app has no deep-linking requirement, no web target, and no state-restoration need. Per the chapter, should it adopt declarative routing (go_router/Router API) anyway, for future-proofing?",
+      "options": [
+        { "id": "a", "text": "Not necessarily — imperative Navigator.push/pop is explicitly framed as 'the correctly-scoped tool,' not a compromise, when none of the three motivating requirements are present; declarative routing has a real structural and learning cost that isn't justified without an actual need for it." },
+        { "id": "b", "text": "Yes, always — declarative routing should be used in 100% of Flutter apps regardless of requirements, since it's strictly superior in every dimension." },
+        { "id": "c", "text": "Yes, because imperative navigation is deprecated and will stop working in future Flutter versions." },
+        { "id": "d", "text": "No, because declarative routing is only available for apps built after a specific, recent Flutter version." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is the chapter's explicit trade-off framing, echoing the course's recurring 'don't pay for what you don't need' discipline — declarative routing's cost (upfront structure, different mental model) is real and only worth paying when one of the three motivating requirements is actually present. (b) is exactly the 'strictly superior, always use it' overclaim the chapter's trade-off paragraph is written to correct. (c) is false; imperative Navigator.push/pop remains a fully supported, commonly used API, not a deprecated one. (d) is a fabricated version-gating claim with no basis in the chapter.",
+      "tags": ["navigation", "tradeoffs", "scoping"]
+    },
+    {
+      "id": "flutter-05-q05",
+      "type": "code-review",
+      "difficulty": "staff",
+      "prompt": "A bottom-nav-bar app switches between tabs using IndexedStack, giving each tab its own nested Navigator. Why would replacing IndexedStack with a conditional (showing only the current tab's Navigator via an if/else, removing the others from the tree) break each tab's preserved navigation position?",
+      "code": "// With IndexedStack: all tab Navigators stay in the tree, just hidden\nIndexedStack(\n  index: currentTab,\n  children: [homeNavigator, searchNavigator],\n)\n\n// Conditional alternative that would break tab state:\ncurrentTab == 0 ? homeNavigator : searchNavigator",
+      "codeLanguage": "dart",
+      "options": [
+        { "id": "a", "text": "Conditionally removing a tab's Navigator from the tree destroys its Element (and the Navigator's internal back-stack state) entirely per chapter 1's type/position-change rule; switching back creates a brand-new Navigator with no memory of where that tab was, unlike IndexedStack which keeps every tab's subtree alive, just invisible." },
+        { "id": "b", "text": "IndexedStack and a conditional produce functionally identical behavior; there would be no observable difference in tab navigation state." },
+        { "id": "c", "text": "The conditional approach would cause a compile-time error, since Dart does not allow conditional expressions to return different Navigator instances." },
+        { "id": "d", "text": "This only matters when there are more than 5 tabs in the bottom navigation bar." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is the chapter's explicit, deliberate application of chapter 1's widget-identity lesson to navigation: removing a widget from the tree (rather than just hiding it) destroys its Element and all associated state, including a nested Navigator's back-stack — IndexedStack avoids this specifically by keeping all children mounted, just not painted. (b) is exactly the mistaken assumption the chapter is warning against — there IS a significant, observable behavioral difference. (c) is false; this is entirely valid, ordinary Dart/Flutter code with no compile error. (d) fabricates an arbitrary tab-count threshold; the effect is present with as few as two tabs.",
+      "tags": ["indexedstack", "nested-navigation", "widget-identity"]
+    },
+    {
+      "id": "flutter-05-q06",
+      "type": "mcq",
+      "difficulty": "senior",
+      "prompt": "What real, honest cost does the chapter attribute to adopting declarative routing, even when the motivating requirements (deep linking, web, state restoration) ARE present?",
+      "options": [
+        { "id": "a", "text": "More upfront structure (a route configuration to define and maintain) and a genuinely different mental model from 'just push a screen,' representing a real learning curve for a team new to it." },
+        { "id": "b", "text": "Declarative routing has no costs whatsoever; it is strictly better than imperative navigation in every measurable way." },
+        { "id": "c", "text": "Declarative routing requires rewriting the entire app's business logic layer, unrelated to navigation." },
+        { "id": "d", "text": "Declarative routing is significantly slower at runtime than imperative navigation in all cases." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is the chapter's explicit, honest cost accounting — even when declarative routing is the right call, it isn't free, and naming that cost is what makes the trade-off analysis genuine rather than one-sided advocacy. (b) contradicts the chapter's explicit acknowledgment of real costs, undermining the trade-off framing the whole section is built around. (c) overstates the scope; declarative routing affects the navigation layer specifically, not the entire business logic layer. (d) is an unsupported runtime-performance claim the chapter never makes; the cost identified is structural/cognitive (setup and mental model), not execution speed.",
+      "tags": ["declarative-routing", "tradeoffs", "learning-curve"]
+    }
+  ]
+}

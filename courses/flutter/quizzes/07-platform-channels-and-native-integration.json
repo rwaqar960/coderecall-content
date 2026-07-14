@@ -1,0 +1,99 @@
+{
+  "schemaVersion": 1,
+  "chapterId": "flutter-07",
+  "passScore": 0.7,
+  "questions": [
+    {
+      "id": "flutter-07-q01",
+      "type": "mcq",
+      "difficulty": "senior",
+      "prompt": "Why can't Dart code in a Flutter app directly call native platform code the way, say, Kotlin can call Java on Android?",
+      "options": [
+        { "id": "a", "text": "Flutter paints its own UI via Skia/Impeller and runs Dart in its own runtime, separate from the native platform's runtime, with no shared memory — any interaction must cross this boundary via explicit message-passing, not a direct call." },
+        { "id": "b", "text": "Dart is a sandboxed, JavaScript-like scripting language that cannot execute compiled native operations at all." },
+        { "id": "c", "text": "This limitation only applies to iOS; on Android, Dart and native code can call each other directly without any bridge." },
+        { "id": "d", "text": "Platform channels are an artificial restriction that Google could remove in a future Flutter release with no architectural changes required." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is the chapter's precise, correct explanation, explicitly contrasted against a common misconception: the boundary exists because of separate runtimes with no shared memory, a genuine architectural fact, not an arbitrary restriction. (b) is explicitly named and rejected in the chapter's Interview lens as the WRONG mental model — Dart compiles to native machine code, it is not a sandboxed scripting language. (c) is false; the separate-runtime boundary applies identically on both iOS and Android — platform channels exist for both. (d) mischaracterizes a fundamental architectural constraint (separate runtimes, no shared memory) as an arbitrary, easily-removable restriction.",
+      "tags": ["platform-channels", "flutter-architecture", "runtime-boundary"]
+    },
+    {
+      "id": "flutter-07-q02",
+      "type": "mcq",
+      "difficulty": "senior",
+      "prompt": "Why must data passed through a MethodChannel be restricted to platform-standard types (numbers, strings, booleans, lists, maps) rather than arbitrary Dart objects?",
+      "options": [
+        { "id": "a", "text": "Dart and native code share no memory, so a Dart object reference is meaningless on the native side — only data that both sides know how to encode and decode identically (i.e. serializable, standard types) can actually cross the boundary." },
+        { "id": "b", "text": "This is an arbitrary API design choice by the Flutter team that could easily be changed to support arbitrary objects." },
+        { "id": "c", "text": "Arbitrary Dart objects are too large in memory to be transmitted over any channel." },
+        { "id": "d", "text": "This restriction only applies to EventChannel, not MethodChannel." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is a direct, necessary consequence of the no-shared-memory fact established earlier in the chapter — object REFERENCES are meaningless across a boundary with no shared address space, so only self-contained, encodable data can cross. (b) mischaracterizes a fundamental architectural constraint as an arbitrary, changeable API decision. (c) is false and not the actual reason; the constraint is about reference-passing being meaningless across runtimes, not about data size. (d) is false — the chapter explicitly states EventChannel uses 'the same underlying message-passing mechanism, same serialization constraint' as MethodChannel.",
+      "tags": ["methodchannel", "serialization", "platform-boundary"]
+    },
+    {
+      "id": "flutter-07-q03",
+      "type": "mcq",
+      "difficulty": "senior",
+      "prompt": "What is the actual relationship between MethodChannel and EventChannel?",
+      "options": [
+        { "id": "a", "text": "EventChannel is really MethodChannel's handshake (start/stop listening) plus a way for native code to push messages back repeatedly, rather than only once in response to a Dart-initiated call — same underlying mechanism, different communication shape (streaming vs. request/response)." },
+        { "id": "b", "text": "They are entirely unrelated APIs implemented via completely different underlying technology." },
+        { "id": "c", "text": "EventChannel is a deprecated predecessor to MethodChannel and should not be used in new code." },
+        { "id": "d", "text": "MethodChannel can only be used on Android, while EventChannel can only be used on iOS." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is the chapter's explicit characterization — EventChannel isn't a fundamentally different bridge, it's the same message-passing mechanism adapted for continuous/streaming data instead of one-shot request/response. (b) directly contradicts the chapter's explicit statement about shared mechanism. (c) is false; EventChannel is the current, actively-used mechanism for streaming platform data (sensors, location), not a deprecated one. (d) is false and a fabricated platform restriction; both channel types are available on both Android and iOS.",
+      "tags": ["eventchannel", "methodchannel", "streaming"]
+    },
+    {
+      "id": "flutter-07-q04",
+      "type": "code-review",
+      "difficulty": "senior",
+      "prompt": "A screen freezes and drops frames while parsing a large JSON payload, even though no platform channel call is involved anywhere in this code. What's the cause, and the fix?",
+      "code": "// Freezes the UI while parsing\nfinal result = expensiveParse(hugeJsonString);\n\n// Fix:\nfinal result = await compute(expensiveParse, hugeJsonString);",
+      "codeLanguage": "dart",
+      "options": [
+        { "id": "a", "text": "Dart is single-threaded per isolate, so a long-running synchronous computation blocks the UI isolate's event loop directly — unrelated to platform channels; compute() runs the function on a separate isolate, keeping the UI isolate responsive." },
+        { "id": "b", "text": "This is caused by a platform channel timeout, since all Dart computation implicitly goes through MethodChannel." },
+        { "id": "c", "text": "JSON parsing in Dart always requires native code, so this is actually a platform channel performance issue." },
+        { "id": "d", "text": "The fix works by running expensiveParse on a background native thread using MethodChannel internally." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is the chapter's explicit distinction: this freeze has NOTHING to do with platform channels — it's Dart's own single-threaded-per-isolate concurrency model blocking the UI event loop with synchronous CPU work, a separate concept the chapter deliberately introduces after platform channels precisely to avoid conflating the two. (b) and (c) both incorrectly attribute an isolate-level concurrency issue to the platform channel mechanism, which the chapter explicitly separates as a different concept entirely. (d) mischaracterizes compute()'s actual mechanism — it uses Dart isolates (a Dart-level concurrency primitive), not MethodChannel or native threads.",
+      "tags": ["isolates", "compute", "ui-thread-blocking"]
+    },
+    {
+      "id": "flutter-07-q05",
+      "type": "mcq",
+      "difficulty": "staff",
+      "prompt": "Why must the function passed to compute() be a top-level or static function, rather than a closure that captures local variables from its surrounding scope?",
+      "options": [
+        { "id": "a", "text": "Isolates communicate only via serializable messages, never shared references — a closure capturing local state (which may include non-serializable objects or references) can't be transmitted across the isolate boundary the same way a MethodChannel call can't pass a Dart object reference to native code." },
+        { "id": "b", "text": "This is an arbitrary Dart language restriction with no relationship to how isolates actually work." },
+        { "id": "c", "text": "Closures are slower than top-level functions, so this restriction exists purely for performance reasons." },
+        { "id": "d", "text": "Static functions are required because compute() is itself implemented using platform channels internally." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is the chapter's explicit parallel between isolate boundaries and platform channel boundaries — both share the 'only serializable messages, never shared references' constraint, which is exactly why a closure's captured environment (which can't be serialized in general) can't cross into the new isolate. (b) understates a real, mechanistic reason tied directly to isolate memory isolation, not an arbitrary language quirk. (c) misattributes the restriction to performance when it's actually about serialization feasibility — a closure isn't merely 'slower,' its captured state often literally cannot be encoded to cross the isolate boundary at all. (d) is false; compute() uses Dart's isolate mechanism, not platform channels, which the chapter treats as two distinct concepts.",
+      "tags": ["isolates", "compute", "closures", "serialization"]
+    },
+    {
+      "id": "flutter-07-q06",
+      "type": "mcq",
+      "difficulty": "staff",
+      "prompt": "A team wraps every async function in their app — including simple network API calls — with compute(), reasoning 'isolates make async code faster.' Is this a sound practice per the chapter?",
+      "options": [
+        { "id": "a", "text": "No — compute()/isolates have real overhead (isolate spin-up, serializing input/output) that's only worth paying for genuinely CPU-bound work; ordinary I/O-bound async work like network calls is already non-blocking via Dart's event loop and gains nothing from an isolate." },
+        { "id": "b", "text": "Yes — wrapping all async operations in compute() is always beneficial and has no downsides." },
+        { "id": "c", "text": "This is required by Flutter; any async function not wrapped in compute() will be rejected by the framework." },
+        { "id": "d", "text": "This only matters for apps targeting iOS; on Android, compute() has no overhead at all." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is the chapter's explicit closing trade-off: isolates solve a specific problem (CPU-bound work blocking the event loop) and have real costs of their own — applying them to I/O-bound work that was never blocking the UI in the first place adds overhead for zero benefit. (b) is exactly the misconception the chapter's trade-off paragraph corrects. (c) is fabricated; ordinary async functions using await work perfectly well without compute() and are not rejected by the framework. (d) fabricates a platform-specific exemption from isolate overhead that doesn't exist; the cost applies on both platforms.",
+      "tags": ["isolates", "compute", "async", "tradeoffs"]
+    }
+  ]
+}

@@ -1,0 +1,103 @@
+{
+  "schemaVersion": 1,
+  "chapterId": "flutter-04",
+  "passScore": 0.7,
+  "questions": [
+    {
+      "id": "flutter-04-q01",
+      "type": "mcq",
+      "difficulty": "senior",
+      "prompt": "Why does calling setState() after an await, without a mounted check, sometimes throw an error rather than just doing nothing?",
+      "options": [
+        { "id": "a", "text": "The widget's Element may have been removed from the tree during the suspension (navigation away, parent rebuild, screen pop) — calling setState on an unmounted State is treated as a hard error specifically because it usually signals this exact bug, not a benign no-op." },
+        { "id": "b", "text": "setState() always throws after any await, regardless of whether the widget is still in the tree, and must always be avoided in async functions." },
+        { "id": "c", "text": "This only happens due to a rare Flutter framework bug that occurs in fewer than 1% of apps." },
+        { "id": "d", "text": "The error only occurs when using StreamBuilder, never with plain async/await code." }
+      ],
+      "answer": ["a"],
+      "explanation": "This directly connects to chapter 1's point that BuildContext IS the Element — an await genuinely can outlive its Element's presence in the tree, and the framework throws deliberately rather than silently ignoring the call, because silent ignoring would hide real bugs. (b) is false; setState after await works fine as long as the widget is still mounted, which is the common case — the check exists for the exception, not because every post-await setState is unsafe. (c) mischaracterizes a well-understood, common, and entirely deterministic (not rare/random) failure mode as a rare framework bug. (d) is false and irrelevant; this applies to any async function using setState, regardless of whether StreamBuilder is involved anywhere.",
+      "tags": ["mounted-check", "async", "setstate"]
+    },
+    {
+      "id": "flutter-04-q02",
+      "type": "code-review",
+      "difficulty": "senior",
+      "prompt": "This code technically compiles and appears to work on first load, but users report the profile screen sometimes gets stuck showing a loading spinner forever after an unrelated part of the screen updates. What's the bug?",
+      "code": "class Profile extends StatelessWidget {\n  @override\n  Widget build(BuildContext context) {\n    return FutureBuilder(\n      future: api.fetchUser(),\n      builder: (context, snapshot) => ...,\n    );\n  }\n}",
+      "codeLanguage": "dart",
+      "options": [
+        { "id": "a", "text": "api.fetchUser() is called inline inside build(), so every rebuild creates a brand-new Future; if anything else triggers a rebuild before the current future resolves, FutureBuilder starts observing a fresh, not-yet-resolved future, restarting the loading state." },
+        { "id": "b", "text": "FutureBuilder cannot be used inside a StatelessWidget under any circumstances." },
+        { "id": "c", "text": "api.fetchUser() is missing an await keyword, which is required for FutureBuilder to function correctly." },
+        { "id": "d", "text": "This is a network connectivity issue unrelated to the widget code." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is exactly the chapter's flagged bug: the future must be created once (in initState or as a late final field, which typically requires a StatefulWidget to hold it) and reused, not recreated on every build() call — the inline version works on first render by coincidence, then breaks the moment any unrelated rebuild occurs before resolution. (b) is false and misses the actual bug — the fix does require moving the future's creation out of build() (typically necessitating a StatefulWidget to store it in a field), but this option incorrectly frames it as an absolute prohibition rather than identifying the specific inline-creation mistake. (c) misunderstands the code — future: expects a Future object, not an awaited value; adding await here would be a type error, not a fix. (d) dismisses a well-defined, reproducible code-level bug as an unrelated external issue.",
+      "tags": ["futurebuilder", "async", "rebuild-bug"]
+    },
+    {
+      "id": "flutter-04-q03",
+      "type": "code-review",
+      "difficulty": "senior",
+      "prompt": "What does removing the cancel() call in dispose() actually cause, given the rest of this code is otherwise correct?",
+      "code": "class _LiveScoreState extends State<LiveScore> {\n  StreamSubscription<int>? _sub;\n\n  @override\n  void initState() {\n    super.initState();\n    _sub = scoreStream.listen((score) => setState(() => _score = score));\n  }\n\n  @override\n  void dispose() {\n    // _sub?.cancel();  <-- removed\n    super.dispose();\n  }\n}",
+      "codeLanguage": "dart",
+      "options": [
+        { "id": "a", "text": "The subscription (and everything the listener closure holds onto, including this State object) stays alive for as long as the stream itself is alive, and the next stream event after widget disposal will call setState on the now-unmounted widget, hitting the exact error chapter's opening mounted-check discussion warned about." },
+        { "id": "b", "text": "This has no observable effect, since Dart's garbage collector automatically cancels all active stream subscriptions when a widget is disposed." },
+        { "id": "c", "text": "The app will fail to compile without the cancel() call, since dispose() requires all subscriptions to be explicitly closed." },
+        { "id": "d", "text": "This only matters for streams with more than 1000 total events." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is the chapter's explicit DSA-course callback: an uncancelled subscription is a leaked listener, keeping the disposed widget's State object alive via the closure and eventually calling setState on it — the identical mounted-check failure the chapter opened with, arriving via a different path (a stream event instead of a resumed await). (b) is false; Dart's garbage collector does not know to cancel stream subscriptions on widget disposal — that's exactly why dispose() exists as a manual cleanup hook. (c) is false; omitting cancel() is a semantic/runtime bug, not a compile error — the code compiles and runs, just incorrectly. (d) fabricates an event-count threshold that has no basis; the bug occurs on the very next event after disposal, regardless of total event count.",
+      "tags": ["streamsubscription", "memory-leak", "dispose"]
+    },
+    {
+      "id": "flutter-04-q04",
+      "type": "code-review",
+      "difficulty": "staff",
+      "prompt": "A search-as-you-type field fires an API call on every keystroke. Without any guard, a slow response to an early keystroke can overwrite a fast response to a later, more relevant keystroke with stale results. What does the _requestId pattern below actually guard against, precisely?",
+      "code": "int _requestId = 0;\n\nFuture<void> _search(String query) async {\n  final thisRequest = ++_requestId;\n  final results = await api.search(query);\n  if (thisRequest != _requestId) return;\n  if (!mounted) return;\n  setState(() => _results = results);\n}",
+      "codeLanguage": "dart",
+      "options": [
+        { "id": "a", "text": "Out-of-order completion: if a newer search has started (incrementing _requestId) before this older search's response arrives, the stale response is discarded instead of overwriting the newer, more relevant results already displayed." },
+        { "id": "b", "text": "It prevents the API from ever being called more than once per second, functioning as a debounce mechanism instead of a result-discarding one." },
+        { "id": "c", "text": "It guards against the widget being disposed, serving the same purpose as the mounted check on the following line." },
+        { "id": "d", "text": "It has no functional purpose and exists only for logging which request number is currently in flight." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is precisely the pattern the chapter names: comparing the captured request id against the current one after the await detects whether a NEWER request has since superseded this one, discarding an outdated result rather than letting it clobber fresher data — a distinct concern from widget disposal. (b) mischaracterizes it as rate-limiting/debouncing (delaying the call itself), when this pattern lets every call proceed but discards stale RESULTS — a different, complementary technique the chapter explicitly distinguishes from debouncing. (c) conflates two separate, stacked guards in the same function — the mounted check (widget disposal) is a SEPARATE line immediately after, addressing a different failure mode than request staleness. (d) dismisses a functionally load-bearing check as mere logging, which is incorrect given the early return it performs.",
+      "tags": ["async", "race-condition", "stale-results"]
+    },
+    {
+      "id": "flutter-04-q05",
+      "type": "mcq",
+      "difficulty": "staff",
+      "prompt": "The chapter frames four distinct-looking bugs (stale context after await, inline FutureBuilder future, leaked stream subscription, out-of-order search results) as fundamentally the same issue. What is that shared root cause?",
+      "options": [
+        { "id": "a", "text": "A mismatch between async operation lifetime and widget/data lifetime — in each case, something (a callback, a subscription, a result) outlives or arrives after the point at which it's still valid or relevant, and nothing automatically discards it." },
+        { "id": "b", "text": "All four bugs are caused by the same specific typo pattern that developers commonly make." },
+        { "id": "c", "text": "They share no common cause; the chapter groups them together purely for organizational convenience, not because of an underlying connection." },
+        { "id": "d", "text": "All four are solved by exactly the same single line of code (the mounted check) applied identically in every case." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is the chapter's explicit closing synthesis: recognizing the SAME underlying shape (async lifetime vs. widget/data lifetime mismatch) across superficially different bugs is what turns four memorized fixes into one transferable understanding, applicable to async scenarios not explicitly covered in the chapter. (b) mischaracterizes a conceptual pattern as a mere typo, missing the actual structural insight. (c) directly contradicts the chapter's explicit final framing connecting all four cases. (d) overstates it — the mounted check specifically addresses the widget-disposal cases (bugs 1 and 3), while the inline-future bug (2) and stale-results bug (4) require different specific fixes (moving future creation, request-id comparison) even though they share the same ROOT CAUSE category.",
+      "tags": ["async", "widget-lifetime", "synthesis"]
+    },
+    {
+      "id": "flutter-04-q06",
+      "type": "mcq",
+      "difficulty": "senior",
+      "prompt": "Under what condition does StreamBuilder correctly and automatically manage a stream subscription's lifetime, without requiring a manual dispose() cancellation?",
+      "options": [
+        { "id": "a", "text": "When given a stable stream reference (not recreated inline on every build), StreamBuilder subscribes and unsubscribes automatically as the widget enters and leaves the tree — the manual-cancellation bug specifically arises from manually calling .listen() instead of delegating to StreamBuilder." },
+        { "id": "b", "text": "StreamBuilder never requires cancellation logic under any circumstances, even when the stream is recreated inline on every build." },
+        { "id": "c", "text": "StreamBuilder only manages subscription lifetime correctly when used inside a StatelessWidget, never inside a StatefulWidget." },
+        { "id": "d", "text": "Manual dispose() cancellation is always required even when using StreamBuilder, with no exceptions." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is the chapter's precise scoping of when the automatic-management benefit actually applies: StreamBuilder handles subscribe/unsubscribe correctly given a STABLE stream reference — the same 'don't recreate it inline' discipline as FutureBuilder's future — and the leaked-subscription bug the chapter demonstrates arises specifically from bypassing StreamBuilder with manual .listen() calls. (b) overclaims — an inline, recreated-every-build stream reference would reintroduce a version of the same rebuild bug FutureBuilder has, even with StreamBuilder's automatic subscription management. (c) is a fabricated, false restriction; StreamBuilder works correctly in both StatelessWidget and StatefulWidget contexts. (d) contradicts the chapter's stated point that StreamBuilder's whole benefit is handling this automatically — manual cancellation is specifically needed only when NOT using StreamBuilder.",
+      "tags": ["streambuilder", "subscription-lifecycle"]
+    }
+  ]
+}

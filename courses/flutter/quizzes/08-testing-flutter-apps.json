@@ -1,0 +1,99 @@
+{
+  "schemaVersion": 1,
+  "chapterId": "flutter-08",
+  "passScore": 0.7,
+  "questions": [
+    {
+      "id": "flutter-08-q01",
+      "type": "mcq",
+      "difficulty": "senior",
+      "prompt": "Why does business logic entangled inside a widget's build() method force more expensive testing than the same logic kept separate?",
+      "options": [
+        { "id": "a", "text": "Logic embedded in build() can only be exercised by rendering the widget, forcing every test of that logic through the widget-testing tier (slower, requires pumping frames) even when the logic itself is pure and could otherwise be tested in milliseconds with no framework involved." },
+        { "id": "b", "text": "Widgets containing logic are always slower to render than widgets without logic, regardless of testing." },
+        { "id": "c", "text": "Dart does not allow unit tests to call any function defined inside a widget class, even indirectly." },
+        { "id": "d", "text": "This has no effect on testing; unit tests and widget tests always have identical cost regardless of where logic lives." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is the chapter's direct connection to chapter 9's architecture discussion: separating logic from widgets is what makes unit testing (the cheapest tier) actually usable for that logic — entangled logic forces the expensive tier by structural necessity, not by choice at test-writing time. (b) confuses testing cost with rendering performance, which are unrelated concerns here. (c) mischaracterizes the constraint as a language-level restriction rather than a practical consequence of needing a widget tree to exercise build()-embedded code. (d) directly contradicts the chapter's central point about tier cost differences.",
+      "tags": ["unit-tests", "architecture", "testability"]
+    },
+    {
+      "id": "flutter-08-q02",
+      "type": "code-review",
+      "difficulty": "senior",
+      "prompt": "This widget test occasionally fails (or passes for the wrong reason) depending on subtle timing. What's missing, and why does it matter?",
+      "code": "testWidgets('tapping increments the counter', (tester) async {\n  await tester.pumpWidget(const MaterialApp(home: CounterScreen()));\n  expect(find.text('0'), findsOneWidget);\n\n  await tester.tap(find.byIcon(Icons.add));\n  // missing: await tester.pump();\n\n  expect(find.text('1'), findsOneWidget);\n});",
+      "codeLanguage": "dart",
+      "options": [
+        { "id": "a", "text": "A pump() call after the tap is missing — tapping triggers setState, which SCHEDULES a rebuild rather than performing it immediately (per chapter 1); without an explicit pump(), the assertion runs against the pre-rebuild tree, checking for '1' before the frame that would show it has actually been processed." },
+        { "id": "b", "text": "The test is missing a call to tester.pumpWidget() a second time, which is required after every tap regardless of setState." },
+        { "id": "c", "text": "This code is completely correct as written; no changes are needed for reliable behavior." },
+        { "id": "d", "text": "The bug is that find.byIcon() should be replaced with find.byKey() for all tap interactions." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is the chapter's explicitly named 'single most common widget-test mistake' — pump() is how a widget test explicitly advances Flutter's frame scheduling, mirroring the real setState-schedules-not-performs behavior from chapter 1; omitting it after a state-changing action leaves the assertion checking stale state. (b) confuses pump() (advance a frame) with pumpWidget() (initially build/rebuild the whole widget tree from scratch) — repeating pumpWidget() is not the fix and would actually reset the widget. (c) is false; this is exactly the flaky/incorrect pattern the chapter's example is built to illustrate. (d) misdiagnoses the issue as a finder-method problem; byIcon() is a legitimate finder, and swapping finder methods doesn't address the missing frame-advance at all.",
+      "tags": ["widget-tests", "pump", "setstate"]
+    },
+    {
+      "id": "flutter-08-q03",
+      "type": "mcq",
+      "difficulty": "senior",
+      "prompt": "What specifically makes integration tests both the slowest AND the most fragile testing tier, per the chapter?",
+      "options": [
+        { "id": "a", "text": "They run the actual compiled app on a real or simulated device, driving it as a user would — exercising real rendering, real navigation, and real platform channel calls, which is both what makes them realistic and what makes them slow (seconds-to-minutes) and timing/environment-dependent (prone to flaking under CI load)." },
+        { "id": "b", "text": "Integration tests are fragile purely because Flutter's integration testing API has known, unfixed bugs unrelated to what's being tested." },
+        { "id": "c", "text": "Integration tests are slow only because they always run on the slowest available CI hardware, not because of what they exercise." },
+        { "id": "d", "text": "There is no meaningful difference in speed or fragility between integration tests and widget tests." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is the chapter's precise causal explanation: realism (real device, real rendering, real platform calls) is simultaneously the source of integration tests' value AND their cost/fragility — the same properties that make them catch real end-to-end bugs also make them slow and timing-sensitive. (b) misattributes the fragility to framework bugs rather than the inherent nature of exercising real device/timing conditions. (c) is a fabricated, overly narrow claim about CI hardware being the sole cause, ignoring the actual mechanism (real rendering/navigation/platform work) the chapter describes. (d) directly contradicts the chapter's explicit statement that integration tests are 'orders of magnitude slower' and 'the most fragile tier.'",
+      "tags": ["integration-tests", "testing-pyramid", "flakiness"]
+    },
+    {
+      "id": "flutter-08-q04",
+      "type": "mcq",
+      "difficulty": "staff",
+      "prompt": "A team relies heavily on integration tests to catch logic bugs (pricing calculation errors, validation mistakes) instead of writing unit tests for that logic. What does the chapter say about this approach?",
+      "options": [
+        { "id": "a", "text": "This inverts the testing pyramid and is a common, expensive mistake — a bug a millisecond unit test would catch instantly instead surfaces in a multi-minute integration run, often flakily, far later in the feedback loop, for no corresponding benefit since integration tests aren't actually needed to catch pure-logic bugs." },
+        { "id": "b", "text": "This is the recommended approach, since integration tests are more thorough and therefore always preferable to unit tests for any kind of bug." },
+        { "id": "c", "text": "There is no difference in effectiveness between catching a logic bug via a unit test versus an integration test, so the choice is purely stylistic." },
+        { "id": "d", "text": "Logic bugs like pricing calculation errors can only be caught by integration tests, since unit tests cannot access application state." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is the chapter's explicit, named anti-pattern — the testing pyramid's shape is presented as a direct, non-negotiable consequence of the cost/fragility gradient, and inverting it wastes the cheap, fast, reliable tier's advantage for no benefit. (b) is precisely the mistake the chapter warns against, mischaracterizing 'more thorough' (testing more of the real system at once) as strictly better regardless of cost. (c) ignores the chapter's explicit cost/speed/fragility differences between tiers — the choice has real consequences, not just style. (d) is false; the chapter's opening unit-test example is exactly a pricing calculation (applyDiscount), demonstrating unit tests handle this kind of logic directly and don't need application state or a running app at all.",
+      "tags": ["testing-pyramid", "unit-tests", "integration-tests", "anti-pattern"]
+    },
+    {
+      "id": "flutter-08-q05",
+      "type": "mcq",
+      "difficulty": "senior",
+      "prompt": "What specific class of bug do golden tests catch that ordinary widget tests (asserting on text content, finding widgets by type) structurally cannot?",
+      "options": [
+        { "id": "a", "text": "Visual/pixel-level regressions — a padding value that silently changes, a color that regresses, a layout shifting by a few pixels — since golden tests compare actual rendered pixels against a saved reference image, while ordinary widget tests only assert on the widget tree's logical structure and content." },
+        { "id": "b", "text": "Golden tests catch the exact same bugs as ordinary widget tests; there is no meaningful difference in what they detect." },
+        { "id": "c", "text": "Golden tests are only useful for catching network request failures, unrelated to visual appearance." },
+        { "id": "d", "text": "Golden tests replace the need for unit tests entirely, since they test the whole rendered output." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is the chapter's precise scoping of golden tests' unique value: pixel-level comparison catches a category of regression (subtle visual/layout drift) that structural assertions on the widget tree simply don't examine at all. (b) directly contradicts the chapter's explicit statement that golden tests catch what 'logic-focused widget tests structurally cannot.' (c) is unrelated; golden tests concern rendered visual output, not network behavior. (d) overstates their scope — golden tests check visual appearance, not business logic correctness, so they don't substitute for unit tests covering pure logic.",
+      "tags": ["golden-tests", "visual-regression", "testing-tiers"]
+    },
+    {
+      "id": "flutter-08-q06",
+      "type": "mcq",
+      "difficulty": "staff",
+      "prompt": "A team applies golden tests to every single screen in their app, including screens that change frequently during active feature development. What honest cost does the chapter attribute to this approach?",
+      "options": [
+        { "id": "a", "text": "Golden images are platform- and font-rendering-sensitive (can fail across OS/Flutter version differences unrelated to actual regressions), and reviewing a failure requires visually inspecting an image rather than reading an assertion message — real maintenance overhead that the chapter says is only clearly worth it for visually load-bearing, REUSED components, not applied indiscriminately." },
+        { "id": "b", "text": "Golden tests have no maintenance cost whatsoever and should always be applied to every screen without exception." },
+        { "id": "c", "text": "Golden tests are incompatible with active feature development and cannot be used at all until a feature is fully finalized." },
+        { "id": "d", "text": "The only cost of golden tests is increased CI run time, with no other practical downside." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is the chapter's explicit, honest cost accounting for golden tests — cross-environment fragility and manual visual review are real, named costs that make blanket application to every frequently-changing screen a poor fit, versus their clear value on stable, reused design-system components. (b) directly contradicts the chapter's explicit cost discussion. (c) overstates the limitation; golden tests can be used during development, they just require updating the reference image when intentional visual changes occur — a maintenance cost, not a hard incompatibility. (d) understates the real cost — the chapter specifically calls out platform sensitivity and manual diff review, not just CI time.",
+      "tags": ["golden-tests", "tradeoffs", "maintenance-cost"]
+    }
+  ]
+}

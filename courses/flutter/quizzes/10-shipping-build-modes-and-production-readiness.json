@@ -1,0 +1,97 @@
+{
+  "schemaVersion": 1,
+  "chapterId": "flutter-10",
+  "passScore": 0.7,
+  "questions": [
+    {
+      "id": "flutter-10-q01",
+      "type": "mcq",
+      "difficulty": "senior",
+      "prompt": "A developer investigates 'app performance' by running flutter run (debug mode) and measuring frame times. What's wrong with this approach?",
+      "options": [
+        { "id": "a", "text": "Debug mode has no compiler optimizations and runs a debug service for tooling, making its frame times several times slower than release in general and not representative of what users actually experience — performance investigation should use profile mode instead." },
+        { "id": "b", "text": "Nothing is wrong; debug mode performance is identical to release mode performance in modern Flutter versions." },
+        { "id": "c", "text": "Debug mode is actually faster than release mode, so measuring in debug mode would understate real-world performance problems." },
+        { "id": "d", "text": "flutter run cannot be used to measure performance at all, under any circumstances, even for rough comparisons." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is the chapter's explicit warning: debug-mode slowness is expected overhead from disabled optimizations and active tooling hooks, not a signal about real performance — profile mode exists specifically to give real timing with tooling still attached. (b) directly contradicts the chapter's explicit statement that debug can be 'several times slower.' (c) inverts the actual relationship — debug is slower, not faster, than release. (d) overstates the limitation; flutter run in profile mode (not just debug) is explicitly recommended for legitimate performance investigation.",
+      "tags": ["build-modes", "debug-mode", "performance"]
+    },
+    {
+      "id": "flutter-10-q02",
+      "type": "mcq",
+      "difficulty": "senior",
+      "prompt": "Why must --obfuscate and --split-debug-info be used together, rather than --obfuscate alone?",
+      "options": [
+        { "id": "a", "text": "Obfuscation strips readable class/method names and string constants, making crash stack traces unreadable symbol garbage without the debug symbol mapping that --split-debug-info generates alongside the build — using one without the other trades reverse-engineering risk for undebuggable production crashes." },
+        { "id": "b", "text": "--split-debug-info is required for --obfuscate to compile at all; the build fails without it." },
+        { "id": "c", "text": "These two flags are unrelated, and --split-debug-info exists purely to reduce app file size." },
+        { "id": "d", "text": "--obfuscate alone is always sufficient; --split-debug-info is a purely optional convenience with no functional trade-off." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is the chapter's precise, paired-cost explanation: the two flags address complementary problems (hiding code structure vs. keeping crashes debuggable), and skipping the debug-info split specifically while obfuscating trades one real problem for another rather than solving both. (b) is false; --obfuscate compiles fine on its own — the issue is a downstream debugging problem, not a build failure. (c) mischaracterizes split-debug-info's actual purpose (preserving a symbol mapping for crash deobfuscation), not file size reduction. (d) directly contradicts the chapter's explicit warning that skipping split-debug-info 'means an obfuscated release build's crash reports become useless' — a real, named trade-off, not an optional nicety.",
+      "tags": ["obfuscation", "debug-info", "release-builds"]
+    },
+    {
+      "id": "flutter-10-q03",
+      "type": "mcq",
+      "difficulty": "senior",
+      "prompt": "How does the Android App Bundle format solve the 'shipping every CPU architecture's native libraries to every device' problem?",
+      "options": [
+        { "id": "a", "text": "Structurally, at the distribution-format level — the Play Store generates and serves a device-specific APK from the uploaded bundle, containing only the architecture and resources that specific device actually needs, rather than a single APK bundling every architecture." },
+        { "id": "b", "text": "App Bundles compress native libraries more efficiently than APKs, using the same set of architectures but smaller files." },
+        { "id": "c", "text": "App Bundles eliminate the need for native libraries entirely by running all code through Dart's VM regardless of platform." },
+        { "id": "d", "text": "This problem doesn't actually exist; APKs have always only included the architecture of the building machine." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is the chapter's precise mechanism: the fix is architectural/structural (device-specific generation by the Store), not a compression improvement or a workaround — every-architecture bloat is solved by never shipping the full multi-architecture bundle to any single device in the first place. (b) mischaracterizes the mechanism as better compression of the same multi-architecture payload, when the actual fix is not shipping unneeded architectures at all. (c) is false; native libraries (e.g. for platform channel implementations) still exist and are still architecture-specific, App Bundles don't eliminate that need. (d) is false and misunderstands the actual problem — a standard release APK genuinely can bundle libraries for every supported architecture unless split explicitly, which is exactly what the chapter identifies as the size issue App Bundles solve.",
+      "tags": ["app-bundle", "app-size", "distribution"]
+    },
+    {
+      "id": "flutter-10-q04",
+      "type": "mcq",
+      "difficulty": "staff",
+      "prompt": "The chapter states a production CI/CD pipeline should 'verify the actual artifact, not just that the build command exited zero.' What specific, real-world lesson motivates this principle?",
+      "options": [
+        { "id": "a", "text": "A build can 'succeed' (exit code zero) while still producing something subtly wrong — unsigned, unobfuscated, or missing debug symbols — which is why a verified pipeline explicitly checks that a release build is actually signed with the intended key, not silently falling back to a debug key, before publishing." },
+        { "id": "b", "text": "Build commands never actually fail in CI environments, so exit code checking is meaningless and should be ignored entirely." },
+        { "id": "c", "text": "This principle applies only to Flutter projects and has no relevance to any other kind of software release pipeline." },
+        { "id": "d", "text": "Verifying the artifact means re-running the entire test suite a second time after the build completes." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is the chapter's explicit, concrete example, directly referencing the exact verified pipeline built earlier in this course: a signing config with a debug-key fallback means a 'successful' build could silently produce a debug-signed artifact — catching that requires inspecting the actual output (certificate check), not trusting the exit code alone. (b) is false; build commands absolutely can and do fail in CI, and the point isn't that exit codes are meaningless, it's that a zero exit code alone is insufficient verification. (c) unnecessarily narrows a general software-engineering principle to one framework; nothing about artifact verification is Flutter-specific. (d) misdescribes what 'verifying the artifact' means in this context — it's inspecting the OUTPUT (e.g., checking a certificate), not re-running tests, which is a separate, earlier pipeline step.",
+      "tags": ["ci-cd", "artifact-verification", "release-process"]
+    },
+    {
+      "id": "flutter-10-q05",
+      "type": "mcq",
+      "difficulty": "staff",
+      "prompt": "A small internal tool, used only by 20 employees on company-managed devices with fast wifi, is being prepared for its first release. Per the chapter's trade-off framing, should the team invest heavily in app-size minimization (lazy-loading feature modules, aggressive asset stripping)?",
+      "options": [
+        { "id": "a", "text": "Probably not — the chapter explicitly frames aggressive size minimization as worth it for apps with 'genuine install-size sensitivity' (expensive/slow mobile data markets, competitive app-store conversion), and 'unnecessary ceremony' for a context like an internal tool where nobody's install decision depends on megabytes." },
+        { "id": "b", "text": "Yes, absolutely — every Flutter app must apply maximum size optimization regardless of its actual distribution context or user base." },
+        { "id": "c", "text": "The chapter provides no basis for this decision; app size optimization effort should always be uniform across all projects." },
+        { "id": "d", "text": "This decision is entirely unrelated to anything covered in the chapter, which only discusses build modes, not app size trade-offs." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is a direct application of the chapter's explicit trade-off statement about app size — the same cost/benefit discipline running throughout this course, applied here to shipping concerns specifically. (b) is exactly the uniform-maximum-effort-regardless-of-context mistake the chapter's trade-off paragraph is written to prevent. (c) is false; the chapter gives a specific, actionable criterion (install-size sensitivity, competitive conversion pressure) rather than leaving it unguided. (d) is false; the chapter has an entire named section ('App size: what actually gets shipped, and what doesn't') including this exact trade-off framing.",
+      "tags": ["app-size", "tradeoffs", "production-readiness"]
+    },
+    {
+      "id": "flutter-10-q06",
+      "type": "mcq",
+      "difficulty": "senior",
+      "prompt": "Why does the chapter explicitly connect its production-readiness checklist back to this course's earlier chapters (build modes to chapter 6's performance discussion, obfuscation/signing to the app's own working CI/CD pipeline)?",
+      "options": [
+        { "id": "a", "text": "To show that a capstone/production checklist isn't a new, separate set of rules to memorize — it's the same principles from earlier chapters (measure correctly, verify actual behavior, cost/benefit trade-offs) applied to the specific, concrete stakes of shipping something real." },
+        { "id": "b", "text": "The connections are purely coincidental and hold no instructional significance." },
+        { "id": "c", "text": "Because production readiness is an entirely unrelated topic to everything else in the course, requiring the connections to be pointed out explicitly to avoid confusion." },
+        { "id": "d", "text": "Because Flutter specifically requires developers to have completed every earlier chapter before deploying to production, as a matter of framework design." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is consistent with how this course (and its sibling courses) structure their capstones — synthesizing and applying, not introducing disconnected new rules — which is why the chapter explicitly ties build-mode discipline back to chapter 6 and CI/CD verification back to the app repo's own actual working pipeline. (b) dismisses a deliberate pedagogical structure as coincidence, contradicted by the chapter's explicit, repeated cross-references. (c) is false and overstates the disconnect; the chapter's whole approach is demonstrating continuity, not introducing an unrelated topic. (d) fabricates a nonexistent Flutter framework requirement gating deployment on course completion.",
+      "tags": ["capstone", "synthesis", "production-readiness"]
+    }
+  ]
+}

@@ -1,0 +1,99 @@
+{
+  "schemaVersion": 1,
+  "chapterId": "flutter-02",
+  "passScore": 0.7,
+  "questions": [
+    {
+      "id": "flutter-02-q01",
+      "type": "mcq",
+      "difficulty": "senior",
+      "prompt": "Precisely what does calling setState() do?",
+      "options": [
+        { "id": "a", "text": "Runs the provided callback, then marks the Element dirty so a rebuild is scheduled for the next frame — it doesn't make the mutation itself 'safe,' the mutation would work the same way outside the callback." },
+        { "id": "b", "text": "Synchronously and immediately repaints the widget on screen before returning." },
+        { "id": "c", "text": "Creates a new State object, discarding the old one and all its other fields." },
+        { "id": "d", "text": "Persists the mutated field to local storage automatically." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is the chapter's precise, two-part definition: run the callback, schedule a rebuild — nothing more. Understanding that the callback's mutation isn't inherently different from a plain mutation clarifies what setState is actually for. (b) rebuilds are scheduled for the NEXT FRAME, not synchronously/immediately — Flutter batches and schedules frame work. (c) is false; setState does not discard or recreate the State object, only marks it for a rebuild, preserving all other fields. (d) setState has nothing to do with persistence; it's purely about triggering a UI rebuild.",
+      "tags": ["setstate", "state-management", "rebuild"]
+    },
+    {
+      "id": "flutter-02-q02",
+      "type": "mcq",
+      "difficulty": "senior",
+      "prompt": "According to the chapter, when is setState the CORRECT, complete answer rather than a stopgap awaiting a 'real' state management solution?",
+      "options": [
+        { "id": "a", "text": "When the state is read only by the widget that owns it (or its direct children via constructor parameters) — reaching for a library here adds indirection with no corresponding benefit." },
+        { "id": "b", "text": "Never — setState should always be replaced with a dedicated state management library in any production app." },
+        { "id": "c", "text": "Only when the app has fewer than 10 total widgets." },
+        { "id": "d", "text": "Only for StatelessWidget, since StatefulWidget always requires an external library." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is the chapter's explicit scope-based criterion, tied to the same 'don't abstract before it's needed' discipline from the algorithms/DSA courses — local, single-subtree state doesn't benefit from a shared external store. (b) is the overcorrection the chapter explicitly argues against, citing local UI state (focus, toggle, animation progress) as legitimate setState-only cases. (c) fabricates an arbitrary, non-existent size threshold. (d) inverts the relationship entirely — setState is specifically a StatefulWidget mechanism; StatelessWidget has no state to setState on.",
+      "tags": ["setstate", "state-management", "scope"]
+    },
+    {
+      "id": "flutter-02-q03",
+      "type": "code-review",
+      "difficulty": "senior",
+      "prompt": "CartSummary and ProductGrid are sibling widgets under the same Column. ProductGrid adds items to a cart; CartSummary needs to display the updated count. Why can't ProductGrid simply call setState() to update CartSummary?",
+      "code": "Column(\n  children: [\n    CartSummary(),\n    ProductGrid(),\n  ],\n)",
+      "codeLanguage": "dart",
+      "options": [
+        { "id": "a", "text": "setState() only rebuilds the Element it's called on and that Element's own subtree — there is no mechanism for it to reach a sibling widget that isn't in an ancestor-descendant relationship with it." },
+        { "id": "b", "text": "setState() can reach siblings automatically as long as they share the same immediate parent widget." },
+        { "id": "c", "text": "This is a bug specific to Column; using a Row instead would allow siblings to share state via setState()." },
+        { "id": "d", "text": "ProductGrid would need to directly hold a reference to CartSummary's State object and call its setState() method." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is exactly the 'sibling problem' the chapter names as setState's fundamental scope limit — the fix requires either lifting state to a common ancestor or using an InheritedWidget-based mechanism, not a sibling-to-sibling call. (b) is false; shared parentage doesn't create any setState reach between siblings — the chapter is explicit that there's no such mechanism. (c) the layout widget (Column vs Row) is irrelevant to this state-scoping issue; it's about tree relationships, not visual arrangement. (d) while technically possible to hold such a reference, it isn't the standard or recommended fix, and it would tightly couple two unrelated widgets — the chapter's answer is lifting state up or using InheritedWidget, not direct References between siblings.",
+      "tags": ["setstate", "sibling-widgets", "state-scope"]
+    },
+    {
+      "id": "flutter-02-q04",
+      "type": "mcq",
+      "difficulty": "senior",
+      "prompt": "What is 'prop drilling,' and why does the chapter identify it as the real problem every state management library exists to solve?",
+      "options": [
+        { "id": "a", "text": "The cost of lifting state to a common ancestor: every intermediate widget between that ancestor and the actual consumer must accept and forward the state via constructor parameters, even widgets that never use it themselves." },
+        { "id": "b", "text": "A Flutter-specific term for a compiler error that occurs when constructor parameters are misspelled." },
+        { "id": "c", "text": "The performance cost of calling setState() too many times per second." },
+        { "id": "d", "text": "A deprecated Flutter API that has been replaced by InheritedWidget." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is the chapter's precise naming of the cost that motivates everything that follows (InheritedWidget, and by extension every state management library) — passing state down through widgets that don't use it themselves, purely to reach a distant descendant. (b) is a fabricated, unrelated definition. (c) confuses this structural/maintenance cost with a runtime performance cost, which is a different concern the chapter doesn't attribute to prop drilling. (d) mischaracterizes prop drilling as an API rather than a pattern/problem — it isn't an API at all, deprecated or otherwise.",
+      "tags": ["prop-drilling", "state-lifting", "state-management"]
+    },
+    {
+      "id": "flutter-02-q05",
+      "type": "mcq",
+      "difficulty": "staff",
+      "prompt": "What two things does calling the lookup method on an InheritedWidget do, and why does that combination matter for performance?",
+      "options": [
+        { "id": "a", "text": "It returns the current value AND registers the calling Element as a dependent, so that when the value changes (per updateShouldNotify), ONLY the Elements that actually looked it up are rebuilt — not the entire subtree between the ancestor and the consumer." },
+        { "id": "b", "text": "It only returns the current value; every widget in the subtree is always rebuilt whenever the InheritedWidget's value changes, regardless of whether they looked it up." },
+        { "id": "c", "text": "It registers a global event listener that fires independently of the widget tree structure." },
+        { "id": "d", "text": "It creates a new copy of the value for each widget that requests it, isolating them from each other." }
+      ],
+      "answer": ["a"],
+      "explanation": "This dependent-registration mechanism is precisely why InheritedWidget-based state management scales better than naive prop drilling with manual rebuild triggers — only the actually-interested Elements pay the rebuild cost, not every widget positioned between the value and its consumer. (b) is the naive, unscoped behavior the mechanism specifically avoids — the chapter is explicit that ONLY dependents rebuild. (c) mischaracterizes it as a global, tree-independent event system; the mechanism is precisely tied to the Element tree's ancestor/dependent relationships. (d) is false — InheritedWidget shares one value across all dependents; it does not create per-consumer copies.",
+      "tags": ["inheritedwidget", "dependency-tracking", "performance"]
+    },
+    {
+      "id": "flutter-02-q06",
+      "type": "mcq",
+      "difficulty": "staff",
+      "prompt": "Per the chapter, what is the actual relationship between InheritedWidget and libraries like Provider or Riverpod?",
+      "options": [
+        { "id": "a", "text": "These libraries are built directly on InheritedWidget (or closely related mechanisms like InheritedModel), adding ergonomics (less boilerplate, dependency injection conveniences, testability) on top of the same underlying primitive — not a fundamentally different mechanism." },
+        { "id": "b", "text": "Provider and Riverpod are entirely unrelated to InheritedWidget and use a completely separate rebuild mechanism implemented outside the Flutter framework." },
+        { "id": "c", "text": "InheritedWidget is deprecated and should never be used directly; only library-based solutions are considered valid in modern Flutter." },
+        { "id": "d", "text": "The libraries exist purely for syntactic convenience and provide no capability beyond what a hand-rolled InheritedWidget already offers." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is the chapter's explicit framing, set up specifically so a later comparison of these libraries becomes a real trade-off analysis rather than brand preference: knowing they share a common foundation lets you evaluate what each library actually ADDS (ergonomics, testability, DI conventions) rather than treating them as magic. (b) is false and contradicts the chapter's direct statement about their foundation. (c) InheritedWidget is a core, actively-used Flutter mechanism, not deprecated — it's literally what the popular libraries build on. (d) understates real, practical value (less boilerplate, built-in DI patterns, easier testing) the chapter explicitly attributes to using a library, even though the underlying mechanism is shared.",
+      "tags": ["inheritedwidget", "provider", "riverpod", "state-management-libraries"]
+    }
+  ]
+}

@@ -1,0 +1,101 @@
+{
+  "schemaVersion": 1,
+  "chapterId": "flutter-09",
+  "passScore": 0.7,
+  "questions": [
+    {
+      "id": "flutter-09-q01",
+      "type": "code-review",
+      "difficulty": "senior",
+      "prompt": "This code compiles and runs correctly. What's the architectural problem the chapter identifies with it?",
+      "code": "class CheckoutState extends State<Checkout> {\n  double _total = 0;\n\n  void _applyPromo(String code) {\n    if (code == 'SAVE10' && _total > 50) {\n      setState(() => _total *= 0.9);\n    }\n  }\n}",
+      "codeLanguage": "dart",
+      "options": [
+        { "id": "a", "text": "The promo-eligibility business rule is buried inside a widget's State class, so it can't be unit tested without building a widget, can't be reused by another screen needing the same rule, and its changes show up as UI-file diffs that obscure what actually changed for reviewers." },
+        { "id": "b", "text": "The code will fail to compile because setState() cannot be called from within a conditional statement." },
+        { "id": "c", "text": "The double type is inappropriate for currency values and will cause the app to crash at runtime." },
+        { "id": "d", "text": "This code has no actual problems; the chapter presents it as an example of correct architecture." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is precisely the chapter's opening example of 'nothing wrong syntactically, wrong architecturally' — the code works but pays real costs later: no isolated testability, no reuse, unclear diffs. (b) is false; setState() inside a conditional is completely valid, ordinary Flutter code. (c) is a real but unrelated concern (floating-point currency precision) not raised anywhere in this chapter's discussion. (d) directly contradicts the chapter's explicit framing of this exact code as the problem being diagnosed, not a positive example.",
+      "tags": ["architecture", "business-logic", "anti-pattern"]
+    },
+    {
+      "id": "flutter-09-q02",
+      "type": "mcq",
+      "difficulty": "senior",
+      "prompt": "In the chapter's three-layer architecture (UI, domain, data), which direction do dependencies point, and why?",
+      "options": [
+        { "id": "a", "text": "UI depends on domain, and domain depends on data-layer INTERFACES (not concrete implementations) — arrows point from volatile (UI, changes with every design tweak) toward stable (domain logic, interfaces) — a direct application of the OOP course's dependency-direction principle." },
+        { "id": "b", "text": "The data layer depends on the UI layer, since the UI determines what data needs to be fetched." },
+        { "id": "c", "text": "All three layers depend equally on each other in a circular relationship, with no clear direction." },
+        { "id": "d", "text": "The domain layer depends directly on Flutter widget classes, since business logic needs to know how it will be displayed." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is the chapter's explicit statement of the dependency direction, directly citing the OOP course's stability-direction principle — volatile UI code depends on stable domain logic, and domain code depends on abstractions (repository interfaces) rather than concrete data-fetching implementations. (b) reverses the actual direction the chapter describes. (c) directly contradicts the chapter's explicit, non-circular layered structure — the entire point is a clear, one-directional dependency chain. (d) is false and specifically contradicted — the domain layer is described as 'pure Dart classes/functions... no Flutter imports at all,' precisely so it has zero dependency on the UI framework.",
+      "tags": ["architecture", "dependency-direction", "layering"]
+    },
+    {
+      "id": "flutter-09-q03",
+      "type": "mcq",
+      "difficulty": "senior",
+      "prompt": "Why is the domain layer (PromoService, pricing rules, etc.) described as 'unit-testable for free,' connecting directly to chapter 8?",
+      "options": [
+        { "id": "a", "text": "Because it's pure Dart with no Flutter import at all, it requires no widget tree, no pumping frames, and no rendering to test — it falls naturally into chapter 8's cheapest, fastest testing tier simply by virtue of having no framework dependency, not because of any special testing effort." },
+        { "id": "b", "text": "Because Flutter automatically generates unit tests for any class named with a 'Service' suffix." },
+        { "id": "c", "text": "Because the domain layer is exempt from needing any tests at all, per Flutter's official style guide." },
+        { "id": "d", "text": "Because domain classes are always faster to execute than UI classes, unrelated to what testing tier applies." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is the direct payoff the chapter connects back to chapter 8's testing tiers: separating logic from Flutter entirely means testing it never needs the widget-testing machinery (pumpWidget, pump, tester) at all — it's a plain function/method call, chapter 8's fastest and cheapest tier, by construction of where the code lives. (b) fabricates a nonexistent automatic test-generation feature based on naming conventions. (c) misstates the actual claim — the domain layer isn't exempt from testing, it's specifically EASIER and cheaper to test, which is the opposite of exemption. (d) misattributes the speed advantage to raw execution speed rather than testing-tier/framework-overhead differences, which is the actual mechanism described.",
+      "tags": ["domain-layer", "unit-testing", "architecture"]
+    },
+    {
+      "id": "flutter-09-q04",
+      "type": "code-review",
+      "difficulty": "staff",
+      "prompt": "Why does defining OrderRepository as an abstract class, with both ApiOrderRepository and FakeOrderRepository implementing it, let a test avoid network calls, widget trees, AND platform channel involvement entirely?",
+      "code": "abstract class OrderRepository {\n  Future<Order> fetchOrder(String id);\n}\n\nclass ApiOrderRepository implements OrderRepository {\n  @override\n  Future<Order> fetchOrder(String id) async { /* real HTTP call */ }\n}\n\nclass FakeOrderRepository implements OrderRepository {\n  @override\n  Future<Order> fetchOrder(String id) async => Order.sample();\n}",
+      "codeLanguage": "dart",
+      "options": [
+        { "id": "a", "text": "Domain code depends only on the OrderRepository interface, never on ApiOrderRepository directly — this is dependency inversion (OOP course chapter 6) applied directly, so a test can substitute FakeOrderRepository, and since it returns canned data synchronously with no real HTTP, no network stack, no HTTP client mocking library, and no widget tree are ever involved." },
+        { "id": "b", "text": "FakeOrderRepository automatically intercepts and redirects real network calls made by ApiOrderRepository during tests." },
+        { "id": "c", "text": "This pattern only works if ApiOrderRepository and FakeOrderRepository are both run simultaneously during every test." },
+        { "id": "d", "text": "The abstract keyword causes Dart to automatically generate mock implementations at compile time, eliminating the need for FakeOrderRepository." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is the chapter's explicit callback to the OOP course's DIP chapter: the domain layer's dependency on an ABSTRACTION (not a concrete class) is precisely what makes substitution possible — the fake never touches a network stack because it simply doesn't call one, returning sample data directly. (b) fabricates a nonexistent interception mechanism; the two classes are entirely independent implementations, not linked at runtime. (c) is false and nonsensical; only one implementation is ever wired in at a time via whatever composition/DI mechanism assembles the app (or test). (d) fabricates a nonexistent Dart compiler feature; 'abstract' simply declares a type cannot be instantiated directly and doesn't auto-generate any implementation.",
+      "tags": ["repository-pattern", "dependency-inversion", "testing"]
+    },
+    {
+      "id": "flutter-09-q05",
+      "type": "mcq",
+      "difficulty": "staff",
+      "prompt": "A five-screen internal tool with simple CRUD operations and no complex business rules is being built. Per the chapter's explicit trade-off, should the team apply the full three-layer architecture (UI/domain/data with repository interfaces) as a default?",
+      "options": [
+        { "id": "a", "text": "Not necessarily — the chapter explicitly states this structure is real overhead for a small app or genuine prototype, and the layering 'earns its cost specifically when business logic is genuinely non-trivial, needs to be tested without a widget tree, or needs to be shared across more than one screen' — not as a default template regardless of size." },
+        { "id": "b", "text": "Yes, always — the three-layer architecture should be applied identically to every Flutter project regardless of size or complexity, with no exceptions." },
+        { "id": "c", "text": "The chapter provides no guidance on when this architecture is or isn't worth the cost; it should always be a judgment call made independent of anything discussed here." },
+        { "id": "d", "text": "This architecture is required by the Flutter framework for any app with more than three screens." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is the chapter's explicit, named trade-off — directly invoking the algorithms course's 'don't abstract before the second occurrence' discipline — stating plainly that a simple app 'doesn't need three layers: it needs working code.' (b) is exactly the default-template overreach the chapter's trade-off section argues against. (c) is false; the chapter gives a specific, actionable criterion (non-trivial logic, isolated testing need, cross-screen reuse), not a vague 'it depends' with no guidance. (d) fabricates a nonexistent Flutter framework requirement tied to screen count; Flutter imposes no such architectural mandate.",
+      "tags": ["architecture", "tradeoffs", "over-engineering"]
+    },
+    {
+      "id": "flutter-09-q06",
+      "type": "mcq",
+      "difficulty": "staff",
+      "prompt": "The chapter opens by connecting Flutter's 'business logic in build()' problem to a specific concept from the OOP course. Which one, and why is the connection apt?",
+      "options": [
+        { "id": "a", "text": "The 'anemic model industrialized' argument (invariants/logic enforced nowhere consistently, scattered across call sites) — restated here as business logic scattered into presentation code, where it's enforced inconsistently across whichever screens happen to duplicate it, rather than owned in one place." },
+        { "id": "b", "text": "The Liskov Substitution Principle, since widgets substituting for each other is the root cause of the problem described." },
+        { "id": "c", "text": "The singleton pattern, since business logic in build() methods is a specific misuse of the singleton pattern." },
+        { "id": "d", "text": "There is no actual connection to prior course material; the chapter's opening reference is purely rhetorical framing." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is the chapter's explicit, direct citation: the parallel is precise — just as an anemic domain model scatters invariant enforcement across services with no single owner, logic-in-widgets scatters business rules across UI files with no single, testable, reusable owner. (b) misidentifies the connected concept; LSP concerns substitutability of subtypes honoring a base contract, which isn't what's being illustrated here. (c) is unrelated; singleton concerns global access to a single instance, not where business logic lives architecturally. (d) dismisses an explicit, substantive cross-course connection the chapter draws deliberately to build on prior material, not merely for rhetorical effect.",
+      "tags": ["architecture", "cross-course-connections", "anemic-model"]
+    }
+  ]
+}

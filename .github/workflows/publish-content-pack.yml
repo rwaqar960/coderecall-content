@@ -1,0 +1,42 @@
+name: Publish content pack
+
+# Tag push shaped like content-<course-id>-v1.0.0 (e.g. content-flutter-v1.0.0)
+# zips that course's chapters/quizzes/course.json and publishes it as a
+# GitHub Release asset — this is what the app downloads for non-bundled
+# packs (see manifest.json's "url" field for each pack).
+on:
+  push:
+    tags:
+      - 'content-*-v*'
+
+permissions:
+  contents: write
+
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Determine course id from tag
+        id: vars
+        run: |
+          tag="${GITHUB_REF_NAME}"                       # content-flutter-v1.0.0
+          course=$(echo "$tag" | sed -E 's/^content-(.+)-v[0-9].*/\1/')
+          if [ ! -d "courses/$course" ]; then
+            echo "::error::No such course directory: courses/$course (parsed from tag '$tag')"
+            exit 1
+          fi
+          echo "course=$course" >> "$GITHUB_OUTPUT"
+
+      - name: Zip course content
+        run: |
+          course="${{ steps.vars.outputs.course }}"
+          cd "courses/$course"
+          zip -r "../../${course}.zip" chapters quizzes course.json
+
+      - name: Publish release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ${{ steps.vars.outputs.course }}.zip
+          generate_release_notes: true

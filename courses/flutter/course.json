@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "id": "flutter",
+  "title": "Flutter",
+  "version": "1.0.0",
+  "level": "core",
+  "bundled": false,
+  "primaryLanguage": "dart",
+  "description": "A senior-level refresher on Flutter as a framework, not a widget catalog — the rendering pipeline, state management trade-offs, async pitfalls, and architecture decisions that separate a demo app from a production one.",
+  "chapters": [
+    { "id": "flutter-01", "title": "Widgets, Elements, and the Rendering Pipeline", "file": "chapters/01-widgets-elements-and-the-rendering-pipeline.md", "quiz": "quizzes/01-widgets-elements-and-the-rendering-pipeline.json", "status": "ready" },
+    { "id": "flutter-02", "title": "State Management: setState and Its Limits", "file": "chapters/02-state-management-setstate-and-its-limits.md", "quiz": "quizzes/02-state-management-setstate-and-its-limits.json", "status": "ready" },
+    { "id": "flutter-03", "title": "State Management at Scale", "file": "chapters/03-state-management-at-scale.md", "quiz": "quizzes/03-state-management-at-scale.json", "status": "ready" },
+    { "id": "flutter-04", "title": "Async in Flutter: Futures, Streams, and the Widget Tree", "file": "chapters/04-async-in-flutter-futures-streams-and-the-widget-tree.md", "quiz": "quizzes/04-async-in-flutter-futures-streams-and-the-widget-tree.json", "status": "ready" },
+    { "id": "flutter-05", "title": "Navigation and Routing", "file": "chapters/05-navigation-and-routing.md", "quiz": "quizzes/05-navigation-and-routing.json", "status": "ready" },
+    { "id": "flutter-06", "title": "Performance: Rebuilds, Keys, and Profiling", "file": "chapters/06-performance-rebuilds-keys-and-profiling.md", "quiz": "quizzes/06-performance-rebuilds-keys-and-profiling.json", "status": "ready" },
+    { "id": "flutter-07", "title": "Platform Channels and Native Integration", "file": "chapters/07-platform-channels-and-native-integration.md", "quiz": "quizzes/07-platform-channels-and-native-integration.json", "status": "ready" },
+    { "id": "flutter-08", "title": "Testing Flutter Apps", "file": "chapters/08-testing-flutter-apps.md", "quiz": "quizzes/08-testing-flutter-apps.json", "status": "ready" },
+    { "id": "flutter-09", "title": "App Architecture: Layers and Boundaries", "file": "chapters/09-app-architecture-layers-and-boundaries.md", "quiz": "quizzes/09-app-architecture-layers-and-boundaries.json", "status": "ready" },
+    { "id": "flutter-10", "title": "Shipping: Build Modes and Production Readiness", "file": "chapters/10-shipping-build-modes-and-production-readiness.md", "quiz": "quizzes/10-shipping-build-modes-and-production-readiness.json", "status": "ready" }
+  ]
+}

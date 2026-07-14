@@ -1,0 +1,99 @@
+{
+  "schemaVersion": 1,
+  "chapterId": "flutter-03",
+  "passScore": 0.7,
+  "questions": [
+    {
+      "id": "flutter-03-q01",
+      "type": "mcq",
+      "difficulty": "senior",
+      "prompt": "What is the chapter's proposed 'real axis' for comparing state management approaches, as opposed to a feature checklist?",
+      "options": [
+        { "id": "a", "text": "Whether state's lifetime is tightly coupled to the widget tree's lifetime (dies with its widget) or tree-independent (survives widget disposal, reachable from outside the tree) — a genuine trade-off, not a maturity ladder." },
+        { "id": "b", "text": "Which library has the most GitHub stars or the largest community, since popularity is the most reliable indicator of correctness." },
+        { "id": "c", "text": "Whether the library uses classes or functions internally." },
+        { "id": "d", "text": "The total number of lines of code required to display a counter." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is the chapter's explicit reframing of the comparison — widget-coupled vs tree-independent state is presented as a genuine, symmetric trade-off (simpler widgets vs explicit lifecycle management), not a spectrum from 'basic' to 'advanced.' (b) popularity is explicitly the kind of surface-level signal the chapter says generates heat without useful comparison. (c) internal implementation style (classes vs functions) isn't the dimension the chapter uses for comparison. (d) counter-app line counts are a famously misleading, oversimplified benchmark, not the chapter's actual criterion.",
+      "tags": ["state-management", "comparison-framework"]
+    },
+    {
+      "id": "flutter-03-q02",
+      "type": "mcq",
+      "difficulty": "senior",
+      "prompt": "What is Provider's actual value proposition, according to the chapter, given that it's built on the same InheritedWidget foundation as plain state lifting?",
+      "options": [
+        { "id": "a", "text": "It's close to setState's existing mental model (a mutable, listener-based object) with much less boilerplate than hand-rolling InheritedWidget — a low conceptual jump for developers already fluent in Flutter's basics, not a fundamentally different paradigm." },
+        { "id": "b", "text": "It eliminates the need for a widget tree entirely, running state updates independently of Flutter's rendering pipeline." },
+        { "id": "c", "text": "It provides compile-time safety guarantees that no other Flutter state management approach offers." },
+        { "id": "d", "text": "It is the only state management library capable of surviving widget disposal." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is the chapter's specific, honest framing of Provider's value: ergonomics and familiarity, not a categorically different capability — the same underlying mutable, listener-based mental model as ChangeNotifier/setState, just reachable beyond one widget's subtree. (b) is false; Provider still operates within and depends on the widget tree, just avoids manual prop drilling. (c) directly contradicts the chapter, which specifically attributes compile-time safety to RIVERPOD, not Provider (Provider's context.watch is described as throwing at runtime for missing providers). (d) is false — the chapter identifies Bloc and Riverpod's tree-independent providers as also capable of surviving widget disposal; this isn't unique to Provider.",
+      "tags": ["provider", "state-management", "tradeoffs"]
+    },
+    {
+      "id": "flutter-03-q03",
+      "type": "mcq",
+      "difficulty": "senior",
+      "prompt": "What two concrete problems does Riverpod's approach (providers declared outside the widget tree, no BuildContext required to read them) solve relative to Provider?",
+      "options": [
+        { "id": "a", "text": "Compile-time safety (a missing/mistyped provider reference is a compile error, not a runtime crash) and testability without a widget tree (providers can be read directly via a container, no pumpWidget needed)." },
+        { "id": "b", "text": "Riverpod eliminates the need to ever rebuild any widget, making all UI updates instantaneous with zero cost." },
+        { "id": "c", "text": "Riverpod is the only approach that supports asynchronous state at all." },
+        { "id": "d", "text": "Riverpod removes the need for any state management concepts, replacing them entirely with direct database access." }
+      ],
+      "answer": ["a"],
+      "explanation": "These are the chapter's exact two named advantages, both traceable directly to decoupling providers from BuildContext: compile-time-checked references (vs. context.watch's runtime failure mode) and the ability to read a provider's value in a test or background context without any widget tree at all. (b) is a fabricated, physically nonsensical claim — rebuilds still happen and still have real (if often small) cost. (c) is false; Provider and Bloc both support async state through their own mechanisms (FutureProvider-equivalents, async event handlers) — this isn't Riverpod-exclusive. (d) is nonsensical and unrelated to what Riverpod actually does.",
+      "tags": ["riverpod", "compile-time-safety", "testability"]
+    },
+    {
+      "id": "flutter-03-q04",
+      "type": "code-review",
+      "difficulty": "staff",
+      "prompt": "This Bloc pattern requires defining an event class, a handler, and reasoning about state transitions explicitly for every change — more ceremony than a single setState call. When does the chapter say this ceremony is actually worth it?",
+      "code": "sealed class CartEvent {}\nclass ItemAdded extends CartEvent { final Item item; ItemAdded(this.item); }\n\nclass CartBloc extends Bloc<CartEvent, CartState> {\n  CartBloc() : super(CartState.empty()) {\n    on<ItemAdded>((event, emit) => emit(state.withItem(event.item)));\n  }\n}",
+      "codeLanguage": "dart",
+      "options": [
+        { "id": "a", "text": "When state TRANSITIONS themselves have business rules worth enforcing explicitly (e.g. can't checkout with an empty cart) — the ceremony buys a closed, exhaustive, testable state machine; it's overkill for simple state with no meaningful transition logic (e.g. a checkbox's checked value)." },
+        { "id": "b", "text": "Whenever the app is 'large,' regardless of whether individual pieces of state have complex transition rules." },
+        { "id": "c", "text": "Only when the app has no other state management library already in use." },
+        { "id": "d", "text": "Bloc's ceremony is never worth it; the chapter recommends avoiding Bloc entirely in favor of simpler alternatives in all cases." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is the chapter's precise, transition-focused criterion — directly connected to the OOP course's sealed-types pattern applied to events, which is worth the ceremony specifically when the mapping from events to states encodes real business rules. (b) is explicitly rejected by the chapter, which states 'large app' alone doesn't determine the right choice, and that mixing approaches by actual per-flow need is a legitimate senior-level call. (c) fabricates an irrelevant precondition about pre-existing libraries. (d) directly contradicts the chapter's explicit, positive case for Bloc on complex, rule-heavy flows like checkout.",
+      "tags": ["bloc", "state-transitions", "tradeoffs"]
+    },
+    {
+      "id": "flutter-03-q05",
+      "type": "mcq",
+      "difficulty": "staff",
+      "prompt": "A large e-commerce app has dozens of independent, simple pieces of UI state (toggle states, filter selections) and ONE genuinely complex, rule-heavy checkout flow. What does the chapter suggest as a legitimate architectural choice?",
+      "options": [
+        { "id": "a", "text": "Use Provider or Riverpod consistently for the simple, independent state, and use Bloc specifically for the checkout flow where transition rules genuinely matter — mixing approaches by actual per-feature need, rather than picking one library for the entire app upfront." },
+        { "id": "b", "text": "The entire app must use exactly one state management library throughout, since mixing approaches is always an anti-pattern in Flutter." },
+        { "id": "c", "text": "Since the app is large, Bloc should be used for every single piece of state, including the simple toggles, to maintain consistency." },
+        { "id": "d", "text": "Large apps should avoid all state management libraries and rely exclusively on setState throughout, regardless of complexity." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is the chapter's explicit closing trade-off example, presented as a defensible senior-level call — matching each piece of state to its actual complexity, not applying one tool uniformly regardless of fit. (b) directly contradicts the chapter's explicit endorsement of mixing approaches by need. (c) is exactly the 'large app therefore heaviest tool everywhere' mistake the chapter argues against — applying Bloc's ceremony to simple toggle state wastes the ceremony with no corresponding benefit. (d) ignores the sibling-problem limitations of setState (chapter 2) that make it unsuitable for state needing to be shared or reasoned about across many independent features at scale.",
+      "tags": ["architecture", "state-management", "tradeoffs"]
+    },
+    {
+      "id": "flutter-03-q06",
+      "type": "mcq",
+      "difficulty": "senior",
+      "prompt": "What is the FIRST question the chapter's decision framework recommends asking before choosing between setState, Provider/Riverpod, or Bloc for a given piece of state?",
+      "options": [
+        { "id": "a", "text": "Does this state need to survive its widget, or be reached from outside the widget tree (background sync, tests without a UI)? If not, setState or a local InheritedWidget is sufficient." },
+        { "id": "b", "text": "Which library has the newest major version release?" },
+        { "id": "c", "text": "How many total widgets exist in the app?" },
+        { "id": "d", "text": "Which library does the loudest online community currently favor?" }
+      ],
+      "answer": ["a"],
+      "explanation": "This is the chapter's explicitly ordered first diagnostic question — reachability/survival need is the first filter, since if the answer is 'no,' every more complex option is immediately ruled out as unnecessary overhead, regardless of the other two framework questions (team fluency, transition complexity). (b), (c), and (d) are exactly the surface-level, popularity- or size-driven signals the chapter opens by rejecting as generating heat without useful comparison.",
+      "tags": ["state-management", "decision-framework"]
+    }
+  ]
+}

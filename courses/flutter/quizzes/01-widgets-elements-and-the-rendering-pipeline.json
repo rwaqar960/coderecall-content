@@ -1,0 +1,99 @@
+{
+  "schemaVersion": 1,
+  "chapterId": "flutter-01",
+  "passScore": 0.7,
+  "questions": [
+    {
+      "id": "flutter-01-q01",
+      "type": "mcq",
+      "difficulty": "senior",
+      "prompt": "Why is it correct that a widget's build() method can be called dozens of times a second without being a performance problem?",
+      "options": [
+        { "id": "a", "text": "Widgets are cheap, immutable configuration objects; Flutter diffs the new widget against the Element's current widget and, if compatible, updates the existing Element and RenderObject in place rather than tearing anything down." },
+        { "id": "b", "text": "Flutter caches the results of build() and only calls it once per widget for the lifetime of the app." },
+        { "id": "c", "text": "build() calls are automatically run on a background thread, so they never affect UI performance." },
+        { "id": "d", "text": "It IS a performance problem in most cases, and frequent rebuilds should always be avoided." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is the chapter's foundational mechanism: creating widget objects is cheap by design, and the expensive work (layout, paint) only happens when the diff against the persistent Element/RenderObject layer detects an actual change. (b) is false — build() is called freely and repeatedly; nothing is 'cached' in that sense. (c) build() runs synchronously on the UI (platform) thread, not a background thread. (d) overcorrects — the chapter's whole point is that rebuilds are cheap and expected; the actual costs to watch are layout and paint, not rebuild frequency itself.",
+      "tags": ["widgets", "rendering-pipeline", "rebuild"]
+    },
+    {
+      "id": "flutter-01-q02",
+      "type": "mcq",
+      "difficulty": "senior",
+      "prompt": "What determines whether Flutter reuses an existing Element and its RenderObject when a new widget is built at the same tree position, versus destroying and recreating that subtree?",
+      "options": [
+        { "id": "a", "text": "Whether the new widget has the same runtime type and the same key as the old widget at that position." },
+        { "id": "b", "text": "Whether the new widget's visual appearance (color, size) is identical to the old one." },
+        { "id": "c", "text": "Whether the widget is a StatelessWidget versus a StatefulWidget." },
+        { "id": "d", "text": "Whether the app is running in debug mode or release mode." }
+      ],
+      "answer": ["a"],
+      "explanation": "Type-and-key matching is the exact, mechanistic rule the chapter states — this single rule explains both the keys-in-lists behavior and the type-swap-destroys-state behavior. (b) visual appearance is irrelevant to element reuse; two widgets with identical colors but different types still cause full recreation. (c) both StatelessWidget and StatefulWidget subtrees follow the same type-and-key reuse rule; being stateful doesn't change the matching mechanism, though it does change what's lost when reuse fails (State object fields). (d) build mode has no bearing on element reuse logic.",
+      "tags": ["elements", "widget-diffing", "reconciliation"]
+    },
+    {
+      "id": "flutter-01-q03",
+      "type": "code-review",
+      "difficulty": "senior",
+      "prompt": "A list of TextField widgets (one per item, holding user-entered text) is rendered without keys. After the underlying data list is reordered (e.g. sorted), users report that the cursor position and typed text appear to jump to the wrong rows. What's the cause?",
+      "code": "ListView(\n  children: items.map((item) => TextField(\n    decoration: InputDecoration(labelText: item.label),\n  )).toList(),\n)",
+      "codeLanguage": "dart",
+      "options": [
+        { "id": "a", "text": "Without keys, element reuse matches by position and type, not by logical identity — after reordering, the TextField Elements (and their internal editing state) stay at the same positions and get reassociated with different, now-mismatched items." },
+        { "id": "b", "text": "TextField widgets cannot be used inside a ListView without a form wrapper, causing undefined behavior." },
+        { "id": "c", "text": "This is a bug in Flutter's ListView implementation that only occurs with more than 10 items." },
+        { "id": "d", "text": "The issue is unrelated to keys; it's caused by using .map().toList() instead of a for-loop." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is the chapter's central keys warning made concrete: same type (TextField) at each position means Flutter reuses the Element (and its persistent internal state, like cursor position) positionally rather than by the item's actual identity — adding a stable key per item (e.g. ValueKey(item.id)) fixes this by giving Flutter the actual identity to match on. (b) TextField works fine in a ListView; no special wrapper is required for this specific issue. (c) this is documented, expected behavior tied to the reconciliation algorithm, not a bug, and it's not related to list length. (d) .map().toList() versus a for-loop produces the same widget list; the construction method is irrelevant to the reuse-by-position issue.",
+      "tags": ["keys", "element-reuse", "listview"]
+    },
+    {
+      "id": "flutter-01-q04",
+      "type": "mcq",
+      "difficulty": "staff",
+      "prompt": "A StatefulWidget holds important in-memory state (e.g. an AnimationController's current progress). A conditional in the parent's build() sometimes renders that widget as a Container instead. What happens to the StatefulWidget's state when the condition flips back?",
+      "options": [
+        { "id": "a", "text": "The state is lost — swapping the widget's runtime type at that tree position destroys the old Element (and its associated State object) entirely; when the condition flips back, a brand new State object is created from scratch." },
+        { "id": "b", "text": "The state is automatically preserved and restored by Flutter regardless of the type change." },
+        { "id": "c", "text": "This scenario causes a runtime exception, since widget types cannot change at a fixed tree position." },
+        { "id": "d", "text": "The state survives only if the widget is wrapped in a GlobalKey, with no other mechanism required." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is a direct, high-stakes consequence of the type-and-key reuse rule: a type change at the same position is treated as 'this position now holds something entirely different,' so the old Element (carrying the State object and all its fields) is discarded, not preserved — a genuinely common source of 'my animation/state randomly reset' bugs. (b) directly contradicts the chapter's stated mechanism; there is no automatic preservation across a type change. (c) is false — conditionally changing a widget's type at a position is legal and common; it just has this state-loss consequence, not an exception. (d) is incomplete — a GlobalKey CAN preserve state across a type change in some scenarios by explicitly tracking identity, but the option's 'with no other mechanism required' overstates it; GlobalKey usage has its own costs and constraints not covered by simply adding one.",
+      "tags": ["state-loss", "widget-type-change", "elements"]
+    },
+    {
+      "id": "flutter-01-q05",
+      "type": "mcq",
+      "difficulty": "senior",
+      "prompt": "Why can a rebuild triggered by setState() in a small, deeply-nested widget avoid relayout and repaint of unrelated parts of the screen?",
+      "options": [
+        { "id": "a", "text": "The Element diff stops at tree boundaries where nothing changed; layout and paint are separate, more expensive operations that only run for RenderObjects whose relevant properties actually changed after the diff." },
+        { "id": "b", "text": "setState() always rebuilds, relays out, and repaints the entire screen; there is no way to scope its cost to a small subtree." },
+        { "id": "c", "text": "Rebuild, relayout, and repaint are three names for the exact same operation, so this question's premise is incorrect." },
+        { "id": "d", "text": "Only StatelessWidgets can avoid unnecessary relayout; StatefulWidgets always trigger a full-screen relayout on every setState() call." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is the chapter's direct rebuttal of a common misconception, stated precisely: rebuild (cheap, widget object creation) is distinct from layout and paint (RenderObject-level work), and the diff process only propagates the expensive work to parts of the tree that actually changed. (b) is exactly the misconception the chapter corrects — scoped setState is presented as legitimate and cheap specifically because it does NOT imply full-screen relayout/repaint. (c) directly contradicts the chapter's explicit three-way distinction with three different costs. (d) is a fabricated, false restriction; the type of widget (Stateless vs Stateful) doesn't determine relayout scope — the diff mechanism does, uniformly.",
+      "tags": ["setState", "relayout", "repaint", "performance"]
+    },
+    {
+      "id": "flutter-01-q06",
+      "type": "mcq",
+      "difficulty": "staff",
+      "prompt": "Why is holding onto a BuildContext across an async gap (e.g. after an 'await' inside a button's onPressed callback) a real risk, mechanistically?",
+      "options": [
+        { "id": "a", "text": "BuildContext IS the Element at that tree position; if the user navigates away (or the widget is otherwise removed) while the async operation is pending, that Element may no longer be in the tree, making the held context stale — using it can throw or silently fail." },
+        { "id": "b", "text": "BuildContext objects expire automatically after exactly one frame, regardless of navigation." },
+        { "id": "c", "text": "This is not actually a risk; BuildContext is a simple, static reference that remains valid for the lifetime of the app." },
+        { "id": "d", "text": "The risk only applies to StatelessWidget, not StatefulWidget, since only StatelessWidget uses BuildContext." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is the chapter's precise explanation, directly connecting BuildContext's true identity (the Element itself) to a genuinely common, real-world async bug — which is exactly why the standard fix ('if (!context.mounted) return;' after an await) works: it's checking whether that specific Element is still attached to the tree. (b) fabricates a fixed, incorrect expiration rule; the actual condition is tree membership, not elapsed frames. (c) directly contradicts the chapter's central point about BuildContext being tied to a specific, potentially-removed tree position. (d) is false — BuildContext is used by and available to both StatelessWidget and StatefulWidget's build methods; the async-gap risk applies to both.",
+      "tags": ["buildcontext", "async-gap", "elements"]
+    }
+  ]
+}
