@@ -1,0 +1,97 @@
+{
+  "schemaVersion": 1,
+  "chapterId": "algo-04",
+  "passScore": 0.7,
+  "questions": [
+    {
+      "id": "algo-04-q01",
+      "type": "mcq",
+      "difficulty": "senior",
+      "prompt": "What are the three steps of the divide-and-conquer pattern, and which step determines merge sort's O(n log n) complexity specifically (as opposed to some other complexity class)?",
+      "options": [
+        { "id": "a", "text": "Divide, conquer (recurse), combine — merge sort's combine step (merging two sorted halves) costs O(n), which combined with 2 subproblems of half size (T(n) = 2T(n/2) + O(n)) yields O(n log n) via the Master theorem." },
+        { "id": "b", "text": "Divide, sort, merge — and the divide step alone determines the complexity, regardless of how combining is done." },
+        { "id": "c", "text": "Split, recurse, return — the recursion depth alone determines complexity, independent of any per-level work." },
+        { "id": "d", "text": "There is no meaningful distinction between the steps; all divide-and-conquer algorithms have identical complexity." }
+      ],
+      "answer": ["a"],
+      "explanation": "This directly connects back to chapter 1's Master theorem: the recurrence's shape (a=2 subproblems, b=2 halving, d=1 from the O(n) combine step) is what the theorem consumes to produce O(n log n) — changing the combine step's cost changes the resulting complexity class entirely. (b) 'sort' isn't a generic divide-and-conquer step name, and ignoring combine cost misses exactly what differentiates one D&C algorithm's complexity from another's. (c) recursion depth alone (without accounting for per-level combine work) doesn't determine total complexity — a cheap combine and an expensive combine at the same depth give very different totals. (d) is directly contradicted by comparing, e.g., merge sort's O(n) combine to closest-pair's O(n) combine to a hypothetical O(n^2) combine — different combine costs give different overall complexities.",
+      "tags": ["divide-and-conquer", "master-theorem", "merge-sort"]
+    },
+    {
+      "id": "algo-04-q02",
+      "type": "mcq",
+      "difficulty": "staff",
+      "prompt": "In the closest-pair-of-points algorithm, why does the 'combine' step (merging left-half and right-half results) run in O(n) rather than O(n^2), despite needing to check points near the dividing line against each other?",
+      "options": [
+        { "id": "a", "text": "A geometric argument bounds the number of candidate points near the dividing line that could possibly beat the current best distance to a small constant per point, so checking them all costs O(n) total rather than a full pairwise O(n^2) comparison." },
+        { "id": "b", "text": "The combine step doesn't need to check anything near the dividing line at all; the closest pair is always fully contained within one half." },
+        { "id": "c", "text": "It's actually O(n^2), and the O(n log n) claim for this algorithm is incorrect." },
+        { "id": "d", "text": "The O(n) bound only holds if the points are pre-sorted by y-coordinate before the algorithm begins." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is the specific insight that makes the whole approach work: without this bound, naively checking all points within distance d of the line against each other would still risk O(n^2) in the worst case, but the geometric argument (points within a d x 2d strip, sorted by y, need comparing only against a small constant number of neighbors) caps it at O(n) total across the whole combine step. (b) is false — the closest pair frequently DOES straddle the dividing line, which is exactly why this combine step is necessary at all. (c) the O(n log n) bound for this algorithm is a correct, standard result; the combine step genuinely achieves O(n) via the geometric bound. (d) x-coordinate sorting happens in the divide step; a SEPARATE y-sorted structure is typically maintained for the strip check, but this is a mechanism detail, not what makes the O(n) bound possible — the geometric argument is what does that.",
+      "tags": ["closest-pair", "divide-and-conquer", "complexity-analysis"]
+    },
+    {
+      "id": "algo-04-q03",
+      "type": "mcq",
+      "difficulty": "senior",
+      "prompt": "Why does quickselect achieve O(n) average time for finding the k-th smallest element, while quicksort (using the same partition step) achieves O(n log n) average time for full sorting?",
+      "options": [
+        { "id": "a", "text": "Quickselect recurses into only ONE side of the partition (the side containing k), discarding the other entirely, giving T(n) = T(n/2) + O(n) which resolves to O(n); quicksort recurses into BOTH sides, giving T(n) = 2T(n/2) + O(n), which resolves to O(n log n)." },
+        { "id": "b", "text": "Quickselect uses a fundamentally different partitioning algorithm than quicksort, which is inherently faster." },
+        { "id": "c", "text": "Quickselect is only faster because it processes smaller arrays; the underlying algorithm is identical to quicksort in every way." },
+        { "id": "d", "text": "Quicksort's O(n log n) applies only to already-sorted input, while quickselect works on any input." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is the precise structural difference the chapter highlights: same partition operation, but quickselect's single-branch recursion changes the recurrence shape entirely (geometric series dominated by the first term, giving O(n)) versus quicksort's two-branch recursion (giving O(n log n)) — a direct, derivable consequence of the recurrence, not a different algorithm. (b) the partition STEP is explicitly stated to be the same as quicksort's; the difference is purely in which subproblems get recursed into. (c) understates the real structural difference — array size alone doesn't explain the different complexity CLASS, only the recursion structure does. (d) misattributes quicksort's average-case complexity claim, which applies to typical (not specifically sorted) input, per chapter 1's discussion.",
+      "tags": ["quickselect", "quicksort", "recurrence-relations"]
+    },
+    {
+      "id": "algo-04-q04",
+      "type": "mcq",
+      "difficulty": "senior",
+      "prompt": "What is quickselect's worst-case time complexity, and why does it share this property with quicksort?",
+      "options": [
+        { "id": "a", "text": "O(n^2) — both algorithms rely on the same partition step, and adversarial pivot selection (e.g. always picking the first element on already-sorted input) produces maximally unbalanced partitions in both, degrading the recurrence to linear-depth recursion with O(n) work per level." },
+        { "id": "b", "text": "O(n log n) — quickselect's single-branch recursion guarantees this bound even in the worst case." },
+        { "id": "c", "text": "O(1) — since quickselect only needs to find one element, its worst case is constant time." },
+        { "id": "d", "text": "Quickselect has no worst case; its complexity is always exactly its average case." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is chapter 1's average-vs-worst-case distinction reapplied: the same pivot-selection vulnerability that gives quicksort its O(n^2) worst case afflicts quickselect identically, since both share the exact same partition mechanism and are both susceptible to adversarial or naive pivot choices on structured input. (b) confuses quickselect's AVERAGE case (correctly O(n), stronger than quicksort's O(n log n) average) with its worst case, which is NOT O(n log n). (c) is nonsensical — finding an element in an unsorted array cannot be done in true O(1) in general. (d) directly contradicts the well-established fact (and this chapter's explicit trade-off discussion) that algorithms with randomized or adversarial-input-sensitive behavior have distinct average and worst cases.",
+      "tags": ["quickselect", "worst-case", "pivot-selection"]
+    },
+    {
+      "id": "algo-04-q05",
+      "type": "mcq",
+      "difficulty": "staff",
+      "prompt": "What specific property of a recursive problem should make you suspect divide-and-conquer is the WRONG tool, and dynamic programming is needed instead?",
+      "options": [
+        { "id": "a", "text": "Overlapping subproblems — when the same smaller subproblem gets solved repeatedly across different branches of the recursion tree (as in naive Fibonacci), divide-and-conquer's 'independent halves' model doesn't fit, and caching (DP) is the correct fix rather than a cleverer combine step." },
+        { "id": "b", "text": "The problem involves an array, which always indicates divide-and-conquer is inappropriate." },
+        { "id": "c", "text": "The recursion has more than two subproblems per call, which automatically disqualifies divide-and-conquer." },
+        { "id": "d", "text": "The problem cannot be solved recursively at all." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is the chapter's explicit diagnostic: divide-and-conquer's whole model assumes independent subproblems that get combined; overlapping work (the same subproblem recomputed across branches, as in naive Fibonacci's repeated fib(n-2) calls) violates that assumption and wastes exponential work that memoization/tabulation (DP, chapter 5) would eliminate by caching. (b) arrays are used in both divide-and-conquer (merge sort) and DP (many classic DP problems) — data structure choice isn't the deciding signal. (c) subproblem count (2, 3, or more) doesn't by itself indicate overlap; independence, not count, is what matters. (d) is unrelated — the diagnostic concerns overlap WITHIN a recursive formulation, not whether recursion is possible at all.",
+      "tags": ["divide-and-conquer", "dynamic-programming", "overlapping-subproblems"]
+    },
+    {
+      "id": "algo-04-q06",
+      "type": "mcq",
+      "difficulty": "senior",
+      "prompt": "A candidate needs to find the median of a large unsorted array as fast as possible, without needing the full sorted order for anything else. What's the better approach, and why?",
+      "options": [
+        { "id": "a", "text": "Quickselect for the middle index — O(n) average time, versus sorting the entire array first (O(n log n)) just to then index into the middle, which does unnecessary extra work establishing an ordering that isn't actually needed." },
+        { "id": "b", "text": "Full sorting is always required to find a median correctly; there is no faster correct approach." },
+        { "id": "c", "text": "Binary search directly on the unsorted array, since binary search always outperforms both sorting and selection algorithms." },
+        { "id": "d", "text": "Quickselect and full sorting have identical time complexity, so the choice doesn't matter." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is the chapter's practical payoff for quickselect: when only ONE order statistic (median, k-th smallest) is needed, sorting the whole array is wasted work — quickselect's O(n) average case gets the answer without establishing the full ordering the problem doesn't require. (b) is false; quickselect (or median-of-medians for a worst-case guarantee) correctly finds the median without full sorting, and is the more efficient standard approach. (c) binary search requires a sorted structure (or a monotonic predicate, per chapter 3) to operate on — it doesn't apply directly to unsorted, unstructured selection problems like this. (d) directly contradicts the chapter's derived complexities: O(n) average (quickselect) is a real asymptotic improvement over O(n log n) (full sort).",
+      "tags": ["quickselect", "median", "practical-application"]
+    }
+  ]
+}

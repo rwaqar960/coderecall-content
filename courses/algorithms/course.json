@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "id": "algorithms",
+  "title": "Algorithms",
+  "version": "1.0.0",
+  "level": "core",
+  "bundled": true,
+  "primaryLanguage": "java",
+  "description": "A senior-level refresher on algorithmic technique — the paradigms behind sorting, searching, dynamic programming, and greedy design, and the judgment calls for approaching a problem you haven't seen before.",
+  "chapters": [
+    { "id": "algo-01", "title": "Complexity Analysis for Algorithm Design", "file": "chapters/01-complexity-analysis-for-algorithm-design.md", "quiz": "quizzes/01-complexity-analysis-for-algorithm-design.json", "status": "ready" },
+    { "id": "algo-02", "title": "Sorting: Comparison Bounds and Practical Trade-offs", "file": "chapters/02-sorting-comparison-bounds-and-practical-tradeoffs.md", "quiz": "quizzes/02-sorting-comparison-bounds-and-practical-tradeoffs.json", "status": "ready" },
+    { "id": "algo-03", "title": "Binary Search Beyond Sorted Arrays", "file": "chapters/03-binary-search-beyond-sorted-arrays.md", "quiz": "quizzes/03-binary-search-beyond-sorted-arrays.json", "status": "ready" },
+    { "id": "algo-04", "title": "Divide and Conquer", "file": "chapters/04-divide-and-conquer.md", "quiz": "quizzes/04-divide-and-conquer.json", "status": "ready" },
+    { "id": "algo-05", "title": "Recursion to Dynamic Programming", "file": "chapters/05-recursion-to-dynamic-programming.md", "quiz": "quizzes/05-recursion-to-dynamic-programming.json", "status": "ready" },
+    { "id": "algo-06", "title": "Dynamic Programming Patterns", "file": "chapters/06-dynamic-programming-patterns.md", "quiz": "quizzes/06-dynamic-programming-patterns.json", "status": "ready" },
+    { "id": "algo-07", "title": "Greedy Algorithms and Proving Correctness", "file": "chapters/07-greedy-algorithms-and-proving-correctness.md", "quiz": "quizzes/07-greedy-algorithms-and-proving-correctness.json", "status": "ready" },
+    { "id": "algo-08", "title": "Backtracking and Constraint Search", "file": "chapters/08-backtracking-and-constraint-search.md", "quiz": "quizzes/08-backtracking-and-constraint-search.json", "status": "ready" },
+    { "id": "algo-09", "title": "String Matching and Bit Manipulation", "file": "chapters/09-string-matching-and-bit-manipulation.md", "quiz": "quizzes/09-string-matching-and-bit-manipulation.json", "status": "ready" },
+    { "id": "algo-10", "title": "Algorithm Design at Scale", "file": "chapters/10-algorithm-design-at-scale.md", "quiz": "quizzes/10-algorithm-design-at-scale.json", "status": "ready" }
+  ]
+}

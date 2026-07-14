@@ -1,0 +1,99 @@
+{
+  "schemaVersion": 1,
+  "chapterId": "algo-03",
+  "passScore": 0.7,
+  "questions": [
+    {
+      "id": "algo-03-q01",
+      "type": "mcq",
+      "difficulty": "senior",
+      "prompt": "What is the actual, general requirement for binary search to apply — beyond the common framing of 'a sorted array'?",
+      "options": [
+        { "id": "a", "text": "A monotonic predicate over a search space: a yes/no question whose answer is false for a while, then true for the rest (or vice versa) — sorted-array search is one specific instance of this, not the definition itself." },
+        { "id": "b", "text": "The data must be stored in an array, though it need not be sorted." },
+        { "id": "c", "text": "The search space must contain fewer than a known maximum number of elements." },
+        { "id": "d", "text": "Binary search only works on integers, never on other data types." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is the chapter's central reframing: monotonicity of a predicate, not sortedness of an array, is the true requirement — which is exactly why 'search on the answer' problems (no array involved at all) are legitimately binary search. (b) still ties the concept to arrays specifically, missing the generalization to arbitrary search spaces (like a range of integers representing possible answers). (c) size isn't a structural requirement; any bounded monotonic search space works regardless of scale. (d) is false — binary search works over any orderable/comparable search space, not just integers.",
+      "tags": ["binary-search", "monotonic-predicate"]
+    },
+    {
+      "id": "algo-03-q02",
+      "type": "mcq",
+      "difficulty": "senior",
+      "prompt": "A problem asks: 'find the minimum number of days needed to ship all packages given a daily weight capacity, then find the SMALLEST capacity that ships everything within D days' — with no array to search at all. Why is this still a binary search problem?",
+      "options": [
+        { "id": "a", "text": "The feasibility check 'can capacity C ship everything within D days?' is monotonic (if C works, any larger capacity also works), so binary searching over the RANGE OF POSSIBLE CAPACITIES finds the minimum feasible one in O(log(range)) feasibility checks." },
+        { "id": "b", "text": "It isn't actually a binary search problem; it requires a different algorithm entirely since there's no array involved." },
+        { "id": "c", "text": "It's a binary search problem only because the package weights happen to be integers." },
+        { "id": "d", "text": "Binary search applies here because the number of packages is always a power of two." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is 'search on the answer' precisely: monotonicity of the feasibility predicate over the candidate-answer range is the only requirement, and it holds here (more capacity can only help, never hurt feasibility). (b) is the exact misconception the chapter corrects — the absence of an array to search doesn't disqualify binary search when a monotonic predicate over a range exists. (c) integer-valued weights aren't the reason; the monotonic feasibility structure is. (d) package count being a power of two is irrelevant and not even implied by the problem.",
+      "tags": ["search-on-the-answer", "binary-search", "monotonicity"]
+    },
+    {
+      "id": "algo-03-q03",
+      "type": "code-review",
+      "difficulty": "senior",
+      "prompt": "What is the specific, historically real bug in this midpoint calculation, and why does the alternative avoid it?",
+      "code": "int mid = (lo + hi) / 2;\n// vs.\nint mid = lo + (hi - lo) / 2;",
+      "codeLanguage": "java",
+      "options": [
+        { "id": "a", "text": "`lo + hi` can overflow a 32-bit int when both are large (even if each individually is a valid, in-range index), producing a negative or wrapped-around mid value; `lo + (hi - lo) / 2` never sums two large values together, avoiding the overflow entirely." },
+        { "id": "b", "text": "The two expressions are mathematically different and do not compute the same midpoint." },
+        { "id": "c", "text": "`(lo + hi) / 2` is slower due to an extra addition operation." },
+        { "id": "d", "text": "This overflow only matters for arrays larger than what any real system would ever process, so it's not a practical concern." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is a documented, real bug — found in the JDK's own Arrays.binarySearch for years before being fixed — precisely because `lo + hi` can exceed Integer.MAX_VALUE even when lo and hi are each valid indices well within range, while the rewritten form only ever adds a (small) half-difference to lo. (b) the two expressions are mathematically equivalent under infinite precision; the difference is purely about finite-integer overflow behavior. (c) performance is not the concern here — correctness under overflow is. (d) understates a real, documented production bug; while rare, it has caused actual failures in widely-used libraries.",
+      "tags": ["binary-search", "integer-overflow", "bugs"]
+    },
+    {
+      "id": "algo-03-q04",
+      "type": "mcq",
+      "difficulty": "staff",
+      "prompt": "According to the chapter, what is the actual root cause of the well-documented finding that most from-memory binary search implementations by professional programmers contain bugs?",
+      "options": [
+        { "id": "a", "text": "Mixing inconsistent conventions (loop condition, midpoint update direction) from different memorized templates, rather than deriving the implementation from an explicitly stated loop invariant that's checked line by line." },
+        { "id": "b", "text": "Binary search is inherently too complex an algorithm for any programmer to implement correctly without extensive practice." },
+        { "id": "c", "text": "Most programming languages lack proper support for implementing binary search correctly." },
+        { "id": "d", "text": "The bugs are almost always in the comparison operator, never in the loop bounds or midpoint calculation." }
+      ],
+      "answer": ["a"],
+      "explanation": "The chapter's diagnosis is specific: `lo <= hi` vs `lo < hi`, and `mid` vs `mid ± 1` in updates, must be internally consistent and matched to what's being searched for — memorized fragments from different sources get combined inconsistently, which is a habit problem, not an inherent-difficulty problem. (b) mischaracterizes it as unavoidable complexity rather than an identifiable, correctable habit (stating the invariant first). (c) is a non-sequitur; the bug pattern is about reasoning discipline, not language capability. (d) narrows the bug surface incorrectly — the chapter explicitly calls out loop-bound and midpoint-update inconsistency as the dominant source, not just comparison operators.",
+      "tags": ["binary-search", "loop-invariant", "common-bugs"]
+    },
+    {
+      "id": "algo-03-q05",
+      "type": "mcq",
+      "difficulty": "senior",
+      "prompt": "What is the recommended discipline for avoiding binary search's classic bugs, per the chapter?",
+      "options": [
+        { "id": "a", "text": "State the loop invariant explicitly before writing any code (e.g. 'the answer is always in [lo, hi]'), then write code that provably maintains it at every iteration." },
+        { "id": "b", "text": "Always use recursive implementations instead of iterative ones, since recursion inherently avoids off-by-one errors." },
+        { "id": "c", "text": "Memorize one single canonical binary search template and never deviate from it under any circumstances." },
+        { "id": "d", "text": "Avoid binary search entirely in production code due to its bug-proneness, preferring linear search instead." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is the chapter's explicit recommendation and the direct antidote to the diagnosed root cause: reasoning from an invariant produces internally consistent code, rather than risking a mismatched combination of memorized fragments. (b) recursion doesn't inherently prevent off-by-one bugs; the same invariant-consistency issues can occur in recursive form. (c) a single memorized template still requires understanding to adapt correctly to variants (first-true vs exact-match vs last-false) — rigid memorization without the invariant reasoning is exactly the failure mode described. (d) massively overcorrects — trading O(log n) for O(n) to avoid a well-understood, preventable bug class isn't the chapter's conclusion at all.",
+      "tags": ["binary-search", "loop-invariant", "best-practices"]
+    },
+    {
+      "id": "algo-03-q06",
+      "type": "mcq",
+      "difficulty": "staff",
+      "prompt": "A candidate is given a problem that doesn't mention searching, sorting, or arrays at all, but does describe a scenario where 'if X amount works, any larger amount also works, and we want the minimum X that works.' What should this phrasing signal?",
+      "options": [
+        { "id": "a", "text": "A monotonic feasibility predicate over a range of candidate values — a 'search on the answer' binary search opportunity, even though nothing in the problem statement mentions arrays or sorting." },
+        { "id": "b", "text": "This phrasing has no particular algorithmic significance and should be approached with brute-force enumeration by default." },
+        { "id": "c", "text": "This is a strong signal for a greedy algorithm rather than any search-based approach." },
+        { "id": "d", "text": "This phrasing only matters if the problem also explicitly provides a sorted array of candidate values." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is exactly the phrasing pattern ('if X works, larger also works, want the minimum') that signals monotonicity — the core recognition skill this chapter is built around, applicable regardless of whether the problem superficially resembles a search-an-array scenario. (b) ignores an efficient O(log range) approach in favor of a strictly worse default. (c) greedy algorithms (covered in a later chapter) solve a different class of problem; this specific monotonic-feasibility phrasing is the binary-search-on-the-answer signal, not a greedy one. (d) is false — 'search on the answer' explicitly does NOT require a pre-existing array; the range of candidate answers itself is the implicit search space.",
+      "tags": ["search-on-the-answer", "pattern-recognition", "monotonicity"]
+    }
+  ]
+}

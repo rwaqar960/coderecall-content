@@ -1,0 +1,99 @@
+{
+  "schemaVersion": 1,
+  "chapterId": "algo-09",
+  "passScore": 0.7,
+  "questions": [
+    {
+      "id": "algo-09-q01",
+      "type": "mcq",
+      "difficulty": "senior",
+      "prompt": "What specific inefficiency does naive string matching have that KMP's failure function fixes?",
+      "options": [
+        { "id": "a", "text": "On a mismatch, naive matching discards all information from the partial match and restarts comparison from the next text position; KMP's failure function lets it resume from the correct point in the PATTERN without ever moving the text pointer backward, so the text is scanned at most once." },
+        { "id": "b", "text": "Naive matching has a bug that causes it to skip valid matches; KMP fixes this correctness issue." },
+        { "id": "c", "text": "KMP works only because it uses a hash function, unlike naive matching." },
+        { "id": "d", "text": "The only difference is that KMP is implemented iteratively while naive matching is recursive." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is the chapter's precise mechanism: the WASTE in naive matching is discarding a partial match's information on mismatch; KMP's failure function preserves and reuses that information, guaranteeing the text pointer never backtracks, which is exactly what makes O(n+m) achievable. (b) naive matching is fully correct, just inefficient — there's no correctness bug being fixed here. (c) KMP does not use hashing at all; that's Rabin-Karp's approach, a different technique covered later in the same chapter. (d) both algorithms can be implemented either iteratively or recursively; the meaningful difference is the failure-function mechanism, not control-flow style.",
+      "tags": ["kmp", "string-matching", "complexity-analysis"]
+    },
+    {
+      "id": "algo-09-q02",
+      "type": "mcq",
+      "difficulty": "senior",
+      "prompt": "Rabin-Karp's average-case complexity matches KMP's O(n+m), but its worst case can degrade to O(nm). What causes this degradation?",
+      "options": [
+        { "id": "a", "text": "Hash collisions — when many different substrings produce the same hash value, the algorithm must fall back to full character-by-character comparison at each of those positions, defeating the hash filter's purpose; this mirrors the hash-flooding risk from hash table collisions in the DSA course." },
+        { "id": "b", "text": "Rabin-Karp's worst case is always O(nm) regardless of input, making the O(n+m) average-case claim misleading." },
+        { "id": "c", "text": "The rolling hash computation itself becomes O(m) per window in the worst case, rather than O(1)." },
+        { "id": "d", "text": "Rabin-Karp degrades only when the pattern length exceeds the text length." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is a direct, explicit callback the chapter draws to the DSA course's hashing chapter: a hash-based filter's worst-case performance depends entirely on how often distinct inputs collide, and adversarial or unlucky data causing many collisions forces the full O(m) comparison fallback repeatedly, reproducing something close to the naive O(nm) bound. (b) mischaracterizes the actual claim — average case genuinely is O(n+m) for typical, non-adversarial data; the worst case is a distinct, rarer scenario. (c) is false — the chapter explicitly states the rolling hash update is O(1) per window; that's the whole point of it being 'rolling.' (d) is a fabricated, unrelated condition; the actual degradation trigger is collision frequency, not a length relationship.",
+      "tags": ["rabin-karp", "hash-collisions", "worst-case"]
+    },
+    {
+      "id": "algo-09-q03",
+      "type": "code-review",
+      "difficulty": "senior",
+      "prompt": "What does the bitwise operation `n & (n-1)` compute, and what is one practical use mentioned in the chapter?",
+      "code": "boolean isPowerOfTwo(int n) {\n    return n > 0 && (n & (n - 1)) == 0;\n}",
+      "codeLanguage": "java",
+      "options": [
+        { "id": "a", "text": "It clears the lowest set bit of n; when the result is 0, n had exactly one set bit, which is the defining property of a power of two — this is also the basis for efficiently counting set bits." },
+        { "id": "b", "text": "It computes the bitwise complement of n, flipping every bit." },
+        { "id": "c", "text": "It always returns 0 regardless of the value of n, making this check meaningless." },
+        { "id": "d", "text": "It rounds n up to the nearest power of two." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is exactly the trick described: n & (n-1) clears the lowest set bit (since n-1 flips all bits from the lowest set bit downward, and ANDing with the original n zeroes exactly that bit), so a single-set-bit number (a power of two) becomes 0 after this operation — and repeatedly applying it counts set bits, one clear per iteration. (b) bitwise complement is the `~` operator, an entirely different operation from AND-with-(n-1). (c) is false for any n with more than one bit set (e.g. n=6=110, n-1=101, AND=100≠0) — the result is meaningfully nonzero for non-powers-of-two. (d) this operation clears a bit, it does not round or increase n in any way.",
+      "tags": ["bit-manipulation", "power-of-two", "bitwise-tricks"]
+    },
+    {
+      "id": "algo-09-q04",
+      "type": "mcq",
+      "difficulty": "senior",
+      "prompt": "Why does XOR-ing every element of an array together correctly find the single non-duplicated element, when every other element appears exactly twice?",
+      "options": [
+        { "id": "a", "text": "XOR is self-canceling (x ^ x = 0) and has identity 0 (x ^ 0 = x), so every pair of identical duplicated values cancels to 0 when XORed together, leaving only the unpaired value after all cancellations, achieved in O(n) time and O(1) space." },
+        { "id": "b", "text": "XOR sorts the array internally, making the unpaired element easy to identify at a fixed position." },
+        { "id": "c", "text": "This technique only works if the array is already sorted before XOR-ing." },
+        { "id": "d", "text": "XOR-ing requires O(n) additional space to track which elements have been seen." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is the precise algebraic property the chapter names: self-cancellation plus identity means order of operations doesn't matter (XOR is commutative and associative), so pairs vanish regardless of their position in the array, leaving exactly the unpaired value — and no extra data structure is needed since XOR accumulates in a single variable. (b) XOR performs no sorting or reordering of any kind; it's a purely algebraic bitwise accumulation. (c) is false — the technique works on the array in ANY order, precisely because XOR is commutative/associative; sortedness is irrelevant. (d) directly contradicts the stated O(1) space bound — a single accumulator variable is all that's needed, no auxiliary structure.",
+      "tags": ["xor", "bit-manipulation", "single-number-problem"]
+    },
+    {
+      "id": "algo-09-q05",
+      "type": "mcq",
+      "difficulty": "staff",
+      "prompt": "The Traveling Salesman Problem's bitmask DP formulation runs in O(2^n * n^2), dramatically better than brute force's O(n!) for the same problem. Does this make TSP solvable in polynomial time?",
+      "options": [
+        { "id": "a", "text": "No — O(2^n * n^2) is still exponential in n; bitmask DP shrinks the exponential base and constant dramatically (making moderate n, like 20, tractable where n! would not be), but it does not change TSP's fundamental complexity class, consistent with TSP being NP-hard." },
+        { "id": "b", "text": "Yes — any algorithm faster than O(n!) is by definition polynomial time." },
+        { "id": "c", "text": "Yes, because bitmask DP is a form of dynamic programming, and all DP algorithms run in polynomial time by definition." },
+        { "id": "d", "text": "The question is unanswerable without knowing the specific input data." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is the chapter's explicit, careful framing — connecting back to chapter 1's P/NP/NP-hard vocabulary: bitmask DP is a genuine, large practical improvement (making n=20 feasible where n! is not), but 2^n remains exponential, and TSP's NP-hardness (formalized in chapter 10) is not resolved or contradicted by this optimization. (b) is a fundamental complexity-theory error — 'faster than one specific slower algorithm' does not imply 'polynomial time'; many exponential algorithms are faster than n! while still being exponential. (c) is false; DP techniques do not universally guarantee polynomial time — the RESULTING complexity depends entirely on the size of the state space being tabulated, which here is itself exponential (2^n masks). (d) complexity class claims are about asymptotic behavior across all inputs of a given structure, not dependent on specific data values.",
+      "tags": ["bitmask-dp", "traveling-salesman", "np-hard", "complexity-classes"]
+    },
+    {
+      "id": "algo-09-q06",
+      "type": "mcq",
+      "difficulty": "staff",
+      "prompt": "A DP problem's state needs to track 'which of these 15 tasks have been completed so far.' What should this specific phrasing signal, per the chapter's guidance?",
+      "options": [
+        { "id": "a", "text": "A bitmask-DP opportunity — a small (here, 15-bit), bounded subset of a fixed universe is exactly the state shape bitmasking compresses into a single integer, usable directly as an array index, rather than requiring a general-purpose Set data structure per state." },
+        { "id": "b", "text": "This phrasing indicates the problem cannot be solved with dynamic programming at all." },
+        { "id": "c", "text": "A HashSet should always be preferred over bitmasking for tracking completed tasks, regardless of the universe size." },
+        { "id": "d", "text": "This signals a greedy algorithm is required, since task completion tracking is inherently sequential." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is precisely the recognition skill the chapter's closing section builds: 'small bounded subset of a fixed universe' is the bitmask-DP signal, and 15 items comfortably fits within a standard integer's bit width, making this state representable as a single number rather than an object-based set. (b) is false — this is exactly the kind of state DP handles well, once represented efficiently; the phrasing doesn't disqualify DP, it points to a specific (bitmask) state representation for it. (c) is the reflexive-default mistake the DSA course's capstone specifically warned against — a HashSet works but is strictly less efficient here (more memory, can't be used directly as an array index) than the bitmask alternative that fits this exact shape. (d) task-tracking phrasing alone doesn't imply irrevocable, no-reconsideration greedy choices; nothing here suggests the greedy structure from chapter 7 applies.",
+      "tags": ["bitmask-dp", "state-compression", "pattern-recognition"]
+    }
+  ]
+}

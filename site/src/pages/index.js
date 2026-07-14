@@ -9,7 +9,7 @@ import styles from './index.module.css';
 const courses = [
   {id: 'oop', title: 'Object-Oriented Programming', available: true, blurb: '10 chapters · encapsulation to architecture at scale'},
   {id: 'dsa', title: 'Data Structures', available: true, blurb: '10 chapters · memory layout to choosing structures under real constraints'},
-  {id: 'algorithms', title: 'Algorithms', available: false, blurb: 'Coming soon'},
+  {id: 'algorithms', title: 'Algorithms', available: true, blurb: '10 chapters · complexity analysis to NP-hardness and approximation'},
   {id: 'flutter', title: 'Flutter', available: false, blurb: 'Coming soon'},
 ];
 

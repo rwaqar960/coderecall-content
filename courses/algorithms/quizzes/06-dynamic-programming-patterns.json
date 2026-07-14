@@ -1,0 +1,97 @@
+{
+  "schemaVersion": 1,
+  "chapterId": "algo-06",
+  "passScore": 0.7,
+  "questions": [
+    {
+      "id": "algo-06-q01",
+      "type": "mcq",
+      "difficulty": "senior",
+      "prompt": "What is the recognizable signal that a problem fits the 0/1 Knapsack DP shape?",
+      "options": [
+        { "id": "a", "text": "A fixed resource budget (capacity, weight limit, target sum) combined with per-item binary include/exclude decisions, each item usable at most once." },
+        { "id": "b", "text": "Any problem involving an array of integers, regardless of what operation is being performed on it." },
+        { "id": "c", "text": "Any problem that asks for a maximum or minimum value, regardless of structure." },
+        { "id": "d", "text": "The presence of two nested loops in the naive brute-force solution." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is the chapter's specific diagnostic for this shape: a budget being consumed plus binary per-item decisions is what defines the (item index, remaining budget) state — subset-sum and bounded coin-change are named as the same shape precisely because they share this structure, not because they're superficially similar. (b) is far too broad — countless non-knapsack problems involve integer arrays. (c) optimization objective alone doesn't identify a specific DP shape; many different shapes optimize a max/min. (d) nested loops are an implementation artifact of many different algorithm types, not a reliable signal specific to this shape.",
+      "tags": ["knapsack", "dp-patterns", "pattern-recognition"]
+    },
+    {
+      "id": "algo-06-q02",
+      "type": "mcq",
+      "difficulty": "senior",
+      "prompt": "Longest Common Subsequence and Edit Distance are described as 'the same shape with different per-cell logic.' What do they share, and what differs?",
+      "options": [
+        { "id": "a", "text": "Both use state (position in sequence A, position in sequence B); LCS's per-cell rule has 2 options (match-and-extend, or skip from one side), while edit distance's has 3 (insert, delete, substitute) — the state shape is identical, only the combine rule at each cell differs." },
+        { "id": "b", "text": "They are unrelated problems that happen to both be solvable with dynamic programming, with no structural connection." },
+        { "id": "c", "text": "LCS operates on two sequences while edit distance operates on only one." },
+        { "id": "d", "text": "Edit distance is a special case of LCS that only applies to strings of equal length." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is exactly the chapter's point about recognizing shared shape despite surface differences: same two-index state axis structure, different transition rule per cell — recognizing this connection is what lets solving one problem transfer insight to the other, rather than treating them as two separately memorized techniques. (b) understates a deliberate, chapter-highlighted structural connection. (c) is false; edit distance also operates on two sequences (the source and target strings) — that's precisely why it shares the two-index state with LCS. (d) is false on both counts — edit distance is not a 'special case' of LCS, and neither requires equal-length inputs.",
+      "tags": ["lcs", "edit-distance", "dp-patterns"]
+    },
+    {
+      "id": "algo-06-q03",
+      "type": "mcq",
+      "difficulty": "senior",
+      "prompt": "The chapter claims grid DP (e.g. minimum path sum moving right/down) is 'structurally the same idea' as LCS's two-sequence state. What's the connection?",
+      "options": [
+        { "id": "a", "text": "Grid DP's (row, column) state and combine-from-valid-predecessors logic is the same two-axis 'combine from prior state' structure as LCS's (position in A, position in B) — the grid's row and column axes play the role LCS's two sequences play." },
+        { "id": "b", "text": "There is no real connection; the chapter's claim is a loose analogy without structural basis." },
+        { "id": "c", "text": "Grid DP always requires exactly the same number of rows and columns as the two sequences in an LCS problem." },
+        { "id": "d", "text": "Grid DP and LCS solve identical problems and produce identical answers on the same input." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is the chapter's explicit unification move: both patterns share the two-axis-state, combine-from-predecessors shape (dp[r][c] depends on dp[r-1][c] and dp[r][c-1] in grid DP; dp[i][j] depends on dp[i-1][j-1]/dp[i-1][j]/dp[i][j-1] in LCS) — recognizing this turns two memorized categories into one applied pattern. (b) dismisses a genuine structural parallel the chapter draws deliberately, not a vague comparison. (c) there's no such dimensional-matching requirement; grid dimensions and sequence lengths are independent, unrelated quantities. (d) they solve different PROBLEMS (path-cost vs. subsequence-length) despite sharing computational structure — the connection is about SHAPE, not about producing the same answers.",
+      "tags": ["grid-dp", "lcs", "pattern-recognition"]
+    },
+    {
+      "id": "algo-06-q04",
+      "type": "mcq",
+      "difficulty": "staff",
+      "prompt": "Per the chapter's diagnostic workflow for a novel DP problem, what should you identify FIRST — before trying to match it to a memorized problem type?",
+      "options": [
+        { "id": "a", "text": "What decision repeats (one state axis) and what running constraint needs tracking (the other axis, or an additional one) — reading the problem for its state, rather than pattern-matching to a remembered problem." },
+        { "id": "b", "text": "Whether the problem can be solved with a greedy algorithm instead, since greedy is always preferable when applicable." },
+        { "id": "c", "text": "The exact Big-O time complexity the final solution must achieve." },
+        { "id": "d", "text": "Whether the problem has appeared in a well-known algorithms textbook before." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is the chapter's stated diagnostic sequence and its explicit goal: building the skill of reading state axes directly from a problem's structure is what generalizes to UNSEEN problems, versus pattern-matching to memorized ones, which fails the moment a genuinely novel problem appears. (b) greedy-vs-DP is a different chapter's question (chapter 7) and isn't the first diagnostic step for a problem already suspected to need DP. (c) target complexity is a downstream concern once a correct approach is found, not the starting diagnostic. (d) relying on textbook recognition is precisely the memorization-dependent approach the chapter is trying to move you away from.",
+      "tags": ["dp-patterns", "problem-solving", "state-identification"]
+    },
+    {
+      "id": "algo-06-q05",
+      "type": "mcq",
+      "difficulty": "staff",
+      "prompt": "A candidate identifies a DP state with too FEW dimensions for a new problem. What is the resulting failure mode, as described in the chapter?",
+      "options": [
+        { "id": "a", "text": "An incorrect recurrence — information that was discarded (not tracked in the state) turns out to matter for correctness, producing wrong answers even though the code runs and the table fills without error." },
+        { "id": "b", "text": "The table becomes infeasibly large to compute or store." },
+        { "id": "c", "text": "The algorithm becomes slower but still produces correct results." },
+        { "id": "d", "text": "A compilation error, since insufficient state dimensions cannot be expressed in code." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is the specific failure the chapter distinguishes from its opposite: too little state means the recurrence silently loses information it needed, producing a plausible-looking but WRONG answer — a correctness bug, not a performance or feasibility one. (b) is the OPPOSITE failure mode (too MUCH state), explicitly named as the other side of this same trade-off in the chapter. (c) incorrectly assumes the algorithm still produces correct results — the chapter is explicit that insufficient state breaks correctness, not just speed. (d) is false; under-dimensioned state compiles and runs fine — the bug is purely semantic/logical, which is what makes it dangerous (it doesn't announce itself).",
+      "tags": ["dp-state", "correctness", "common-mistakes"]
+    },
+    {
+      "id": "algo-06-q06",
+      "type": "mcq",
+      "difficulty": "staff",
+      "prompt": "A DP problem's naturally-identified state has so many dimensions (or such a large range) that the resulting table would be infeasibly large to build. What does the chapter suggest as the direction to look for a fix?",
+      "options": [
+        { "id": "a", "text": "Look for a smarter, more compact state representation that captures the same necessary information more compactly — the chapter points specifically to bitmask-based state compression (covered in a later chapter) as one concrete technique for this." },
+        { "id": "b", "text": "Abandon dynamic programming entirely and switch to a greedy approach, which always has smaller state requirements." },
+        { "id": "c", "text": "Increase the table size further to ensure correctness, accepting the larger memory cost as unavoidable." },
+        { "id": "d", "text": "This situation cannot be resolved; DP is fundamentally inapplicable whenever the naive state space is large." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is the chapter's explicit forward-reference and guidance: state-space explosion is a recognized, addressable problem, and compressing the state representation (rather than abandoning the approach) is the standard fix — bitmasking is named as one concrete example technique covered later in this course. (b) greedy algorithms solve a fundamentally different (and narrower) class of problems than DP; switching approaches isn't a free substitution, and greedy doesn't 'always' have smaller state requirements since it doesn't use tabulated state the same way at all. (c) is backwards — the goal is REDUCING state size, not accepting or growing an infeasible one. (d) overstates the limitation; the chapter explicitly frames this as a solvable problem via better state representation, not a hard wall for DP.",
+      "tags": ["dp-state", "state-compression", "scalability"]
+    }
+  ]
+}

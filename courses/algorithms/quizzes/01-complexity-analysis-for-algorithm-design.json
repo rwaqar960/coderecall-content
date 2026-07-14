@@ -1,0 +1,97 @@
+{
+  "schemaVersion": 1,
+  "chapterId": "algo-01",
+  "passScore": 0.7,
+  "questions": [
+    {
+      "id": "algo-01-q01",
+      "type": "mcq",
+      "difficulty": "senior",
+      "prompt": "Why does naive recursive Fibonacci (T(n) = T(n-1) + T(n-2) + O(1)) run in exponential time, despite having a recurrence that superficially resembles merge sort's (T(n) = 2T(n/2) + O(n)), which runs in O(n log n)?",
+      "options": [
+        { "id": "a", "text": "Fibonacci's subproblems barely shrink (n-1, n-2), so the call tree's depth is O(n) with roughly doubling width per level, giving O(2^n) total calls; merge sort's subproblems halve in size each time, giving only O(log n) depth." },
+        { "id": "b", "text": "Both recurrences actually have the same complexity; the exponential behavior is a common misconception." },
+        { "id": "c", "text": "Fibonacci is slower only because it uses addition instead of the more efficient merge operation." },
+        { "id": "d", "text": "The number of subproblems (2 in both cases) is what determines complexity, so both should be O(2^n)." }
+      ],
+      "answer": ["a"],
+      "explanation": "The determining factor is HOW MUCH SMALLER each subproblem is, not just how many there are — halving (merge sort) gives logarithmic depth, while barely-shrinking (Fibonacci) gives linear depth with exponential branching, a categorically different growth rate. (b) is false — the exponential blowup is real and well-documented, not a misconception. (c) the operation performed per call is O(1) in both; the issue is the SHAPE of recursion, not the operation. (d) ignores subproblem size entirely, which is precisely the factor that differentiates the two despite both having '2 subproblems.'",
+      "tags": ["recurrence-relations", "fibonacci", "complexity-analysis"]
+    },
+    {
+      "id": "algo-01-q02",
+      "type": "mcq",
+      "difficulty": "senior",
+      "prompt": "Using the Master theorem on T(n) = 4T(n/2) + O(n) (a=4, b=2, d=1), which case applies and what's the resulting complexity?",
+      "options": [
+        { "id": "a", "text": "log_2(4) = 2 > d = 1, so the recursive calls dominate: T(n) = O(n^log_2(4)) = O(n^2)." },
+        { "id": "b", "text": "d = 1 = log_2(4), so this is the balanced case: T(n) = O(n log n)." },
+        { "id": "c", "text": "d = 1 < log_2(4) = 2, so the non-recursive work dominates: T(n) = O(n)." },
+        { "id": "d", "text": "The Master theorem cannot be applied to this recurrence." }
+      ],
+      "answer": ["a"],
+      "explanation": "log_2(4) = 2, and comparing to d=1: since d < log_b(a) (1 < 2), the recursive-calls-dominate case applies, giving O(n^log_b(a)) = O(n^2) — this is, notably, the recurrence for a naive divide-and-conquer matrix multiplication approach. (b) misidentifies which case applies — d and log_b(a) are NOT equal here (1 ≠ 2). (c) has the comparison backwards; d is smaller, not larger, so it's the recursive term that dominates, not the reverse. (d) the recurrence is in exactly the form aT(n/b) + O(n^d) the theorem covers.",
+      "tags": ["master-theorem", "recurrence-relations"]
+    },
+    {
+      "id": "algo-01-q03",
+      "type": "mcq",
+      "difficulty": "senior",
+      "prompt": "Is the statement 'quicksort is O(n log n)' accurate as an unqualified claim?",
+      "options": [
+        { "id": "a", "text": "No — it's O(n log n) average-case only; its worst case is O(n^2), and that worst case is triggered by realistic input (already-sorted or reverse-sorted data) under naive pivot selection, not just contrived adversarial input." },
+        { "id": "b", "text": "Yes — quicksort is O(n log n) in all cases, which is why it's widely used." },
+        { "id": "c", "text": "No — quicksort is always O(n^2); O(n log n) is a common misconception." },
+        { "id": "d", "text": "The claim is accurate only when the input array has fewer than 1000 elements." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is the chapter's amortized-vs-average-case distinction in action: O(n log n) is an average-case-over-random-inputs claim, not a worst-case guarantee, and the worst case is reachable by common real data patterns (sorted logs, pre-processed data), which is exactly why production sorts randomize the pivot or use median-of-three selection. (b) overclaims — merge sort (not quicksort) is the one with a guaranteed O(n log n) worst case. (c) understates it — O(n log n) is the typical, expected case; O(n^2) is the exception, not the rule. (d) input size has no bearing on which complexity case is triggered.",
+      "tags": ["quicksort", "average-case", "worst-case"]
+    },
+    {
+      "id": "algo-01-q04",
+      "type": "mcq",
+      "difficulty": "staff",
+      "prompt": "What is the precise difference between 'amortized' and 'average-case' complexity claims?",
+      "options": [
+        { "id": "a", "text": "Amortized cost is averaged over a SEQUENCE OF OPERATIONS and holds for any input (e.g. dynamic array resizing); average-case cost is averaged over RANDOM INPUTS and does not hold for a specific bad input (e.g. quicksort's pivot choices)." },
+        { "id": "b", "text": "They are two names for the same concept and can be used interchangeably." },
+        { "id": "c", "text": "Amortized analysis applies only to sorting algorithms, while average-case applies only to search algorithms." },
+        { "id": "d", "text": "Amortized cost is always worse than average-case cost for the same algorithm." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is the chapter's key distinction, directly relevant to avoiding a common real interview/design mistake: amortized guarantees hold regardless of which specific input you get (it's about operation-sequence bookkeeping), while average-case guarantees can fail entirely on a specific, realistic input (it's about the input distribution). Conflating them is exactly how 'quicksort is O(n log n)' gets stated without the crucial worst-case caveat. (b) treating them as interchangeable is the precise error the chapter warns against. (c) both concepts apply broadly across algorithm types, not restricted to sorting or searching specifically. (d) there's no general ordering between the two — they answer different questions and aren't directly comparable.",
+      "tags": ["amortized-analysis", "average-case", "complexity-analysis"]
+    },
+    {
+      "id": "algo-01-q05",
+      "type": "mcq",
+      "difficulty": "senior",
+      "prompt": "Before writing any code, what practical benefit comes from writing down an algorithm's recurrence relation first?",
+      "options": [
+        { "id": "a", "text": "The recurrence's shape reveals complexity (and thus viability) before implementation effort is spent — an exponential-shaped recurrence like Fibonacci's is identifiable in minutes, versus discovering the same fact after building and running an unusably slow program." },
+        { "id": "b", "text": "It guarantees the resulting code will have no bugs." },
+        { "id": "c", "text": "It is required by the Master theorem in order to compile the code correctly." },
+        { "id": "d", "text": "It has no practical value; it's purely a theoretical exercise for coursework." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is the chapter's central practical argument: recurrence analysis is a cheap, five-minute check that catches an unusable design before implementation time is invested — a real engineering discipline, not an academic formality. (b) complexity analysis says nothing about correctness/bugs, only about performance growth. (c) the Master theorem is an analysis tool, entirely unrelated to compilation. (d) directly contradicts the chapter's stated purpose — this is presented as a practical, time-saving habit.",
+      "tags": ["recurrence-relations", "algorithm-design", "practical-application"]
+    },
+    {
+      "id": "algo-01-q06",
+      "type": "mcq",
+      "difficulty": "staff",
+      "prompt": "A candidate is asked to design an exact, optimal solution for a problem later recognized as NP-hard (e.g. exact bin packing at scale). What is the senior-level response?",
+      "options": [
+        { "id": "a", "text": "Name that no known polynomial-time algorithm solves NP-hard problems exactly, and pivot the goal toward an approximation, heuristic, or constraint-relaxation approach that is 'good enough' for the actual requirement — chasing an optimal polynomial solution is chasing something not known to exist." },
+        { "id": "b", "text": "Keep attempting to design a polynomial-time exact algorithm, since with enough cleverness any problem can be solved optimally in polynomial time." },
+        { "id": "c", "text": "Conclude the problem is unsolvable and cannot be addressed at all." },
+        { "id": "d", "text": "Use a standard sorting algorithm, since sorting-based approaches always resolve NP-hard problems in practice." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is the practical payoff of knowing the P/NP/NP-hard vocabulary: recognizing the problem class changes what 'success' means for the task, redirecting effort toward approaches (covered in chapter 10) that are actually productive rather than searching for something that would be a landmark unsolved-problem breakthrough if found. (b) misunderstands what NP-hard means — no known polynomial algorithm exists, and finding one would resolve the P vs NP question, one of the most significant open problems in computer science. (c) is too pessimistic — NP-hard doesn't mean unsolvable, it means exact optimal solutions aren't efficiently guaranteed; approximations and heuristics remain genuinely useful. (d) sorting has no general relationship to solving NP-hard problems.",
+      "tags": ["np-hard", "complexity-classes", "algorithm-design"]
+    }
+  ]
+}

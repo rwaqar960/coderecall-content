@@ -1,0 +1,97 @@
+{
+  "schemaVersion": 1,
+  "chapterId": "algo-10",
+  "passScore": 0.7,
+  "questions": [
+    {
+      "id": "algo-10-q01",
+      "type": "mcq",
+      "difficulty": "senior",
+      "prompt": "What is the precise relationship between P, NP, and NP-hard?",
+      "options": [
+        { "id": "a", "text": "P is solvable in polynomial time; NP is verifiable in polynomial time (P is a subset of NP); NP-hard problems are at least as hard as the hardest NP problems and aren't necessarily even in NP themselves." },
+        { "id": "b", "text": "P, NP, and NP-hard are three equivalent names for the same class of problems." },
+        { "id": "c", "text": "NP-hard problems are always easier than P problems, since 'hard' just refers to implementation difficulty, not computational complexity." },
+        { "id": "d", "text": "NP stands for 'not polynomial,' meaning no NP problem can be solved in polynomial time under any circumstances." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is the chapter's precise restatement of the definitions, with the crucial subset relationship (P ⊆ NP) and the important nuance that NP-hard doesn't require NP membership (some NP-hard problems lack even polynomial-time verifiability). (b) directly contradicts the whole point of having three distinct terms with different, precise meanings. (c) inverts the actual difficulty relationship and also misdefines 'hard' as an informal notion rather than the formal reducibility-based definition. (d) is a common but incorrect folk etymology — NP stands for 'nondeterministic polynomial time' (verifiable in polynomial time by a nondeterministic machine, or equivalently, verifiable in polynomial time by a deterministic one given a solution) — and P itself is a subset of NP, so plenty of NP problems ARE solvable in polynomial time.",
+      "tags": ["complexity-classes", "np-hard", "p-vs-np"]
+    },
+    {
+      "id": "algo-10-q02",
+      "type": "mcq",
+      "difficulty": "staff",
+      "prompt": "A candidate is asked to design a route through 500 delivery stops, visiting each exactly once, minimizing total distance. They propose a polynomial-time algorithm claimed to always find the exact optimal route. What should a staff-level reviewer's first reaction be?",
+      "options": [
+        { "id": "a", "text": "Skepticism — this is the Traveling Salesman Problem, a canonical NP-hard problem; a claimed exact polynomial-time solution would be one of the most significant results in computer science history (implying P = NP), so it should be checked very carefully for a hidden flaw before being trusted." },
+        { "id": "b", "text": "Immediate acceptance, since 500 stops is a small enough number that exact polynomial algorithms are always possible at that scale." },
+        { "id": "c", "text": "The claim should be dismissed outright as impossible without any need to examine the proposed algorithm." },
+        { "id": "d", "text": "This is unrelated to NP-hardness since the problem only asks for a route, not an optimal assignment or subset." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is the chapter's central recognition skill applied directly: TSP's shape ('visit every location exactly once, minimize total cost') is explicitly named as a recognizable NP-hard pattern, and an exact polynomial claim for it would resolve the P vs NP question — appropriately triggering careful scrutiny rather than either blind acceptance or dismissal. (b) input SIZE doesn't determine whether a polynomial algorithm exists for the GENERAL problem — 500 is not 'small' in the bitmask-DP sense (2^500 is astronomically larger than any feasible computation), so this reasoning is backwards. (c) dismissing without examination is too hasty — algorithms restricted to special-case inputs, or approximation algorithms mislabeled as 'optimal,' are worth understanding precisely; outright dismissal without inquiry isn't the recommended engineering response. (d) misses that 'visit every location exactly once, minimize total cost' is explicitly the TSP shape named in the chapter, regardless of framing as a 'route.'",
+      "tags": ["np-hard", "traveling-salesman", "recognition"]
+    },
+    {
+      "id": "algo-10-q03",
+      "type": "mcq",
+      "difficulty": "senior",
+      "prompt": "What is the key difference between an 'approximation algorithm' and a 'heuristic,' both offered as responses to an NP-hard problem?",
+      "options": [
+        { "id": "a", "text": "An approximation algorithm comes with a PROVABLE bound on how far its answer can be from optimal (e.g. 'always within 2x'); a heuristic has no such guarantee, relying instead on typically-good performance on realistic inputs." },
+        { "id": "b", "text": "Heuristics always run faster than approximation algorithms in every case." },
+        { "id": "c", "text": "Approximation algorithms always find the exact optimal solution, just more slowly than heuristics." },
+        { "id": "d", "text": "There is no meaningful difference; the terms are interchangeable." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is the chapter's precise distinction, and it matters practically because the two carry different risk profiles: a provable bound is a guarantee you can design a system around, while a heuristic's 'usually good' behavior could fail unpredictably on an unusual input, with no bound to fall back on. (b) is an unsupported, false generalization — relative speed depends on the specific algorithms being compared, not a universal rule between the two categories. (c) directly contradicts the definition — approximation algorithms are explicitly NOT exact; that's precisely why they need a bound describing how far from exact they can be. (d) ignores a meaningful, chapter-emphasized distinction with real engineering consequences for which one fits a given system's requirements.",
+      "tags": ["approximation-algorithms", "heuristics", "np-hard"]
+    },
+    {
+      "id": "algo-10-q04",
+      "type": "mcq",
+      "difficulty": "staff",
+      "prompt": "In the delivery-route worked example, why does the chapter recommend a fast heuristic with local-search refinement over a provably-bounded approximation algorithm, given that both are legitimate NP-hard responses?",
+      "options": [
+        { "id": "a", "text": "The failure cost is real but survivable (extra fuel/time, not a correctness catastrophe), and real-time order updates require fast incremental re-solving — this cost/latency profile favors a fast, good-enough heuristic over the extra engineering effort a provable-bound guarantee would cost without matching benefit." },
+        { "id": "b", "text": "Approximation algorithms are always slower than heuristics in every possible scenario, making this an easy, universal choice." },
+        { "id": "c", "text": "Heuristics are recommended here because they always produce provably optimal results for routing problems specifically." },
+        { "id": "d", "text": "The choice is arbitrary; the chapter states either approach would be equally appropriate with no reasoning given." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is a direct application of the chapter's stated trade-off principle: matching the RESPONSE to the actual constraints (latency needs, failure cost) rather than picking the 'best' technique in the abstract — a survivable failure cost plus a real-time latency requirement specifically favors the heuristic's speed and incremental-update-friendliness over an approximation algorithm's guarantee, which costs more to build for a benefit this system doesn't strictly need. (b) overgeneralizes; the reasoning given is about THIS system's specific constraints, not a universal speed ranking between the two categories. (c) is false and self-contradictory — heuristics are explicitly defined earlier in the chapter as NOT having optimality guarantees, provable or otherwise. (d) directly misrepresents the chapter, which gives explicit, detailed reasoning (steps 3 and 4 of the worked example) for this specific choice.",
+      "tags": ["heuristics", "approximation-algorithms", "worked-example", "np-hard"]
+    },
+    {
+      "id": "algo-10-q05",
+      "type": "mcq",
+      "difficulty": "staff",
+      "prompt": "A stakeholder insists on 'the provably optimal solution' for a scheduling problem later recognized as NP-hard, with a real-time response requirement. What is a legitimate engineering response, per the chapter?",
+      "options": [
+        { "id": "a", "text": "Reformulate the actual business requirement — clarify that 'a good schedule a human would approve of, computed fast' may be the real underlying need, since over-specifying 'provably optimal' for an NP-hard problem under real-time constraints may be requesting something not achievable at all, while a slightly different, well-chosen goal is." },
+        { "id": "b", "text": "Insist that provably optimal solutions are always achievable for any problem given enough engineering effort, and continue searching indefinitely." },
+        { "id": "c", "text": "Silently implement a heuristic while telling the stakeholder it is provably optimal, since the difference won't matter in practice." },
+        { "id": "d", "text": "Refuse the project entirely, since NP-hard problems cannot be worked on under any real-time constraint." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is explicitly named in the chapter as a legitimate engineering move, not a compromise or a failure: recognizing that the STATED requirement ('provably optimal') may not be the REAL underlying need, and proposing a tractable reformulation, is presented as being on equal footing with approximation algorithms and heuristics as a valid response. (b) is exactly the 'keep trying to find the polynomial algorithm' non-plan the chapter opens by rejecting — for NP-hard problems under P≠NP, this could mean searching forever for something that doesn't exist. (c) is a serious integrity violation — misrepresenting a heuristic's guarantees to a stakeholder is dishonest, not a legitimate response, and directly undermines the trust the chapter's honest-communication framing depends on. (d) is far too extreme — the chapter's entire point is that NP-hard problems remain workable via approximation, heuristics, restricted-input exact methods, or reformulation; outright refusal ignores three of the four legitimate paths offered.",
+      "tags": ["np-hard", "requirements", "engineering-judgment"]
+    },
+    {
+      "id": "algo-10-q06",
+      "type": "mcq",
+      "difficulty": "staff",
+      "prompt": "A problem has a naturally small input size (e.g. exactly 18 items) but is a known NP-hard variant. What does the chapter suggest checking before assuming an approximation or heuristic approach is necessary?",
+      "options": [
+        { "id": "a", "text": "Whether an exact method (e.g. bitmask DP from chapter 9, O(2^n * n^2)) is fast enough in practice for this specific, small n — NP-hardness describes the GENERAL problem's asymptotic behavior, but a small enough actual instance may still be exactly solvable in reasonable time." },
+        { "id": "b", "text": "NP-hard problems can never be solved exactly regardless of input size, so approximation is always required." },
+        { "id": "c", "text": "Small input size is irrelevant; the response should always default to the same technique regardless of n." },
+        { "id": "d", "text": "The problem should be assumed to actually be in P if the input size is small enough." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is explicitly one of the chapter's four listed legitimate responses to NP-hardness ('exact algorithms on restricted inputs') and it connects directly to chapter 9's bitmask DP example, where n=20 was shown to be entirely tractable at O(2^n * n^2) despite the general problem (TSP) being NP-hard. (b) is the misconception this option corrects — NP-hardness is a statement about the GENERAL problem across all input sizes, not a claim that no instance is ever exactly solvable. (c) ignores the chapter's explicit point that response should be constraint-driven (including input size), not one-size-fits-all. (d) confuses a small INSTANCE being tractable with the underlying PROBLEM CLASS changing — the problem remains NP-hard in general; only this particular small case happens to be practically solvable exactly.",
+      "tags": ["np-hard", "bitmask-dp", "exact-algorithms"]
+    }
+  ]
+}

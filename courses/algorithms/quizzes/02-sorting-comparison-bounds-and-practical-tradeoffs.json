@@ -1,0 +1,99 @@
+{
+  "schemaVersion": 1,
+  "chapterId": "algo-02",
+  "passScore": 0.7,
+  "questions": [
+    {
+      "id": "algo-02-q01",
+      "type": "mcq",
+      "difficulty": "senior",
+      "prompt": "Why is O(n log n) a proven lower bound for comparison-based sorting, rather than just an observed pattern?",
+      "options": [
+        { "id": "a", "text": "There are n! possible orderings of n elements, and each comparison yields at most one bit of information, so distinguishing between n! possibilities requires at least log_2(n!) comparisons, which is Theta(n log n) by Stirling's approximation." },
+        { "id": "b", "text": "It's an empirical observation across many algorithms, but no proof exists ruling out a faster comparison sort." },
+        { "id": "c", "text": "It's a limitation of current hardware, not a mathematical bound." },
+        { "id": "d", "text": "The bound only applies to specific languages like Java and Python." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is a genuine information-theoretic proof (the decision-tree argument), not an empirical pattern — it holds for ANY comparison-based algorithm, on any hardware, in any language. (b) understates it; this is a proven bound, not an unresolved conjecture. (c) is false — it's a mathematical, not physical, limitation. (d) the bound is language-agnostic, following purely from the comparison-based model of computation.",
+      "tags": ["comparison-sort", "lower-bound", "complexity-theory"]
+    },
+    {
+      "id": "algo-02-q02",
+      "type": "mcq",
+      "difficulty": "senior",
+      "prompt": "Counting sort achieves O(n + k) time, apparently beating the O(n log n) comparison-sort floor. Why doesn't this contradict the proven lower bound from the previous question?",
+      "options": [
+        { "id": "a", "text": "Counting sort isn't comparison-based — it never compares two elements to each other; it exploits known structure (a bounded integer range) that the information-theoretic bound's assumptions don't cover." },
+        { "id": "b", "text": "The O(n log n) bound was proven incorrect once counting sort was discovered." },
+        { "id": "c", "text": "Counting sort actually has the same O(n log n) complexity; the O(n+k) claim is a common misconception." },
+        { "id": "d", "text": "Counting sort only works on already-sorted data, so the comparison bound doesn't apply." }
+      ],
+      "answer": ["a"],
+      "explanation": "The n log n bound specifically constrains algorithms that ONLY learn about elements through pairwise comparisons — counting sort sidesteps the model entirely by using the elements' actual integer values as array indices, which is a fundamentally different (and more informative, when available) operation than comparison. (b) misunderstands proof structure — a correctly proven bound for one model of computation isn't 'overturned' by an algorithm operating outside that model. (c) is false; O(n+k) is a real, correct bound distinct from O(n log n). (d) counting sort works on arbitrary (unsorted) input within the bounded range — that's its whole purpose.",
+      "tags": ["counting-sort", "comparison-sort", "lower-bound"]
+    },
+    {
+      "id": "algo-02-q03",
+      "type": "mcq",
+      "difficulty": "senior",
+      "prompt": "When does radix/counting sort's O(n+k) or O(d(n+k)) actually lose to a well-implemented O(n log n) comparison sort in practice?",
+      "options": [
+        { "id": "a", "text": "When k (the key range) is very large relative to n — e.g. sorting a small array of arbitrary 32-bit integers, where k approaches 4 billion, making O(n+k) worse than O(n log n) despite the asymptotic notation suggesting otherwise." },
+        { "id": "b", "text": "Never — radix and counting sort are always faster than comparison sorts regardless of input characteristics." },
+        { "id": "c", "text": "Only when the input array is already sorted." },
+        { "id": "d", "text": "Only on hardware without SIMD instruction support." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is the chapter's explicit trade-off warning: the O(n+k) bound is only better than O(n log n) when k is not large relative to n — a small dataset with a huge key range makes the 'k' term dominate catastrophically, and a comparison sort with good cache behavior and low constants wins outright. (b) is the overcorrection the chapter specifically warns against — asymptotically 'better' doesn't mean universally faster. (c) sortedness of input isn't the deciding factor for this specific trade-off; key range relative to n is. (d) SIMD support isn't the mechanism being discussed here.",
+      "tags": ["radix-sort", "counting-sort", "practical-tradeoffs"]
+    },
+    {
+      "id": "algo-02-q04",
+      "type": "code-review",
+      "difficulty": "staff",
+      "prompt": "A pipeline sorts a list of Order objects by `status` (a small enum), and the list was already sorted by `timestamp` before this sort runs. Code later assumes: 'within each status group, orders remain in timestamp order.' Using an unstable sort here would:",
+      "code": "orders.sort(Comparator.comparing(Order::getStatus));\n// downstream code assumes: within each status group, timestamp order is preserved",
+      "codeLanguage": "java",
+      "options": [
+        { "id": "a", "text": "Silently violate the downstream assumption — an unstable sort is free to reorder equal-status elements arbitrarily, scrambling the previously-established timestamp order within each status group with no error or warning." },
+        { "id": "b", "text": "Have no effect, since sort stability only matters for numeric keys, not enum keys." },
+        { "id": "c", "text": "Cause a runtime exception when the downstream code detects out-of-order timestamps." },
+        { "id": "d", "text": "Only be a problem if the list contains duplicate Order objects." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is exactly the correctness risk the chapter flags: stability isn't about the SORT KEY's type, it's about whether elements sharing that key retain their prior relative order — an unstable sort can rearrange same-status orders in any order, breaking the timestamp-order assumption with no visible failure, just quietly wrong behavior downstream. (b) stability's relevance has nothing to do with whether the key is numeric, enum, or any other comparable type. (c) nothing in a typical unstable sort throws an exception for this — it's a silent correctness bug, which is precisely what makes it dangerous. (d) duplicate object identity is unrelated; the issue is about EQUAL-KEY elements (same status value), not duplicate objects.",
+      "tags": ["stability", "sorting", "correctness"]
+    },
+    {
+      "id": "algo-02-q05",
+      "type": "mcq",
+      "difficulty": "senior",
+      "prompt": "Why does Java use dual-pivot quicksort for `int[]` (primitives) but Timsort for `Integer[]` (objects)?",
+      "options": [
+        { "id": "a", "text": "Primitives have no identity beyond their value, so an unstable sort's reordering of equal elements is unobservable; objects can carry additional state or identity that other code may depend on preserving order for, making Timsort's stability a correctness requirement rather than a nicety." },
+        { "id": "b", "text": "Timsort is always faster than dual-pivot quicksort, so it's used wherever performance allows." },
+        { "id": "c", "text": "int[] and Integer[] are functionally identical, so the choice is arbitrary and historical." },
+        { "id": "d", "text": "Dual-pivot quicksort cannot be implemented for object types due to a technical limitation of Java generics." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is the chapter's direct illustration of stability mattering in a real, shipped standard-library decision: two equal-value ints are truly indistinguishable, so any reordering among them is invisible; two Integer objects with the same value could still be distinguished by other code (identity, associated metadata in a wrapping structure), so silently reordering them is a real risk Timsort avoids by being stable. (b) is backwards for raw numeric performance — dual-pivot quicksort is chosen for primitives specifically because it's typically faster there, not because Timsort is universally faster. (c) is the misconception the entire chapter section corrects — the distinction is deliberate and load-bearing. (d) is fabricated; there's no such generics limitation preventing quicksort implementations on object arrays.",
+      "tags": ["java-sort", "stability", "dual-pivot-quicksort", "timsort"]
+    },
+    {
+      "id": "algo-02-q06",
+      "type": "mcq",
+      "difficulty": "staff",
+      "prompt": "A dataset of server log entries is already mostly sorted by time, with occasional out-of-order entries from clock skew across machines. Which sort characteristic makes Timsort a particularly good practical fit here?",
+      "options": [
+        { "id": "a", "text": "Timsort detects existing sorted 'runs' in the data and merges them efficiently, so nearly-sorted input (like mostly-time-ordered logs) is processed much faster than the O(n log n) worst case would suggest." },
+        { "id": "b", "text": "Timsort is the only algorithm capable of handling data with any out-of-order elements at all." },
+        { "id": "c", "text": "Timsort has a better worst-case asymptotic complexity than merge sort or heapsort." },
+        { "id": "d", "text": "Timsort requires the input to be pre-sorted before it can run." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is exactly the real-world-data-shape argument from the chapter: Timsort's run-detection is a deliberate adaptation to the fact that real data (logs, incremental updates) is very often nearly sorted already, and exploiting that structure gives large practical speedups over algorithms that don't look for it. (b) every comparison sort handles unordered data correctly; Timsort's advantage is speed on nearly-sorted data, not unique capability. (c) Timsort's worst case is O(n log n), matching merge sort — no asymptotic advantage there; its edge is entirely in the common case. (d) is backwards — Timsort works on any input; it just performs exceptionally well specifically when partial order already exists.",
+      "tags": ["timsort", "practical-tradeoffs", "adaptive-sorting"]
+    }
+  ]
+}

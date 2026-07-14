@@ -19,6 +19,15 @@
       "url": null,
       "sizeBytes": null,
       "minAppVersion": "1.0.0"
+    },
+    {
+      "id": "algorithms",
+      "title": "Algorithms",
+      "version": "1.0.0",
+      "bundled": true,
+      "url": null,
+      "sizeBytes": null,
+      "minAppVersion": "1.0.0"
     }
   ]
 }

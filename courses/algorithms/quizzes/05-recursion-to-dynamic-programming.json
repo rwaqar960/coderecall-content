@@ -1,0 +1,99 @@
+{
+  "schemaVersion": 1,
+  "chapterId": "algo-05",
+  "passScore": 0.7,
+  "questions": [
+    {
+      "id": "algo-05-q01",
+      "type": "mcq",
+      "difficulty": "senior",
+      "prompt": "What are the two required properties for dynamic programming to apply to a problem?",
+      "options": [
+        { "id": "a", "text": "Optimal substructure (an optimal solution contains optimal solutions to its subproblems) and overlapping subproblems (the same subproblem is reached via multiple recursive paths)." },
+        { "id": "b", "text": "The problem must involve an array, and the array must be sortable." },
+        { "id": "c", "text": "The problem must have a unique optimal solution, and that solution must be found via greedy choice." },
+        { "id": "d", "text": "The recursion must have exactly two base cases." }
+      ],
+      "answer": ["a"],
+      "explanation": "These are the two textbook-precise requirements the chapter names, and both are checkable by writing the brute-force recursion first and inspecting it: does an optimal answer compose from optimal sub-answers, and do recursive calls repeat arguments? (b) neither array usage nor sortability is a requirement for DP applicability — many DP problems involve strings, grids, or abstract state, not sortable arrays. (c) greedy choice is a DIFFERENT technique (a later chapter), and DP explicitly handles problems where greedy choice does NOT work. (d) base case count is an implementation detail unrelated to whether DP applies.",
+      "tags": ["dynamic-programming", "optimal-substructure", "overlapping-subproblems"]
+    },
+    {
+      "id": "algo-05-q02",
+      "type": "code-review",
+      "difficulty": "senior",
+      "prompt": "What changed between these two implementations, and why does that change alone take the complexity from O(2^n) to O(n)?",
+      "code": "// Version A\nint fib(int n) {\n    if (n <= 1) return n;\n    return fib(n - 1) + fib(n - 2);\n}\n\n// Version B\nint fibMemo(int n, Map<Integer, Integer> cache) {\n    if (n <= 1) return n;\n    if (cache.containsKey(n)) return cache.get(n);\n    int result = fibMemo(n - 1, cache) + fibMemo(n - 2, cache);\n    cache.put(n, result);\n    return result;\n}",
+      "codeLanguage": "java",
+      "options": [
+        { "id": "a", "text": "Only a cache was added; the recursive logic is otherwise identical. Since each distinct value of n is now computed once and cached, every repeated call with the same n becomes an O(1) lookup instead of re-triggering the full exponential recursion." },
+        { "id": "b", "text": "Version B uses a fundamentally different algorithm (iterative rather than recursive) to compute Fibonacci numbers." },
+        { "id": "c", "text": "The complexity difference comes from Version B using a HashMap instead of an array, which is inherently faster." },
+        { "id": "d", "text": "Version B is only faster for small values of n; for large n, both versions have identical performance." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is the chapter's central point about memoization being a minimal, correctness-preserving transformation: the recursive structure is untouched, only a cache is added, and since fib(n-2) etc. would otherwise be recomputed many times across the call tree, caching collapses that redundant work entirely. (b) Version B is still recursive; it hasn't been converted to iteration (that would be tabulation, a separate technique). (c) the data structure choice (HashMap vs array) is incidental; the ALGORITHMIC change (caching to eliminate redundant recursive calls) is what matters, not the container type. (d) is backwards — the performance GAP between the two versions grows dramatically larger as n increases, since Version A's redundant work grows exponentially while Version B's doesn't.",
+      "tags": ["memoization", "fibonacci", "complexity-analysis"]
+    },
+    {
+      "id": "algo-05-q03",
+      "type": "mcq",
+      "difficulty": "senior",
+      "prompt": "What is a genuine, practical advantage of tabulation (bottom-up, iterative) over memoization (top-down, recursive with cache), beyond them both achieving the same asymptotic complexity?",
+      "options": [
+        { "id": "a", "text": "Tabulation is iterative by construction, avoiding the call-stack depth risk that deep recursion carries (the same risk flagged for recursive DFS in the DSA course)." },
+        { "id": "b", "text": "Tabulation always has strictly better time complexity than memoization for the same problem." },
+        { "id": "c", "text": "Tabulation never requires more memory than memoization for any problem." },
+        { "id": "d", "text": "Tabulation can solve problems that memoization is fundamentally incapable of solving." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is a real, chapter-stated practical trade-off, not an asymptotic one: both approaches solve the same subproblems with the same time complexity, but tabulation's iterative form sidesteps the stack-overflow risk that a sufficiently large recursion depth (deep memoization) could trigger. (b) time complexity is generally the SAME between the two for a given problem — the chapter frames this as a trade-off, not a strict win for either side. (c) is false — the chapter explicitly notes tabulation can do MORE work than necessary by solving every subproblem up to n, even unreachable ones, while memoization is demand-driven and can use less memory in such cases. (d) both approaches solve the same class of problems (those with optimal substructure and overlapping subproblems); neither has capability the other fundamentally lacks.",
+      "tags": ["tabulation", "memoization", "tradeoffs"]
+    },
+    {
+      "id": "algo-05-q04",
+      "type": "mcq",
+      "difficulty": "staff",
+      "prompt": "Why is the space optimization from O(n) table to O(1) variables described as being 'only visible from the tabulated form,' rather than equally visible in the memoized (recursive) version?",
+      "options": [
+        { "id": "a", "text": "The tabulated form makes the row-by-row dependency pattern explicit and inspectable (e.g. 'dp[i] only depends on dp[i-1] and dp[i-2]'), while the recursive/memoized version's access pattern is obscured by the call stack, making this kind of dependency analysis much less direct." },
+        { "id": "b", "text": "Memoized solutions can never be space-optimized under any circumstances." },
+        { "id": "c", "text": "This is incorrect; the space optimization is equally visible and equally easy to apply in both forms." },
+        { "id": "d", "text": "The optimization is specific to Fibonacci and does not generalize to any other DP problem." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is the chapter's specific, practical argument for why tabulating (even when memoization was faster to write) can be worth doing: a table makes 'which prior rows does this row depend on' a directly readable property, which is precisely what licenses collapsing the table to just the needed rows — this pattern is much harder to spot by inspecting a recursive call graph. (b) overstates it — the underlying reasoning could in principle be applied to a memoized solution too, but it's harder to SEE there, which is the actual point (visibility, not fundamental impossibility). (c) directly contradicts the chapter's stated reasoning about why tabulated form makes this visible. (d) is false — this same row-dependency-based space reduction applies broadly across many DP problems with similar limited-lookback dependency structures (e.g. many grid DP and sequence DP problems in the next chapter).",
+      "tags": ["space-optimization", "tabulation", "dynamic-programming"]
+    },
+    {
+      "id": "algo-05-q05",
+      "type": "mcq",
+      "difficulty": "senior",
+      "prompt": "Per the chapter's recommended workflow, what should be the FIRST step when approaching a problem suspected to need dynamic programming?",
+      "options": [
+        { "id": "a", "text": "Write the brute-force recursive solution and verify it is correct on small inputs, before attempting any optimization." },
+        { "id": "b", "text": "Immediately write the space-optimized, tabulated final solution to save time." },
+        { "id": "c", "text": "Determine the Big-O complexity target first, then reverse-engineer an algorithm that hits it." },
+        { "id": "d", "text": "Start by writing the memoization cache structure before defining any recursive logic." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is the chapter's explicit workflow ordering, and the reasoning for starting here is stated directly: correctness of the final DP solution TRANSFERS from the brute-force version specifically because later steps (memoization, tabulation) don't change the recursive logic, only add caching or restructure the computation order — skipping this step risks building on an unverified foundation. (b) jumping straight to the most optimized form skips the correctness-preserving chain the chapter's workflow is built around, and space optimization requires first seeing the dependency pattern from tabulation, which itself requires a working recursive solution as its basis. (c) reverse-engineering from a target complexity, without first having correct logic, risks producing a fast but wrong algorithm. (d) building the cache before the recursive logic exists has nothing to cache correctly yet.",
+      "tags": ["dynamic-programming", "workflow", "problem-solving"]
+    },
+    {
+      "id": "algo-05-q06",
+      "type": "mcq",
+      "difficulty": "staff",
+      "prompt": "A recursive solution is correct but its recursive calls never repeat the same arguments across different branches of the call tree. Should you apply memoization to it?",
+      "options": [
+        { "id": "a", "text": "No — without overlapping subproblems, there is nothing to cache; adding a cache would only add memory overhead with no computational benefit, since every cache lookup would be a guaranteed miss." },
+        { "id": "b", "text": "Yes — memoization should always be applied to any recursive solution as a matter of best practice." },
+        { "id": "c", "text": "Yes, but only if the recursion has more than three levels of depth." },
+        { "id": "d", "text": "It depends solely on the time complexity of the base case, not on whether subproblems overlap." }
+      ],
+      "answer": ["a"],
+      "explanation": "This tests the inverse of the chapter's diagnostic check: overlapping subproblems is a REQUIREMENT for memoization to help, not just a nice-to-have — without repeated arguments, every cache entry is written once and never read again, providing zero speedup while still paying memory and lookup overhead. This is precisely why divide-and-conquer algorithms with genuinely independent subproblems (chapter 4) are NOT typically memoized. (b) is the misapplication this question is testing against — 'always memoize' ignores the actual applicability condition. (c) recursion depth is unrelated to whether overlap exists; a deep but non-overlapping recursion still gains nothing from memoization. (d) base case complexity has no bearing on whether caching provides benefit; overlap (or its absence) is the deciding factor.",
+      "tags": ["memoization", "overlapping-subproblems", "when-to-apply"]
+    }
+  ]
+}

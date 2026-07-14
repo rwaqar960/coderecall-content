@@ -1,0 +1,99 @@
+{
+  "schemaVersion": 1,
+  "chapterId": "algo-08",
+  "passScore": 0.7,
+  "questions": [
+    {
+      "id": "algo-08-q01",
+      "type": "mcq",
+      "difficulty": "senior",
+      "prompt": "What is the specific difference between backtracking and plain brute force, given that both may end up exploring similarly-sized search spaces in the worst case?",
+      "options": [
+        { "id": "a", "text": "Backtracking checks constraints DURING construction, abandoning an invalid partial solution immediately (pruning); brute force generates complete candidates first and filters afterward, wasting work extending paths that were already invalid partway through." },
+        { "id": "b", "text": "Backtracking is a fundamentally different algorithm family with no relationship to brute force at all." },
+        { "id": "c", "text": "Backtracking always has polynomial time complexity, while brute force is always exponential." },
+        { "id": "d", "text": "The only difference is that backtracking is implemented recursively, while brute force is implemented iteratively." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is the chapter's central distinction: the VALUE of backtracking comes specifically from pruning during construction, not from a different fundamental algorithm — checking a constraint as early as possible lets whole invalid subtrees be skipped rather than fully built and then discarded. (b) understates the real relationship — backtracking is explicitly framed as 'systematic brute force,' not an unrelated technique. (c) is false and directly contradicted by the chapter's own trade-off note that backtracking's worst-case complexity often remains exponential despite pruning. (d) is a superficial, incorrect distinction — both can in principle be implemented either way; the meaningful difference is about WHEN constraints are checked, not the control-flow mechanism.",
+      "tags": ["backtracking", "brute-force", "pruning"]
+    },
+    {
+      "id": "algo-08-q02",
+      "type": "code-review",
+      "difficulty": "senior",
+      "prompt": "In N-Queens, why does checking `isValid(queens, row, col)` BEFORE recursing into the next row matter so much for performance, compared to checking validity only once a complete N-queen placement exists?",
+      "code": "void solve(int[] queens, int row, int n, List<int[]> solutions) {\n    if (row == n) { solutions.add(queens.clone()); return; }\n    for (int col = 0; col < n; col++) {\n        if (isValid(queens, row, col)) {\n            queens[row] = col;\n            solve(queens, row + 1, n, solutions);\n        }\n    }\n}",
+      "codeLanguage": "java",
+      "options": [
+        { "id": "a", "text": "Rejecting an invalid partial placement at row k prevents ANY exploration of the exponentially many ways to fill the remaining n-k rows on top of that already-invalid prefix — pruning early cuts off entire subtrees rather than discovering their invalidity only after fully building them." },
+        { "id": "b", "text": "It doesn't actually matter for performance; the two approaches have identical runtime." },
+        { "id": "c", "text": "Checking early is only about code readability, not performance." },
+        { "id": "d", "text": "isValid() is only correct when called before recursion, and would produce wrong results if called after building a complete placement." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is the concrete mechanism behind the chapter's 8^8 vs. instant-for-N=8 example: an invalid choice at row k dooms every possible continuation, and checking early means the algorithm never even generates those continuations, whereas checking only at completion means all of them get fully built first. (b) directly contradicts the chapter's explicit performance claim about early pruning eliminating most of the search tree. (c) dismisses a real, large performance difference as merely cosmetic. (d) isValid()'s correctness doesn't depend on WHEN it's called — it correctly evaluates a partial placement's validity at any point; the performance argument is entirely about avoiding wasted exploration, not about correctness.",
+      "tags": ["n-queens", "pruning", "backtracking"]
+    },
+    {
+      "id": "algo-08-q03",
+      "type": "mcq",
+      "difficulty": "staff",
+      "prompt": "Why do typical backtracking problems (permutations, subsets, N-Queens) NOT benefit from dynamic programming's memoization technique, even though both DP and backtracking build solutions incrementally?",
+      "options": [
+        { "id": "a", "text": "Backtracking problems typically lack overlapping subproblems — each partial path through the choice tree represents a genuinely distinct partial solution (e.g. a specific sequence of queen placements), not a repeated state reachable via multiple routes, so there's nothing productive to cache." },
+        { "id": "b", "text": "Memoization is technically impossible to implement for any recursive algorithm involving loops." },
+        { "id": "c", "text": "Backtracking problems always have a larger state space than DP problems, making caching infeasible regardless of overlap." },
+        { "id": "d", "text": "DP can only be applied to problems that require finding a single optimal answer, and backtracking problems typically don't ask for that." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is a direct application of chapter 5's DP-applicability check: memoization only helps when subproblems overlap (the same state reached multiple ways) — most backtracking problems collect DISTINCT paths through a choice tree where no state repeats in a cacheable way, so there's no redundant work for memoization to eliminate. (b) is a fabricated, false claim; memoization works fine with looping recursive structures generally, it's the OVERLAP property (not loop presence) that determines its usefulness. (c) state space size alone doesn't determine cacheability; overlap does, and the chapter's argument is specifically about the absence of overlap, not raw size. (d) while true that many backtracking problems don't ask for a single optimum, this restates a symptom rather than the actual causal reason (absence of overlapping subproblems) the chapter gives.",
+      "tags": ["backtracking", "dynamic-programming", "overlapping-subproblems"]
+    },
+    {
+      "id": "algo-08-q04",
+      "type": "mcq",
+      "difficulty": "staff",
+      "prompt": "The chapter claims subsets-generation and 0/1 Knapsack share 'the same include/exclude choice tree.' What actually differs between them, given this shared structure?",
+      "options": [
+        { "id": "a", "text": "Subsets collects every distinct path as a separate answer (backtracking, since each path is a genuinely different valid output); knapsack combines overlapping paths that reach the same (item index, remaining capacity) state into a single cached optimum (DP)." },
+        { "id": "b", "text": "Nothing differs; subsets-generation and 0/1 knapsack are the same algorithm with different variable names." },
+        { "id": "c", "text": "Subsets always runs faster than knapsack because it doesn't use a 2D table." },
+        { "id": "d", "text": "Knapsack requires backtracking, while subsets requires dynamic programming — the reverse of the chapter's actual claim." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is the chapter's unifying staff-level observation: identical CHOICE STRUCTURE (include or exclude, one item at a time) but a different GOAL at each branch — collect-every-path versus combine-overlapping-paths-into-one-optimum — is what determines whether backtracking or DP is the right technique, even though the underlying recursive tree shape is the same. (b) ignores the meaningfully different goal/termination behavior the chapter explicitly distinguishes. (c) fabricates an unsupported performance comparison; the chapter makes no such general speed claim, and the two solve different problems entirely (enumeration vs. optimization) so aren't directly comparable this way. (d) reverses the chapter's actual framing exactly backwards.",
+      "tags": ["subsets", "knapsack", "backtracking", "dynamic-programming"]
+    },
+    {
+      "id": "algo-08-q05",
+      "type": "mcq",
+      "difficulty": "senior",
+      "prompt": "Does effective pruning change a backtracking algorithm's worst-case asymptotic time complexity?",
+      "options": [
+        { "id": "a", "text": "Not necessarily — pruning reduces the PRACTICALLY explored search space for typical inputs, but the worst-case complexity (e.g. N-Queens remaining exponential) often stays the same asymptotic class." },
+        { "id": "b", "text": "Yes — well-implemented pruning always converts an exponential-time backtracking algorithm into a polynomial-time one." },
+        { "id": "c", "text": "Pruning has no effect whatsoever on either practical performance or worst-case complexity." },
+        { "id": "d", "text": "Pruning only affects space complexity, never time complexity." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is the chapter's explicit trade-off warning, worth internalizing precisely because it's easy to overstate pruning's benefit: N-Queens with pruning still solves in exponential time for pathological or worst-case boards, even though typical/average performance is dramatically better than the unpruned exhaustive count. (b) overclaims — this would mean pruning could resolve P vs NP-adjacent hardness for many problems, which is false; pruning is a practical-performance technique, not an asymptotic-complexity-reducing one. (c) directly contradicts the chapter's clear example (8^8 raw placements vs. near-instant pruned search) showing a massive PRACTICAL difference. (d) is false; pruning affects the number of recursive calls made, which is fundamentally a TIME complexity concern (fewer calls, less work), not merely a space one.",
+      "tags": ["backtracking", "pruning", "complexity-analysis"]
+    },
+    {
+      "id": "algo-08-q06",
+      "type": "mcq",
+      "difficulty": "senior",
+      "prompt": "A candidate is asked to generate all valid ways to place parentheses for a given number of pairs (e.g. '()()' and '(())' for n=2), such that the result is always balanced. Which technique fits, and why?",
+      "options": [
+        { "id": "a", "text": "Backtracking — build the string character by character, pruning any partial string where close-parens exceed open-parens so far (an invalid prefix that can never become valid), and collect each complete valid string as a distinct answer." },
+        { "id": "b", "text": "Dynamic programming with memoization, since generating all valid strings necessarily involves overlapping subproblems." },
+        { "id": "c", "text": "A greedy algorithm that always adds an open paren before a close paren." },
+        { "id": "d", "text": "Binary search over the space of possible strings." }
+      ],
+      "answer": ["a"],
+      "explanation": "This fits the chapter's pattern precisely: the goal is to COLLECT EVERY distinct valid output (not find one optimal value), and a clear prunable constraint exists (close-count can never exceed open-count at any prefix) — exactly the choose/explore/un-choose-with-pruning shape. (b) misapplies chapter 5's criterion; generating all distinct valid strings doesn't involve the same state being reached and needing to be combined/cached — each path IS a distinct desired output, not a redundant recomputation, so there's no overlap to exploit here in the way the question implies. (c) greedy has no mechanism to backtrack and explore alternative valid completions, so it cannot enumerate ALL valid arrangements — it commits to one path only. (d) binary search requires a monotonic predicate over an ordered search space (chapter 3's requirement), which doesn't apply to generating a set of valid string arrangements.",
+      "tags": ["backtracking", "pattern-recognition", "pruning"]
+    }
+  ]
+}

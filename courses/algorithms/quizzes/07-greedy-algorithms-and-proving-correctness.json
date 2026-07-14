@@ -1,0 +1,99 @@
+{
+  "schemaVersion": 1,
+  "chapterId": "algo-07",
+  "passScore": 0.7,
+  "questions": [
+    {
+      "id": "algo-07-q01",
+      "type": "mcq",
+      "difficulty": "senior",
+      "prompt": "What is the fundamental structural difference between a greedy algorithm and a DP algorithm applied to the same class of problem?",
+      "options": [
+        { "id": "a", "text": "Greedy commits immediately to the locally best choice at each step and never reconsiders it; DP considers multiple options and lets optimal substructure (via the recurrence) combine subproblem results to find the true optimum." },
+        { "id": "b", "text": "Greedy algorithms always run in exponential time, while DP algorithms always run in polynomial time." },
+        { "id": "c", "text": "Greedy and DP are two names for the same underlying technique, differing only in implementation style." },
+        { "id": "d", "text": "Greedy algorithms can only be applied to sorting problems, while DP applies to all other problem types." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is the chapter's core structural distinction: immediate, irrevocable commitment (greedy) versus considering and combining multiple branches (DP) — which is exactly why greedy is faster when correct (no need to explore alternatives) and silently wrong when the local choice forecloses a better global option. (b) is false; greedy algorithms are typically FASTER (often linear or n log n) precisely because they don't explore alternatives, and DP's complexity depends entirely on state space size, not a fixed relationship to greedy. (c) directly contradicts the chapter's central distinction — they are different techniques with different correctness guarantees, not stylistic variants of each other. (d) is a fabricated, overly narrow restriction; greedy applies to a range of problem types (scheduling, compression, graph algorithms like Kruskal's/Prim's from the DSA course) beyond sorting.",
+      "tags": ["greedy-algorithms", "dynamic-programming", "algorithm-design"]
+    },
+    {
+      "id": "algo-07-q02",
+      "type": "code-review",
+      "difficulty": "senior",
+      "prompt": "Why is the exchange argument sufficient to prove the interval-scheduling greedy rule (always pick the earliest-ending remaining interval) is correct, rather than just empirically plausible?",
+      "code": "int maxNonOverlapping(int[][] intervals) {\n    Arrays.sort(intervals, Comparator.comparingInt(iv -> iv[1]));\n    int count = 0, lastEnd = Integer.MIN_VALUE;\n    for (int[] interval : intervals) {\n        if (interval[0] >= lastEnd) {\n            count++;\n            lastEnd = interval[1];\n        }\n    }\n    return count;\n}",
+      "codeLanguage": "java",
+      "options": [
+        { "id": "a", "text": "The argument shows that ANY optimal solution can be transformed to agree with the greedy choice at every step without reducing the count — swapping an optimal solution's first interval for the earliest-ending one can only free up equal or more room for subsequent choices, never less — which generalizes to all inputs, not just tested cases." },
+        { "id": "b", "text": "It's sufficient because the code passed all example test cases the developer tried." },
+        { "id": "c", "text": "The exchange argument only proves correctness for inputs with fewer than 100 intervals." },
+        { "id": "d", "text": "It isn't actually a proof; interval scheduling's greedy correctness is still an open conjecture." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is precisely the distinction the chapter draws between 'passes examples' and 'proven correct' — the exchange argument is a general mathematical claim about ALL possible optimal solutions and all possible inputs, not a statement about specific test cases. (b) is exactly the weaker, insufficient standard the chapter explicitly contrasts against a real proof. (c) fabricates a scale limitation that doesn't exist in the actual mathematical argument, which holds for any n. (d) is false — interval scheduling's greedy correctness is a well-established, proven result, not an open question.",
+      "tags": ["exchange-argument", "interval-scheduling", "proof-of-correctness"]
+    },
+    {
+      "id": "algo-07-q03",
+      "type": "mcq",
+      "difficulty": "senior",
+      "prompt": "Why does the 'highest value-per-weight ratio first' greedy rule fail for 0/1 Knapsack but succeed for the fractional knapsack variant (items can be split)?",
+      "options": [
+        { "id": "a", "text": "0/1 Knapsack's all-or-nothing constraint means committing to one high-ratio item can foreclose a better combination of other items entirely, with no way to partially back out; fractional knapsack removes that all-or-nothing commitment, which is exactly the property the counter-example exploited." },
+        { "id": "b", "text": "The greedy rule actually works correctly for both variants; the 0/1 version's apparent failures are implementation bugs, not an algorithmic limitation." },
+        { "id": "c", "text": "Fractional knapsack always has a smaller number of items than 0/1 knapsack, making greedy trivially correct." },
+        { "id": "d", "text": "0/1 Knapsack cannot be solved by any algorithm, greedy or otherwise." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is the chapter's precise diagnosis of why the SAME greedy rule flips from wrong to provably correct based on one constraint change: the ability to take a fraction of an item removes the irrevocable, all-or-nothing commitment that let a locally-best choice foreclose a globally-better combination in the 0/1 counter-example. (b) is the exact misconception the chapter's worked counter-example (A vs. B+C) directly disproves — this is a genuine algorithmic limitation, not a bug. (c) item count has nothing to do with why the correctness differs; the mechanism is about splittability, not quantity. (d) is false — 0/1 Knapsack is solved correctly by dynamic programming (chapter 6), just not by this particular greedy rule.",
+      "tags": ["knapsack", "greedy-algorithms", "counter-examples"]
+    },
+    {
+      "id": "algo-07-q04",
+      "type": "mcq",
+      "difficulty": "staff",
+      "prompt": "What made the 0/1 Knapsack greedy failure 'silent,' as the chapter describes it, rather than something that would be caught immediately?",
+      "options": [
+        { "id": "a", "text": "The algorithm runs without error and produces a plausible-looking number (10, in the worked example) with no indication that a better answer (12) exists — nothing about the execution signals that the local choice was suboptimal." },
+        { "id": "b", "text": "The algorithm throws a warning message whenever the greedy choice is suboptimal, but developers often ignore it." },
+        { "id": "c", "text": "The failure only manifests as a slower runtime, not an incorrect result." },
+        { "id": "d", "text": "The algorithm crashes with a stack trace that developers frequently misdiagnose." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is exactly the danger the chapter emphasizes about greedy failures generally: a wrong-but-plausible answer with zero runtime signal is far more dangerous than a crash, because nothing prompts investigation — the bug surfaces only when someone independently verifies the answer against a known-optimal solution. (b) no such warning mechanism exists in a standard greedy implementation; there's genuinely nothing to ignore. (c) directly contradicts the worked example, where the failure is a wrong VALUE (10 instead of 12), not a performance issue. (d) there is no crash in this scenario — the code executes cleanly and returns a wrong but well-formed answer, which is the entire point.",
+      "tags": ["greedy-algorithms", "silent-failure", "knapsack"]
+    },
+    {
+      "id": "algo-07-q05",
+      "type": "mcq",
+      "difficulty": "senior",
+      "prompt": "Per the chapter, what is the practical, senior-level discipline to apply before committing to a greedy solution over a DP one?",
+      "options": [
+        { "id": "a", "text": "Actively attempt to construct either an exchange argument (proving the local choice is always safe) or a counter-example (disproving it) — 'it passed my test cases' is explicitly insufficient." },
+        { "id": "b", "text": "Always prefer DP over greedy in every case, since DP is strictly more powerful and greedy should never be used." },
+        { "id": "c", "text": "Run the greedy algorithm on as many random test cases as possible; if none fail, correctness is established." },
+        { "id": "d", "text": "Check whether the problem statement uses the word 'optimal,' which determines whether greedy is appropriate." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is the chapter's explicit closing discipline, and it's specifically framed as an active, constructive check (attempt BOTH directions — proof or counter-example) rather than passive observation. (b) overcorrects — the chapter explicitly celebrates greedy's real, correct, production use (interval scheduling, Huffman coding) when a genuine proof exists; DP isn't universally preferred, it's used when greedy provably fails or can't be proven. (c) is exactly the 'passed my examples' standard the chapter explicitly rejects as insufficient — random testing can miss the specific structural cases where greedy fails, as the 0/1 knapsack example demonstrates. (d) is a fabricated, non-existent heuristic; word choice in a problem statement has no bearing on greedy's actual correctness.",
+      "tags": ["greedy-algorithms", "proof-of-correctness", "problem-solving-discipline"]
+    },
+    {
+      "id": "algo-07-q06",
+      "type": "mcq",
+      "difficulty": "staff",
+      "prompt": "Huffman coding's greedy rule (repeatedly merge the two lowest-frequency nodes) is used in real production compression formats like DEFLATE. What makes this a legitimate, non-cautionary example of greedy in production, per the chapter?",
+      "options": [
+        { "id": "a", "text": "The merge-two-smallest rule has its own exchange argument proving optimality (the two least-frequent symbols can always be placed at maximum tree depth without loss) — it's used in production BECAUSE a correctness proof exists, the same standard interval scheduling met." },
+        { "id": "b", "text": "It's used in production simply because it's fast, regardless of whether it's provably correct." },
+        { "id": "c", "text": "Huffman coding is actually a form of dynamic programming, not a true greedy algorithm." },
+        { "id": "d", "text": "Compression algorithms don't require correctness guarantees the way other algorithms do, since minor errors are acceptable in compressed data." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is the chapter's explicit point in citing Huffman coding: it's presented as a positive counterpart to the knapsack cautionary tale specifically because it also has a provable exchange argument, reinforcing that 'proof exists' — not 'seems to work' or 'is fast' — is the deciding factor for trusting greedy in production. (b) contradicts the chapter's entire thesis that speed alone doesn't justify trusting greedy without a correctness argument. (c) mischaracterizes the algorithm — it's explicitly described as greedy (immediate, irrevocable merge choices via a min-heap), not DP. (d) is dangerously false — compression MUST be exactly correct (lossless formats like DEFLATE require exact reconstruction); the chapter gives no indication that approximate correctness is acceptable here.",
+      "tags": ["huffman-coding", "greedy-algorithms", "production-use"]
+    }
+  ]
+}
