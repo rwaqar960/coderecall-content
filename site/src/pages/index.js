@@ -10,7 +10,7 @@ const courses = [
   {id: 'oop', title: 'Object-Oriented Programming', available: true, blurb: '10 chapters · encapsulation to architecture at scale'},
   {id: 'dsa', title: 'Data Structures', available: true, blurb: '10 chapters · memory layout to choosing structures under real constraints'},
   {id: 'algorithms', title: 'Algorithms', available: true, blurb: '10 chapters · complexity analysis to NP-hardness and approximation'},
-  {id: 'flutter', title: 'Flutter', available: false, blurb: 'Coming soon'},
+  {id: 'flutter', title: 'Flutter', available: true, blurb: '10 chapters · rendering pipeline to shipping (downloadable pack)'},
 ];
 
 const principles = [
