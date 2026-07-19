@@ -12,12 +12,13 @@ const courses = [
   {id: 'algorithms', title: 'Algorithms', available: true, blurb: 'Complexity analysis to NP-hardness and approximation', delivery: 'Bundled'},
   {id: 'flutter', title: 'Flutter', available: true, blurb: 'Rendering pipeline to shipping', delivery: 'Downloadable'},
   {id: 'kotlin', title: 'Kotlin', available: true, blurb: 'Null safety to multiplatform', delivery: 'Downloadable'},
+  {id: 'swift', title: 'Swift', available: true, blurb: 'Optionals to Swift 6 actors and data-race safety', delivery: 'Downloadable'},
 ];
 
 const stats = [
   {value: courses.filter((c) => c.available).length, label: 'Courses'},
-  {value: '50', label: 'Chapters'},
-  {value: '300', label: 'Quiz questions'},
+  {value: '60', label: 'Chapters'},
+  {value: '360', label: 'Quiz questions'},
   {value: '0', label: 'Ads, ever'},
 ];
 

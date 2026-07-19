@@ -46,6 +46,15 @@
       "url": "https://github.com/rwaqar960/coderecall-content/releases/download/content-kotlin-v1.0.0/kotlin.zip",
       "sizeBytes": 74768,
       "minAppVersion": "1.0.0"
+    },
+    {
+      "id": "swift",
+      "title": "Swift",
+      "version": "1.0.0",
+      "bundled": false,
+      "url": "https://github.com/rwaqar960/coderecall-content/releases/download/content-swift-v1.0.0/swift.zip",
+      "sizeBytes": 56761,
+      "minAppVersion": "1.0.0"
     }
   ]
 }
