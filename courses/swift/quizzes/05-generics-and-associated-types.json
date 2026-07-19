@@ -1,0 +1,99 @@
+{
+  "schemaVersion": 1,
+  "chapterId": "swift-05",
+  "passScore": 0.7,
+  "questions": [
+    {
+      "id": "swift-05-q01",
+      "type": "mcq",
+      "difficulty": "senior",
+      "prompt": "What does 'some Protocol' mean as a return type?",
+      "options": [
+        { "id": "a", "text": "There is exactly one concrete type here, chosen by the implementation and hidden from the caller; the caller gets full type-identity guarantees (two values of the same opaque type are the same type) but can't see the underlying type name — a reverse generic where the callee picks the type." },
+        { "id": "b", "text": "The return value could be any conforming type at runtime, boxed so different concrete types can be returned from different calls." },
+        { "id": "c", "text": "It is identical to writing the bare protocol name and exists only for readability." },
+        { "id": "d", "text": "It means the function returns an optional conforming value that may be nil." }
+      ],
+      "answer": ["a"],
+      "explanation": "The chapter defines some as one hidden concrete type, callee-chosen, with full type identity but no exposed name — a reverse generic. (b) describes any (an existential box), not some. (c) is false; some is precisely NOT the same as a bare protocol name (which historically meant any). (d) confuses opaque types with optionals.",
+      "tags": ["some", "opaque-types", "generics"]
+    },
+    {
+      "id": "swift-05-q02",
+      "type": "mcq",
+      "difficulty": "senior",
+      "prompt": "What does 'any Protocol' mean, and what is its cost?",
+      "options": [
+        { "id": "a", "text": "Any conforming type, boxed in an existential container so different concrete types can be stored together (e.g. a heterogeneous array); the cost is a layer of indirection — a box, possibly a heap allocation, and dynamic dispatch." },
+        { "id": "b", "text": "Exactly one hidden concrete type with no runtime cost, identical to some." },
+        { "id": "c", "text": "A compile-time-only constraint that never appears in the running program and has zero representation." },
+        { "id": "d", "text": "A guarantee that the value is non-nil and non-optional." }
+      ],
+      "answer": ["a"],
+      "explanation": "The chapter: any is an existential box holding any conforming type (enabling heterogeneous storage) at the cost of indirection and dynamic dispatch. (b) describes some, not any, and wrongly claims no cost. (c) is false; any has a real runtime representation (the existential container). (d) is unrelated to nullability.",
+      "tags": ["any", "existential", "performance"]
+    },
+    {
+      "id": "swift-05-q03",
+      "type": "mcq",
+      "difficulty": "senior",
+      "prompt": "What is the one-line mental model distinguishing some from any?",
+      "options": [
+        { "id": "a", "text": "some = one hidden concrete type (static, fast, single); any = a box that could hold different types (dynamic, flexible, heterogeneous) — use some when there's really one type you don't want to name, any when you must mix different conforming types." },
+        { "id": "b", "text": "some is for classes, any is for structs." },
+        { "id": "c", "text": "some allows nil, any does not." },
+        { "id": "d", "text": "They are interchangeable synonyms with no meaningful difference." }
+      ],
+      "answer": ["a"],
+      "explanation": "The chapter's explicit one-liner: some = one hidden concrete type (static/fast/single), any = box of possibly-different types (dynamic/flexible/heterogeneous). (b) fabricates a class/struct split. (c) fabricates a nil distinction. (d) is false; they differ in identity, performance, and use case.",
+      "tags": ["some", "any", "mental-model"]
+    },
+    {
+      "id": "swift-05-q04",
+      "type": "code-review",
+      "difficulty": "senior",
+      "prompt": "A developer wants to store a mix of Circle, Square, and Triangle (all conforming to Shape) in one array. Which declaration is correct and why?",
+      "code": "// Option 1\nlet shapes: [some Shape] = [Circle(), Square(), Triangle()]\n// Option 2\nlet shapes: [any Shape] = [Circle(), Square(), Triangle()]",
+      "codeLanguage": "swift",
+      "options": [
+        { "id": "a", "text": "Option 2 (any Shape) — a heterogeneous collection of different concrete conforming types requires the existential box that any provides; some Shape would demand a single fixed concrete type, which this array doesn't have." },
+        { "id": "b", "text": "Option 1 (some Shape) — some is required for any array, and it transparently holds mixed types." },
+        { "id": "c", "text": "Both are equivalent and either compiles identically." },
+        { "id": "d", "text": "Neither works; you must use a concrete superclass instead." }
+      ],
+      "answer": ["a"],
+      "explanation": "The chapter's use-case split: heterogeneous storage of different concrete types needs any (the existential box); some means one fixed concrete type, which a mixed array violates. (b) inverts it — some can't hold mixed concrete types. (c) is false; they are not equivalent here. (d) is false; any Shape works, and structs have no shared superclass anyway.",
+      "tags": ["any", "heterogeneous-collections", "some"]
+    },
+    {
+      "id": "swift-05-q05",
+      "type": "mcq",
+      "difficulty": "staff",
+      "prompt": "Why was 'any' made an explicit keyword in Swift 5.7 rather than remaining implicit?",
+      "options": [
+        { "id": "a", "text": "Before 5.7, writing a bare protocol name gave an existential silently, so people paid its runtime cost (boxing, dynamic dispatch) without realizing; making any explicit surfaces that cost at the point you opt into it — the same philosophy as making force-unwrap visible." },
+        { "id": "b", "text": "To make existentials faster by removing the box entirely." },
+        { "id": "c", "text": "Because bare protocol names were being removed from the language and any is the replacement syntax with identical, zero-cost behavior." },
+        { "id": "d", "text": "Purely to reduce typing, since any is shorter than the protocol name." }
+      ],
+      "answer": ["a"],
+      "explanation": "The chapter: explicit any surfaces the previously-hidden existential cost at the opt-in point, mirroring visible force-unwrap. (b) is false; making it explicit didn't change the cost, only its visibility. (c) is misleading — the behavior (a boxed existential) is not zero-cost; the change was about visibility, not eliminating cost. (d) is false; any is longer than a bare name, and brevity wasn't the goal.",
+      "tags": ["any", "language-design", "explicit-cost"]
+    },
+    {
+      "id": "swift-05-q06",
+      "type": "mcq",
+      "difficulty": "staff",
+      "prompt": "On a hot path iterated millions of times, why might choosing any over some or a generic parameter be a mistake?",
+      "options": [
+        { "id": "a", "text": "Generics and some resolve at compile time (the compiler can inline and specialize, no per-call overhead), while any defers the type to runtime — meaning a box, possibly a heap allocation, and indirect dispatch per element, a real cost a profiler will find on a very hot loop." },
+        { "id": "b", "text": "any cannot be used in loops at all, so the code won't compile." },
+        { "id": "c", "text": "some is always slower than any, so any is the correct hot-path choice." },
+        { "id": "d", "text": "There is no performance difference; the choice is purely stylistic in all cases." }
+      ],
+      "answer": ["a"],
+      "explanation": "The chapter's performance framing: generics/some are statically resolved (inlinable, no overhead); any adds boxing/indirection per use, which matters on a hot path. (b) is false; any works in loops. (c) reverses the performance relationship. (d) contradicts the chapter's explicit point that the difference is real on hot paths.",
+      "tags": ["performance", "any", "hot-path"]
+    }
+  ]
+}

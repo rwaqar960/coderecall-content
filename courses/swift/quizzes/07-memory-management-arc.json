@@ -1,0 +1,99 @@
+{
+  "schemaVersion": 1,
+  "chapterId": "swift-07",
+  "passScore": 0.7,
+  "questions": [
+    {
+      "id": "swift-07-q01",
+      "type": "mcq",
+      "difficulty": "senior",
+      "prompt": "How does ARC decide when to deallocate an object, and how does that differ from a tracing garbage collector?",
+      "options": [
+        { "id": "a", "text": "Each class instance tracks its count of strong references; when the count hits zero the object is deallocated immediately and deterministically at that point, with retain/release calls inserted at compile time — there is no background collector and no pause, unlike a tracing GC that reclaims memory eventually." },
+        { "id": "b", "text": "ARC runs a background thread that periodically scans the heap for unreachable objects, exactly like a tracing garbage collector." },
+        { "id": "c", "text": "ARC never frees memory; objects live until the process exits." },
+        { "id": "d", "text": "ARC frees objects at random intervals to amortize cost." }
+      ],
+      "answer": ["a"],
+      "explanation": "The chapter: ARC is reference counting with compile-time-inserted retain/release; at zero references the object is freed immediately and deterministically, no background collector or pause. (b) describes a tracing GC, which ARC explicitly is not. (c) and (d) both misstate ARC's deterministic, count-driven behavior.",
+      "tags": ["arc", "reference-counting", "memory"]
+    },
+    {
+      "id": "swift-07-q02",
+      "type": "mcq",
+      "difficulty": "senior",
+      "prompt": "Why can't value types (structs, enums) participate in a retain cycle?",
+      "options": [
+        { "id": "a", "text": "ARC applies only to reference types; value types are copied rather than reference-counted, so they can't form a reference cycle at all — which is another quiet argument for the struct-by-default habit, since values are outside the entire leak category." },
+        { "id": "b", "text": "Value types can form cycles, but ARC automatically detects and breaks them for structs only." },
+        { "id": "c", "text": "Value types are always allocated on the stack, and stack memory can never leak under any circumstance." },
+        { "id": "d", "text": "Value types use a tracing garbage collector while classes use ARC, so cycles are collected for structs." }
+      ],
+      "answer": ["a"],
+      "explanation": "The chapter: ARC applies only to reference types; value types are copied, not counted, so they're outside the cycle category entirely — reinforcing struct-by-default. (b) is false; there's no cycle detection because there are no reference cycles for values. (c) overclaims and misattributes the reason (it's copy semantics, not merely stack allocation). (d) fabricates a GC for value types.",
+      "tags": ["value-types", "retain-cycles", "arc"]
+    },
+    {
+      "id": "swift-07-q03",
+      "type": "mcq",
+      "difficulty": "senior",
+      "prompt": "What is the precise difference between weak and unowned references?",
+      "options": [
+        { "id": "a", "text": "Both avoid increasing the reference count; weak automatically becomes nil when the referent is deallocated (so it must be optional) and is the safe default, while unowned does not become nil and assumes the referent outlives it — accessing it after deallocation crashes, so it's an optimization you earn by proving the lifetime relationship." },
+        { "id": "b", "text": "weak increases the reference count but unowned does not; otherwise they behave identically." },
+        { "id": "c", "text": "unowned becomes nil on deallocation and weak crashes; weak is the dangerous one." },
+        { "id": "d", "text": "They are interchangeable; the keyword chosen has no runtime effect." }
+      ],
+      "answer": ["a"],
+      "explanation": "The chapter: neither adds to the count; weak nils out safely (must be optional, safe default), unowned assumes the referent outlives it and crashes if not (an earned optimization). (b) is false; neither increases the count — that's the whole point. (c) reverses their behaviors. (d) is false; the choice has a real safety/behavior difference.",
+      "tags": ["weak", "unowned", "reference-cycles"]
+    },
+    {
+      "id": "swift-07-q04",
+      "type": "code-review",
+      "difficulty": "senior",
+      "prompt": "This Loader leaks. Identify the cycle and the correct fix.",
+      "code": "class Loader {\n    var onDone: (() -> Void)?\n    func start() {\n        onDone = {\n            self.finish()\n        }\n    }\n    func finish() {}\n}",
+      "codeLanguage": "swift",
+      "options": [
+        { "id": "a", "text": "The stored closure onDone captures self strongly, and self owns onDone — a reference cycle. Fix with a capture list: onDone = { [weak self] in guard let self else { return }; self.finish() }." },
+        { "id": "b", "text": "There is no cycle; a closure capturing self never causes a leak because closures are value types." },
+        { "id": "c", "text": "The fix is to make finish() a static method so it doesn't need self." },
+        { "id": "d", "text": "The fix is to mark onDone with unowned self unconditionally, which is always safer than weak." }
+      ],
+      "answer": ["a"],
+      "explanation": "The chapter's most common real leak: self stores a closure that captures self strongly → cycle; fix with [weak self] plus guard let self. (b) is false; a stored closure capturing self strongly is exactly the cycle. (c) sidesteps rather than addresses the general pattern and isn't the chapter's fix. (d) is wrong — weak is the safe default; unowned would crash if self is gone when the closure runs, and 'always safer' inverts the guidance.",
+      "tags": ["closure-capture", "retain-cycle", "weak-self"]
+    },
+    {
+      "id": "swift-07-q05",
+      "type": "mcq",
+      "difficulty": "senior",
+      "prompt": "Why are delegate properties conventionally declared 'weak var delegate'?",
+      "options": [
+        { "id": "a", "text": "The delegating object shouldn't keep its delegate alive, because the delegate (often a parent view controller) typically owns the delegating object; a strong delegate is a classic accidental retain cycle." },
+        { "id": "b", "text": "Because delegates must be optional for syntactic reasons unrelated to memory." },
+        { "id": "c", "text": "Because weak makes method calls on the delegate faster." },
+        { "id": "d", "text": "Because delegates are value types and weak is required for value types." }
+      ],
+      "answer": ["a"],
+      "explanation": "The chapter: weak delegate avoids the cycle because the delegate usually owns the delegating object; a strong delegate is a classic accidental cycle. (b) inverts cause and effect — weak requires optional, but the reason for weak is the cycle, not a syntactic quirk. (c) fabricates a performance rationale. (d) is false; delegates are typically reference types, and weak applies to references.",
+      "tags": ["delegates", "weak", "retain-cycles"]
+    },
+    {
+      "id": "swift-07-q06",
+      "type": "mcq",
+      "difficulty": "staff",
+      "prompt": "Per the chapter's trade-off, why is adding [weak self] to every closure a mistake?",
+      "options": [
+        { "id": "a", "text": "A closure that isn't stored (a synchronous map, a short-lived animation block self doesn't retain) has no cycle to break, so the weak dance adds noise and an unnecessary guard; the skill is recognizing the actual cycle condition — self stores the closure that captures self — and applying weak only there." },
+        { "id": "b", "text": "[weak self] causes a compile error in any non-escaping closure, so it can't be applied everywhere." },
+        { "id": "c", "text": "[weak self] should in fact be added to every closure without exception; there is no downside." },
+        { "id": "d", "text": "Using weak self anywhere degrades performance so severely that it must be avoided entirely." }
+      ],
+      "answer": ["a"],
+      "explanation": "The chapter's trade-off: no stored-closure-capturing-self means no cycle, so blanket [weak self] is cargo-cult noise plus a needless guard; apply it at the real cycle condition. (b) overstates — it's about necessity, not a compile error (though it's indeed unnecessary for many non-escaping closures). (c) is the cargo-cult reflex the chapter argues against. (d) fabricates a severe performance claim.",
+      "tags": ["weak-self", "tradeoffs", "closures"]
+    }
+  ]
+}

@@ -1,0 +1,99 @@
+{
+  "schemaVersion": 1,
+  "chapterId": "swift-03",
+  "passScore": 0.7,
+  "questions": [
+    {
+      "id": "swift-03-q01",
+      "type": "mcq",
+      "difficulty": "senior",
+      "prompt": "What is the central idea of protocol-oriented programming, contrasted with class inheritance?",
+      "options": [
+        { "id": "a", "text": "Abstraction centers on what a type can DO (protocols a type conforms to) rather than what a type IS (a base class it inherits from); a type can conform to many protocols and carry no inherited state, making it composition over inheritance as a first-class feature." },
+        { "id": "b", "text": "Every type must inherit from a single root protocol, recreating a class hierarchy with different syntax." },
+        { "id": "c", "text": "Protocols replace all value types; POP requires everything to be a class." },
+        { "id": "d", "text": "POP means avoiding abstraction entirely and always programming to concrete types." }
+      ],
+      "answer": ["a"],
+      "explanation": "The chapter's framing: abstract on capability (conform to many protocols, no inherited state) rather than identity — composition over inheritance made first-class. (b) describes exactly the anti-pattern the chapter warns against (recreating inheritance with protocols). (c) is false; POP works precisely because value types can conform to protocols. (d) inverts it — POP is about better abstraction, not avoiding it.",
+      "tags": ["protocol-oriented-programming", "protocols", "composition"]
+    },
+    {
+      "id": "swift-03-q02",
+      "type": "mcq",
+      "difficulty": "senior",
+      "prompt": "Why can a struct participate in polymorphism via protocols, and why does the chapter highlight that as the key POP advantage?",
+      "options": [
+        { "id": "a", "text": "A value type can conform to protocols, so you get polymorphism (abstracting over multiple conforming types) without giving up value semantics — the combination of abstraction plus value types is what class-based languages can't easily offer." },
+        { "id": "b", "text": "Structs can conform to protocols only by first being wrapped in a class, so they gain polymorphism at the cost of value semantics." },
+        { "id": "c", "text": "Structs get polymorphism only through inheritance, exactly like classes." },
+        { "id": "d", "text": "Structs cannot conform to protocols; only classes can." }
+      ],
+      "answer": ["a"],
+      "explanation": "The chapter: struct conformance gives polymorphism while keeping value semantics — the abstraction-plus-value-types combination is POP's distinctive pitch. (b) is false; no class wrapping is required. (c) is false; structs don't have inheritance and don't need it for protocol polymorphism. (d) is flatly false — structs conform to protocols routinely.",
+      "tags": ["value-types", "polymorphism", "protocols"]
+    },
+    {
+      "id": "swift-03-q03",
+      "type": "mcq",
+      "difficulty": "staff",
+      "prompt": "What consequence follows from a protocol having an associated type?",
+      "options": [
+        { "id": "a", "text": "The protocol has no single concrete shape (it leaves a type unspecified per conformer), so it can't always be used as an ordinary variable type the way a simple protocol can — which is the reason the some and any keywords exist." },
+        { "id": "b", "text": "The protocol can no longer be conformed to by any struct, only by classes." },
+        { "id": "c", "text": "Associated types force the protocol to be dynamically dispatched, eliminating all generic specialization." },
+        { "id": "d", "text": "Associated types are purely documentation and have no effect on how the protocol can be used." }
+      ],
+      "answer": ["a"],
+      "explanation": "The chapter flags this explicitly: an associated type means no single concrete shape, so it can't always be used as a plain variable type — motivating some and any (covered in chapter 5). (b) is false; structs conform to associated-type protocols (the collection protocols do exactly this). (c) fabricates a dispatch consequence. (d) is false; it directly constrains how the protocol can be used as a type.",
+      "tags": ["associated-types", "protocols", "generics"]
+    },
+    {
+      "id": "swift-03-q04",
+      "type": "code-review",
+      "difficulty": "senior",
+      "prompt": "A reviewer flags this protocol extraction as a smell. Given there is exactly one conformer and no test or second implementation planned, why?",
+      "code": "protocol UserFormatterProtocol {\n    func format(_ user: User) -> String\n}\n\nfinal class UserFormatter: UserFormatterProtocol {\n    func format(_ user: User) -> String { user.name }\n}\n// Used in exactly one place; no other conformer, no mock in the tests.",
+      "codeLanguage": "swift",
+      "options": [
+        { "id": "a", "text": "It's speculative abstraction: a protocol for a type with a single conformer, no second implementation, and no test seam adds indirection and cost now for a benefit that may never materialize — protocols earn their place at real variation points or genuine mocking needs." },
+        { "id": "b", "text": "The smell is that the class is marked final; removing final would justify the protocol." },
+        { "id": "c", "text": "The protocol should be a base class instead, because inheritance is always preferable to protocols." },
+        { "id": "d", "text": "There is no smell; every concrete type should always have a matching protocol." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is the chapter's first POP failure mode: protocolizing a single-conformer type with no test seam is cost-now/benefit-maybe-never. (b) is unrelated — final is orthogonal to whether the protocol earns its keep. (c) contradicts the chapter's whole thesis (composition over inheritance). (d) is the exact junior heuristic the chapter calls out as producing abstraction sprawl.",
+      "tags": ["speculative-abstraction", "protocols", "anti-patterns"]
+    },
+    {
+      "id": "swift-03-q05",
+      "type": "mcq",
+      "difficulty": "senior",
+      "prompt": "What does a composed constraint like 'Identifiable & Cacheable' as a parameter type express, and why is it often preferable to a concrete type?",
+      "options": [
+        { "id": "a", "text": "It says 'I don't care what this is; I care that it's both identifiable and cacheable' — decoupling the function from any concrete type and making it more testable, since a test can pass a small fake conforming type instead of a real one." },
+        { "id": "b", "text": "It requires the argument to inherit from both Identifiable and Cacheable base classes simultaneously, which only classes can do." },
+        { "id": "c", "text": "It is slower than a concrete type in every case and should be avoided for performance." },
+        { "id": "d", "text": "It means the argument must conform to either Identifiable or Cacheable, whichever is available." }
+      ],
+      "answer": ["a"],
+      "explanation": "The chapter: protocol composition expresses capability requirements, decoupling from concrete types and improving testability (pass a tiny fake). (b) misreads protocols as base classes and & as multiple inheritance. (c) fabricates a blanket performance claim. (d) misreads & as 'either' — it means BOTH must be satisfied.",
+      "tags": ["protocol-composition", "testability", "constraints"]
+    },
+    {
+      "id": "swift-03-q06",
+      "type": "mcq",
+      "difficulty": "staff",
+      "prompt": "Per the chapter, how should a senior engineer decide between a protocol and a concrete type?",
+      "options": [
+        { "id": "a", "text": "Tie it to variation points: use a protocol where you genuinely expect multiple implementations or need a test double, and the concrete type otherwise — 'always program to a protocol' is a junior heuristic that produces abstraction sprawl." },
+        { "id": "b", "text": "Always use a protocol; concrete types are a code smell in idiomatic Swift." },
+        { "id": "c", "text": "Never use protocols in application code; reserve them for the standard library." },
+        { "id": "d", "text": "Decide based purely on which produces fewer lines of code in the immediate file." }
+      ],
+      "answer": ["a"],
+      "explanation": "The chapter's senior guidance: abstract at real variation points (multiple implementations or a test seam), concrete otherwise; 'always program to a protocol' is explicitly named as a junior heuristic. (b) is that very junior heuristic. (c) overcorrects into never using protocols. (d) reduces a design judgment to a line count, ignoring the variation-point criterion.",
+      "tags": ["protocols", "design-judgment", "tradeoffs"]
+    }
+  ]
+}

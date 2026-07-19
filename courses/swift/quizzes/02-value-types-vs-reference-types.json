@@ -1,0 +1,99 @@
+{
+  "schemaVersion": 1,
+  "chapterId": "swift-02",
+  "passScore": 0.7,
+  "questions": [
+    {
+      "id": "swift-02-q01",
+      "type": "mcq",
+      "difficulty": "senior",
+      "prompt": "What is the fundamental behavioral difference between a struct and a class in Swift?",
+      "options": [
+        { "id": "a", "text": "A struct is a value type — assigning or passing it copies it, so each holder has an independent instance; a class is a reference type — assigning or passing it shares a reference to one instance, so mutations are visible to every holder." },
+        { "id": "b", "text": "A struct is stored on the heap and a class on the stack; the copy behavior is identical between them." },
+        { "id": "c", "text": "A struct can have methods but a class cannot; otherwise they behave the same." },
+        { "id": "d", "text": "A class copies on assignment while a struct shares a reference — structs are the reference type in Swift." }
+      ],
+      "answer": ["a"],
+      "explanation": "The chapter's core distinction: value type = copy on assign/pass (independent), reference type = share (mutations visible to all). (b) is wrong on both storage and behavior — and storage location is not the defining difference. (c) is false; both structs and classes have methods. (d) exactly reverses which is the value and which is the reference type.",
+      "tags": ["value-types", "reference-types", "struct-vs-class"]
+    },
+    {
+      "id": "swift-02-q02",
+      "type": "mcq",
+      "difficulty": "senior",
+      "prompt": "Swift's Array and String are value types, yet assigning a large array to a new variable is cheap. Why?",
+      "options": [
+        { "id": "a", "text": "Copy-on-write: the underlying buffer is shared between the two variables until one of them mutates it, and only then is the buffer actually copied — giving value semantics (nobody sees your changes) with reference-level cost for reads and non-mutating assignments." },
+        { "id": "b", "text": "Because Array and String are secretly reference types, so no copy ever happens even on mutation." },
+        { "id": "c", "text": "The compiler skips the copy entirely and both variables permanently share storage, so mutating one does change the other." },
+        { "id": "d", "text": "Swift caches every array globally, so assignments just return an index into the cache." }
+      ],
+      "answer": ["a"],
+      "explanation": "Copy-on-write is the chapter's named technique: shared buffer until mutation, copy only on write — value semantics at reference-level read cost. (b) is false; they are value types, and mutation does trigger a copy. (c) describes reference sharing, which would break value semantics — the opposite of what COW preserves. (d) fabricates a global cache mechanism.",
+      "tags": ["copy-on-write", "value-semantics", "performance"]
+    },
+    {
+      "id": "swift-02-q03",
+      "type": "code-review",
+      "difficulty": "senior",
+      "prompt": "Why does the marked line fail to compile?",
+      "code": "struct Counter {\n    private(set) var count = 0\n    mutating func increment() { count += 1 }\n}\n\nlet c = Counter()\nc.increment()   // compile error",
+      "codeLanguage": "swift",
+      "options": [
+        { "id": "a", "text": "increment() is a mutating method, and a mutating method changes the value itself; calling it on a let constant would require replacing the constant's value, which is not allowed — the fix is declaring c with var." },
+        { "id": "b", "text": "private(set) makes count entirely unwritable, so no method can ever change it, even a mutating one." },
+        { "id": "c", "text": "Structs cannot have methods that modify their properties at all; you must use a class." },
+        { "id": "d", "text": "The initializer is missing, so Counter() is invalid." }
+      ],
+      "answer": ["a"],
+      "explanation": "The chapter explains that a mutating method conceptually replaces the value, so it can't be called on a let (the constant is the value). Declaring c as var fixes it. (b) misreads private(set) — it restricts external writes but the type's own mutating methods can still change count. (c) is false; structs absolutely have mutating methods. (d) is false; the memberwise/default init makes Counter() valid.",
+      "tags": ["mutating", "let-vs-var", "value-semantics"]
+    },
+    {
+      "id": "swift-02-q04",
+      "type": "mcq",
+      "difficulty": "senior",
+      "prompt": "When does === (identity comparison) make sense, versus == (equality)?",
+      "options": [
+        { "id": "a", "text": "=== tests whether two references point to the same instance and is meaningful only for reference types (classes); value types have no meaningful identity — only equality (==) applies, because 'the same value' and 'an equal value' are indistinguishable for them." },
+        { "id": "b", "text": "=== works on all types and is always preferable to == because it is faster." },
+        { "id": "c", "text": "=== compares values field-by-field, while == compares memory addresses." },
+        { "id": "d", "text": "=== is only for strings, == is for everything else." }
+      ],
+      "answer": ["a"],
+      "explanation": "The chapter: reference types have identity (=== tests same-instance); value types have only equality since equal and same are indistinguishable. Reaching for === signals genuine reasoning about shared instances. (b) is false — === applies only to reference types and isn't a general speed win. (c) reverses the two operators. (d) fabricates a string-only rule.",
+      "tags": ["identity", "equality", "reference-types"]
+    },
+    {
+      "id": "swift-02-q05",
+      "type": "mcq",
+      "difficulty": "staff",
+      "prompt": "How do value types support Swift's concurrency and data-race safety story?",
+      "options": [
+        { "id": "a", "text": "A value copied across a task or actor boundary can't be mutated by two tasks at once, because each holds its own independent copy — there's no shared mutable state to race on, which is why Sendable checking scrutinizes classes far more than structs." },
+        { "id": "b", "text": "Value types are automatically locked by the runtime whenever accessed concurrently, so they serialize all access." },
+        { "id": "c", "text": "Value types disable concurrency entirely; only classes can be used across threads." },
+        { "id": "d", "text": "Value types are irrelevant to concurrency; only actors matter." }
+      ],
+      "answer": ["a"],
+      "explanation": "The chapter connects value semantics to concurrency: copies mean no shared mutable state, so no race — hence Sendable scrutinizes classes more than structs. (b) fabricates automatic locking; the safety comes from copying, not locks. (c) is false; value types are exactly what's safe to pass across boundaries. (d) understates it — value semantics are foundational to the data-race-safety model, not irrelevant.",
+      "tags": ["concurrency", "sendable", "data-race-safety"]
+    },
+    {
+      "id": "swift-02-q06",
+      "type": "mcq",
+      "difficulty": "staff",
+      "prompt": "Per the chapter, when is choosing a class over a struct the right call?",
+      "options": [
+        { "id": "a", "text": "When you genuinely need identity (multiple references to the same mutable object), need inheritance, must interoperate with an Objective-C API requiring it, or are modeling a truly shared resource (like a database connection) rather than a data record." },
+        { "id": "b", "text": "Always — classes are the modern default and structs are a legacy feature." },
+        { "id": "c", "text": "Only when the type has more than five properties, since structs become slow beyond that." },
+        { "id": "d", "text": "Whenever the type needs methods, since structs can't have behavior." }
+      ],
+      "answer": ["a"],
+      "explanation": "The chapter's concrete reasons for a class: identity, inheritance, Obj-C interop, or a genuinely shared resource — otherwise struct is the modern default. (b) inverts the guidance (struct is the default). (c) fabricates a property-count performance rule. (d) is false; structs have methods, so 'needs behavior' is not a reason.",
+      "tags": ["struct-vs-class", "design", "tradeoffs"]
+    }
+  ]
+}

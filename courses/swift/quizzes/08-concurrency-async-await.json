@@ -1,0 +1,99 @@
+{
+  "schemaVersion": 1,
+  "chapterId": "swift-08",
+  "passScore": 0.7,
+  "questions": [
+    {
+      "id": "swift-08-q01",
+      "type": "mcq",
+      "difficulty": "senior",
+      "prompt": "What does it mean that an async function 'suspends' at an await, and why is that different from blocking?",
+      "options": [
+        { "id": "a", "text": "Suspending pauses the function and frees its thread for other work, resuming later — so a handful of threads can service thousands of in-flight async operations, unlike a blocking call that holds the thread hostage until it completes." },
+        { "id": "b", "text": "Suspending and blocking are identical; await simply blocks the current thread until the result is ready." },
+        { "id": "c", "text": "Suspending spawns a new OS thread per await, which is why async code scales." },
+        { "id": "d", "text": "Suspending pauses the entire program, including all other tasks, until the awaited value arrives." }
+      ],
+      "answer": ["a"],
+      "explanation": "The chapter's crucial distinction: awaiting suspends and frees the thread (few threads serve many operations), whereas blocking holds the thread. (b) erases the very distinction the chapter draws. (c) is false; the model avoids thread-per-operation. (d) is false; other tasks continue — only this function pauses.",
+      "tags": ["async-await", "suspension", "threads"]
+    },
+    {
+      "id": "swift-08-q02",
+      "type": "code-review",
+      "difficulty": "senior",
+      "prompt": "These two fetches are independent. What is wrong with this code from a latency standpoint, and how do you fix it?",
+      "code": "let a = try await fetchUser(id: \"1\")\nlet b = try await fetchUser(id: \"2\")\nlet users = [a, b]",
+      "codeLanguage": "swift",
+      "options": [
+        { "id": "a", "text": "Sequential awaits run sequentially — b doesn't start until a finishes — so two independent calls are needlessly serialized (total time is their sum). Fix by starting them concurrently with async let (or a task group) and awaiting afterward, making total time roughly the max, not the sum." },
+        { "id": "b", "text": "Nothing is wrong; separate await statements automatically run in parallel." },
+        { "id": "c", "text": "The bug is that await can't be used twice in one function; you must combine them into a single call." },
+        { "id": "d", "text": "The fix is to remove try, which is what forces sequential execution." }
+      ],
+      "answer": ["a"],
+      "explanation": "The chapter's most common misread: sequential awaits serialize, so independent calls should use async let / a task group to overlap (time ≈ max, not sum). (b) is exactly the misconception the chapter corrects. (c) fabricates a one-await-per-function rule. (d) is false; try has nothing to do with sequencing.",
+      "tags": ["async-let", "serialization", "concurrency"]
+    },
+    {
+      "id": "swift-08-q03",
+      "type": "mcq",
+      "difficulty": "staff",
+      "prompt": "What does 'structured' mean in structured concurrency, and what problem does it prevent?",
+      "options": [
+        { "id": "a", "text": "Child tasks have a lifetime bounded by a parent scope — a task group won't return until all its children have finished or been cancelled — which prevents orphaned background work from leaking past the function that started it." },
+        { "id": "b", "text": "It means tasks are stored in a structured data format like JSON for debugging." },
+        { "id": "c", "text": "It means every task must be declared at the top of the file in a fixed structure." },
+        { "id": "d", "text": "It means tasks run in a guaranteed sequential order determined by their declaration." }
+      ],
+      "answer": ["a"],
+      "explanation": "The chapter: structured means child tasks are scope-bounded (the group won't return until children finish/cancel), preventing orphaned work. (b) and (c) fabricate unrelated meanings of 'structured.' (d) is false; children run concurrently, not in declaration order.",
+      "tags": ["structured-concurrency", "task-groups", "lifetime"]
+    },
+    {
+      "id": "swift-08-q04",
+      "type": "mcq",
+      "difficulty": "staff",
+      "prompt": "How does an unstructured Task { } differ from a structured child task, and why does it matter?",
+      "options": [
+        { "id": "a", "text": "An unstructured Task is not bound to a scope — it runs independently, and you're responsible for its lifetime and cancellation; it opts out of the safety structured concurrency provides, so it's the exception (bridging from non-async code, managed fire-and-forget), not the default." },
+        { "id": "b", "text": "An unstructured Task is automatically cancelled when its enclosing function returns, exactly like a structured child." },
+        { "id": "c", "text": "There is no difference; Task { } and task-group children behave identically." },
+        { "id": "d", "text": "Unstructured tasks cannot throw errors, while structured ones can." }
+      ],
+      "answer": ["a"],
+      "explanation": "The chapter: an unstructured Task isn't scope-bound — you own its lifetime/cancellation — so it opts out of structured safety and is the exception, not the default. (b) is false; it is precisely NOT bound to the enclosing scope. (c) erases the key difference. (d) fabricates a throwing restriction.",
+      "tags": ["unstructured-tasks", "task", "lifetime"]
+    },
+    {
+      "id": "swift-08-q05",
+      "type": "mcq",
+      "difficulty": "staff",
+      "prompt": "Cancellation in Swift concurrency is 'cooperative.' What does that mean in practice?",
+      "options": [
+        { "id": "a", "text": "Cancelling a task only sets a flag; the task must check it (via Task.checkCancellation() or Task.isCancelled) and stop voluntarily. A tight compute loop that never checks will run to completion even after cancellation, so honoring cancellation is the programmer's responsibility." },
+        { "id": "b", "text": "Cancelling a task forcibly and immediately terminates it at whatever line it's executing, no cooperation needed." },
+        { "id": "c", "text": "Cancellation is impossible in structured concurrency; tasks always run to completion." },
+        { "id": "d", "text": "Cooperative means the OS scheduler decides whether to honor the cancellation, independent of the task's code." }
+      ],
+      "answer": ["a"],
+      "explanation": "The chapter: cancellation sets a flag the task must check and honor; a loop that never checks runs to completion. (b) describes forcible cancellation, which Swift explicitly does NOT do. (c) is false; cancellation exists and propagates to children (as a marking). (d) misattributes the responsibility to the OS rather than the task's own checks.",
+      "tags": ["cancellation", "cooperative", "concurrency"]
+    },
+    {
+      "id": "swift-08-q06",
+      "type": "mcq",
+      "difficulty": "staff",
+      "prompt": "Per the chapter's trade-off, why isn't maximum concurrency (firing all child tasks at once) automatically the best choice?",
+      "options": [
+        { "id": "a", "text": "Firing thousands of unbounded child tasks can exhaust connections or memory; task groups let you bound the width (e.g. process in batches), which is often the correct engineering choice over starting everything at once." },
+        { "id": "b", "text": "Maximum concurrency is always best; there is no downside to starting unlimited tasks simultaneously." },
+        { "id": "c", "text": "Concurrency should always be avoided; sequential code is universally safer and faster." },
+        { "id": "d", "text": "Task groups cannot limit the number of concurrent children, so width can't be bounded anyway." }
+      ],
+      "answer": ["a"],
+      "explanation": "The chapter's trade-off: unbounded task fan-out can exhaust resources (connections, memory); bounding width via task groups (batching) is often better. (b) ignores resource limits. (c) overcorrects into avoiding concurrency entirely. (d) is false; bounding width via task groups is exactly the recommended technique.",
+      "tags": ["tradeoffs", "task-groups", "resource-limits"]
+    }
+  ]
+}

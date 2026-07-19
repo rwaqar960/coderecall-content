@@ -1,0 +1,99 @@
+{
+  "schemaVersion": 1,
+  "chapterId": "swift-04",
+  "passScore": 0.7,
+  "questions": [
+    {
+      "id": "swift-04-q01",
+      "type": "mcq",
+      "difficulty": "senior",
+      "prompt": "What is the dispatch rule that distinguishes a protocol requirement from an extension-only method?",
+      "options": [
+        { "id": "a", "text": "A method listed in the protocol body (a requirement) uses dynamic dispatch — the conformer's implementation wins even through the protocol type; a method that exists only in the extension uses static dispatch — which implementation runs is decided by the reference's compile-time type." },
+        { "id": "b", "text": "Both requirement and extension-only methods always use dynamic dispatch; the conformer's version always wins." },
+        { "id": "c", "text": "Both always use static dispatch; the extension's version always wins regardless of the conformer." },
+        { "id": "d", "text": "Requirements are static and extension-only methods are dynamic — the reverse of what most people assume." }
+      ],
+      "answer": ["a"],
+      "explanation": "The chapter's central rule: requirements → dynamic (conformer wins even through the protocol type); extension-only → static (chosen by the reference's static type). (b) and (c) each collapse the distinction that is the whole point. (d) reverses the rule — requirements are the dynamic ones.",
+      "tags": ["protocol-extensions", "dispatch", "requirements"]
+    },
+    {
+      "id": "swift-04-q02",
+      "type": "code-review",
+      "difficulty": "staff",
+      "prompt": "Given the code, what does d.label() print, and why?",
+      "code": "protocol Describable { func kind() -> String }\nextension Describable {\n    func kind() -> String { \"generic\" }\n    func label() -> String { \"unlabeled\" }   // extension-only\n}\nstruct Widget: Describable {\n    func kind() -> String { \"widget\" }\n    func label() -> String { \"shiny widget\" }\n}\nlet d: Describable = Widget()\nprint(d.label())",
+      "codeLanguage": "swift",
+      "options": [
+        { "id": "a", "text": "It prints 'unlabeled' — label() is not a protocol requirement, so it is statically dispatched against the Describable reference type, and Widget's own label() is not consulted at all (nothing is actually overridden; the two label() methods are independent)." },
+        { "id": "b", "text": "It prints 'shiny widget' — the actual object is a Widget, so its method always wins." },
+        { "id": "c", "text": "It fails to compile because Widget redefines an extension method." },
+        { "id": "d", "text": "It prints 'generic' — the kind() default leaks into label()." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is the chapter's exact trap: label() is extension-only, so the call resolves against the static type Describable and prints 'unlabeled' — Widget's label() is a separate, statically-dispatched method that isn't consulted through the protocol reference. (b) is the intuitive-but-wrong answer the chapter builds the whole lesson around. (c) is false; redefining an extension method compiles fine. (d) confuses label() with the unrelated kind() default.",
+      "tags": ["static-dispatch", "protocol-extensions", "gotcha"]
+    },
+    {
+      "id": "swift-04-q03",
+      "type": "mcq",
+      "difficulty": "senior",
+      "prompt": "For the same object, why can d.kind() print the conformer's value while d.label() prints the extension's, when both are accessed through a Describable reference?",
+      "options": [
+        { "id": "a", "text": "kind() is declared in the protocol body, so it is a requirement dispatched dynamically (conformer wins); label() exists only in the extension, so it is dispatched statically against the reference type — the difference is requirement-vs-extension, not anything about the object." },
+        { "id": "b", "text": "Because kind() returns a String and label() returns an optional, and optionals are dispatched differently." },
+        { "id": "c", "text": "Because the object is sometimes a Widget and sometimes not, depending on runtime state." },
+        { "id": "d", "text": "Because kind() is called first, and the first method call on an object is always dynamic." }
+      ],
+      "answer": ["a"],
+      "explanation": "The chapter's key insight: the divergence is purely requirement (dynamic) vs extension-only (static), not a property of the object. (b) fabricates a return-type dependency. (c) is false; the same object is used throughout. (d) invents a call-order rule that doesn't exist.",
+      "tags": ["dispatch", "requirements", "protocol-extensions"]
+    },
+    {
+      "id": "swift-04-q04",
+      "type": "mcq",
+      "difficulty": "senior",
+      "prompt": "You want a protocol extension method to be overridable per conformer through the protocol type. What is the fix?",
+      "options": [
+        { "id": "a", "text": "Declare the method as a protocol requirement (list it in the protocol body); the extension can still provide a default, but being a requirement is what moves it into dynamic dispatch so conformers' overrides win through the protocol type." },
+        { "id": "b", "text": "Mark the extension method with the dynamic keyword; that alone makes any extension method dynamically dispatched." },
+        { "id": "c", "text": "Make the conformer a class instead of a struct; extension methods are dynamic for classes." },
+        { "id": "d", "text": "There is no fix; extension methods can never be overridden through a protocol type." }
+      ],
+      "answer": ["a"],
+      "explanation": "The chapter's fix: list the method as a requirement in the protocol body — that (not merely being in an extension) is what enables dynamic dispatch, while the extension still supplies a default. (b) is misleading — the requirement declaration is the mechanism here, not a bare dynamic keyword on an extension method. (c) is false; the requirement-vs-extension rule is independent of struct vs class. (d) is false; declaring it a requirement is exactly the fix.",
+      "tags": ["protocol-requirements", "dynamic-dispatch", "fix"]
+    },
+    {
+      "id": "swift-04-q05",
+      "type": "mcq",
+      "difficulty": "staff",
+      "prompt": "Why does Swift dispatch extension-only methods statically rather than dynamically?",
+      "options": [
+        { "id": "a", "text": "Extension-only methods aren't part of the protocol's witness (dynamic dispatch) table unless declared as requirements; they are ordinary statically-dispatched functions in scope for conformers — a deliberate performance and predictability choice, even though it violates the 'the real object's method always wins' intuition." },
+        { "id": "b", "text": "It is an acknowledged compiler bug that the Swift team plans to change to dynamic dispatch in a future release." },
+        { "id": "c", "text": "Because static dispatch is required for any method that returns a value; only void methods can be dynamic." },
+        { "id": "d", "text": "Because extensions are compiled after the main type, so their methods lose dynamic dispatch as a side effect of compilation order." }
+      ],
+      "answer": ["a"],
+      "explanation": "The chapter explains it as a deliberate design: extension-only methods live outside the witness table, dispatched statically for performance and predictability, at the cost of surprising the inheritance intuition. (b) is false; it's intentional, not a bug slated for change. (c) fabricates a return-type rule. (d) invents a compilation-order cause.",
+      "tags": ["witness-table", "static-dispatch", "design"]
+    },
+    {
+      "id": "swift-04-q06",
+      "type": "mcq",
+      "difficulty": "staff",
+      "prompt": "Per the chapter's trade-off, should you make every protocol extension method a requirement to avoid the static-dispatch surprise?",
+      "options": [
+        { "id": "a", "text": "No — declaring everything a requirement reintroduces ceremony and gives up static dispatch's performance for helpers that never needed overriding; the judgment is intent: customization points should be requirements, while internal conveniences built on those points are fine as extension-only." },
+        { "id": "b", "text": "Yes — every extension method should always be a requirement, with no exceptions, to guarantee dynamic dispatch everywhere." },
+        { "id": "c", "text": "No — you should never declare requirements at all and rely entirely on extensions." },
+        { "id": "d", "text": "It doesn't matter; requirement vs extension has no practical effect once the code compiles." }
+      ],
+      "answer": ["a"],
+      "explanation": "The chapter's trade-off: requirement for genuine customization points, extension-only for internal helpers where static dispatch is fine and even desirable — blanket-requiring everything is needless ceremony and lost performance. (b) is the overcorrection the trade-off argues against. (c) overcorrects the other way. (d) contradicts the entire chapter, which shows the effect is a real, bug-causing behavioral difference.",
+      "tags": ["tradeoffs", "protocol-design", "dispatch"]
+    }
+  ]
+}

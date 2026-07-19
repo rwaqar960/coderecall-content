@@ -1,0 +1,99 @@
+{
+  "schemaVersion": 1,
+  "chapterId": "swift-09",
+  "passScore": 0.7,
+  "questions": [
+    {
+      "id": "swift-09-q01",
+      "type": "mcq",
+      "difficulty": "senior",
+      "prompt": "What guarantee does an actor provide, and how does the compiler enforce it?",
+      "options": [
+        { "id": "a", "text": "An actor's mutable state is isolated so only one task touches it at a time; the compiler enforces this by making access from outside the actor asynchronous (you await it), so calls queue rather than overlap — mutual exclusion built into the type system without a manual lock." },
+        { "id": "b", "text": "An actor guarantees its methods never suspend, so all its work runs atomically from start to finish." },
+        { "id": "c", "text": "An actor is a value type whose copies prevent races through copying, identical to a struct." },
+        { "id": "d", "text": "An actor disables concurrency for the whole program while any of its methods run." }
+      ],
+      "answer": ["a"],
+      "explanation": "The chapter: an actor isolates mutable state to one-at-a-time access, enforced by requiring await from outside so calls serialize — lock-free mutual exclusion in the type system. (b) is false and sets up the reentrancy misconception the next question addresses (actors DO suspend). (c) is false; an actor is a reference type, not a value type. (d) overstates — only access to that actor serializes, not the whole program.",
+      "tags": ["actors", "isolation", "data-race-safety"]
+    },
+    {
+      "id": "swift-09-q02",
+      "type": "code-review",
+      "difficulty": "staff",
+      "prompt": "This ImageCache actor can still download the same image twice for concurrent callers. Why, despite actor isolation?",
+      "code": "actor ImageCache {\n    var cache: [String: Image] = [:]\n    func image(for key: String) async -> Image {\n        if let cached = cache[key] { return cached }\n        let downloaded = await download(key)\n        cache[key] = downloaded\n        return downloaded\n    }\n}",
+      "codeLanguage": "swift",
+      "options": [
+        { "id": "a", "text": "Actors are reentrant: when the method suspends at 'await download(key)', the actor is free to run other queued calls before this one resumes. Two concurrent calls for the same key can both miss the cache, both suspend to download, and both write — the check-then-act spans a suspension point. Fix by re-checking after the await or storing an in-flight task." },
+        { "id": "b", "text": "The bug is that cache should be a let constant; actors can't protect var properties." },
+        { "id": "c", "text": "Actor isolation doesn't apply to dictionaries, only to scalar properties like Int." },
+        { "id": "d", "text": "There is no bug; actor isolation guarantees the whole method runs atomically across the await." }
+      ],
+      "answer": ["a"],
+      "explanation": "The chapter's reentrancy trap: at an await the actor can run other work, so a check-then-act spanning the suspension lets two callers both miss and both download; fix by re-checking after suspension or storing an in-flight task. (b) is false; actors specifically protect mutable var state. (c) fabricates a scalar-only rule. (d) is exactly the wrong intuition — 'one at a time' is not 'atomic across awaits.'",
+      "tags": ["actor-reentrancy", "suspension", "race-condition"]
+    },
+    {
+      "id": "swift-09-q03",
+      "type": "mcq",
+      "difficulty": "staff",
+      "prompt": "What does the Sendable protocol govern, and why are value types often automatically Sendable while classes usually are not?",
+      "options": [
+        { "id": "a", "text": "Sendable marks a type as safe to pass between concurrency domains without a data race; value types composed of sendable values are automatically sendable because a copy can't be shared-mutated, whereas a class with mutable state isn't sendable unless proven internally synchronized (an actor, immutable, or a lock plus @unchecked Sendable)." },
+        { "id": "b", "text": "Sendable marks types that can be serialized to disk; it is unrelated to concurrency." },
+        { "id": "c", "text": "Sendable applies only to classes; value types are never checked for it." },
+        { "id": "d", "text": "Sendable is a runtime-only check that throws if a non-sendable type crosses a boundary." }
+      ],
+      "answer": ["a"],
+      "explanation": "The chapter: Sendable governs safe crossing of isolation boundaries; value types of sendable parts are auto-sendable (copies can't be shared-mutated), classes with mutable state need proof of synchronization. (b) confuses it with serialization. (c) reverses the emphasis — value types are the ones often automatically sendable. (d) is false; Swift 6 makes it a compile-time check, not a runtime throw.",
+      "tags": ["sendable", "concurrency-domains", "value-types"]
+    },
+    {
+      "id": "swift-09-q04",
+      "type": "mcq",
+      "difficulty": "senior",
+      "prompt": "What does @MainActor express, and what does it change about UI code?",
+      "options": [
+        { "id": "a", "text": "It encodes 'runs on the main thread' as isolation: anything annotated @MainActor runs on the main actor, and the compiler forces you to await when hopping onto it from background code — turning 'UIKit must be touched on the main thread' from a documentation convention into a checked rule." },
+        { "id": "b", "text": "It marks code that must never run on the main thread, moving all annotated work to background threads." },
+        { "id": "c", "text": "It is a performance hint with no effect on where code runs." },
+        { "id": "d", "text": "It disables actor isolation for the annotated type so UI code can run on any thread freely." }
+      ],
+      "answer": ["a"],
+      "explanation": "The chapter: @MainActor pins work to the main actor/thread and makes the compiler enforce the hop (await) from background code — the main-thread rule becomes type-checked. (b) reverses it (main, not off-main). (c) is false; it has a real effect on scheduling. (d) inverts it — it adds main-actor isolation, it doesn't disable isolation.",
+      "tags": ["main-actor", "ui-thread", "isolation"]
+    },
+    {
+      "id": "swift-09-q05",
+      "type": "mcq",
+      "difficulty": "staff",
+      "prompt": "What is the defining shift the Swift 6 concurrency model introduces for data races?",
+      "options": [
+        { "id": "a", "text": "Data races become compile errors rather than lurking runtime bugs: passing a non-sendable class into a concurrent context is rejected at build time, so the actor/Sendable/@MainActor rules are checked by the compiler instead of relied upon by convention." },
+        { "id": "b", "text": "Swift 6 adds a runtime race detector that logs races as they happen but still lets the program run." },
+        { "id": "c", "text": "Swift 6 removes actors and relies entirely on manual locking again." },
+        { "id": "d", "text": "Swift 6 makes all code single-threaded to eliminate races." }
+      ],
+      "answer": ["a"],
+      "explanation": "The chapter's headline: Swift 6 turns data-race safety into compile-time checking — non-sendable across a boundary is a build error, not a runtime race. (b) describes a runtime detector, which is not the Swift 6 model's defining feature (it's compile-time). (c) reverses the direction (actors are central, not removed). (d) is false; concurrency remains, races are just caught at compile time.",
+      "tags": ["swift-6", "compile-time-safety", "data-races"]
+    },
+    {
+      "id": "swift-09-q06",
+      "type": "mcq",
+      "difficulty": "staff",
+      "prompt": "Per the chapter's trade-off, what is the risk of over-using actor isolation?",
+      "options": [
+        { "id": "a", "text": "Over-isolating turns everything into await calls and can serialize work that didn't need to be, hurting throughput; migrating a large codebase to strict Swift 6 checking also surfaces real friction (escape hatches, annotation churn). The judgment is isolating the genuinely shared mutable state, not wrapping every type in an actor." },
+        { "id": "b", "text": "There is no downside; wrapping every type in an actor is always the safest and fastest design." },
+        { "id": "c", "text": "Actors should never be used because manual locks are always more efficient." },
+        { "id": "d", "text": "Over-using actors causes memory leaks because actors can't be deallocated." }
+      ],
+      "answer": ["a"],
+      "explanation": "The chapter's trade-off: over-isolation serializes work needlessly (hurting throughput) and Swift 6 migration has real friction; isolate the genuinely shared mutable state rather than actor-wrapping everything. (b) ignores the throughput cost. (c) overcorrects toward manual locks the actor model exists to replace. (d) fabricates a deallocation problem.",
+      "tags": ["tradeoffs", "actor-isolation", "throughput"]
+    }
+  ]
+}

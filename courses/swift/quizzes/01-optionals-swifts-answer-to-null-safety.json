@@ -1,0 +1,99 @@
+{
+  "schemaVersion": 1,
+  "chapterId": "swift-01",
+  "passScore": 0.7,
+  "questions": [
+    {
+      "id": "swift-01-q01",
+      "type": "mcq",
+      "difficulty": "senior",
+      "prompt": "What is an optional in Swift, mechanically?",
+      "options": [
+        { "id": "a", "text": "A generic enum with two cases — .none and .some(Wrapped) — where the trailing ? is syntax sugar over that enum; this is why an optional and its non-optional wrapped type are genuinely different types the compiler distinguishes at every call site." },
+        { "id": "b", "text": "A runtime annotation attached to an existing type that flags whether the compiler should insert null checks, leaving the underlying type unchanged." },
+        { "id": "c", "text": "A pointer that may be null, identical to a nullable pointer in C, with the ? being purely cosmetic." },
+        { "id": "d", "text": "A protocol that types conform to in order to become nullable." }
+      ],
+      "answer": ["a"],
+      "explanation": "The chapter's central mechanism: an optional is literally a generic enum (.none / .some), and ? is sugar over it — which is exactly why the optional type and its wrapped type are different types, not the same type with a flag. (b) mischaracterizes it as an annotation over an unchanged type; the whole point is it IS a different type. (c) is wrong — an optional is a type-safe enum with no direct null pointer, and ? is not cosmetic. (d) fabricates a protocol; Optional is an enum, not a conformance.",
+      "tags": ["optionals", "type-system", "enum"]
+    },
+    {
+      "id": "swift-01-q02",
+      "type": "mcq",
+      "difficulty": "senior",
+      "prompt": "How does guard let differ from if let in how the unwrapped value is scoped?",
+      "options": [
+        { "id": "a", "text": "guard let unwraps and keeps the value in scope for the rest of the enclosing function (with the failure branch required to exit), whereas if let scopes the unwrapped value only to the success block it introduces." },
+        { "id": "b", "text": "They are identical; guard let is only a stylistic alias for if let with no scoping difference." },
+        { "id": "c", "text": "if let keeps the value in scope after the block, while guard let scopes it only to its else branch." },
+        { "id": "d", "text": "guard let can only be used at the top of a file, not inside a function body." }
+      ],
+      "answer": ["a"],
+      "explanation": "The chapter frames guard as the early-exit tool: it unwraps and keeps the value available for the rest of the function, pushing failure out via a required exit, which keeps the happy path un-indented. (b) is false — the scoping difference is the entire reason both exist. (c) reverses the two operators' actual scoping. (d) fabricates a placement restriction; guard is used inside function bodies precisely to validate preconditions.",
+      "tags": ["guard-let", "optional-binding", "control-flow"]
+    },
+    {
+      "id": "swift-01-q03",
+      "type": "code-review",
+      "difficulty": "senior",
+      "prompt": "A teammate writes the function below and says the force-unwrap is fine 'because the value is obviously there.' What is the precise risk they're accepting?",
+      "code": "func firstInitial(of names: [String]) -> Character {\n    let first = names.first!   // force-unwrap\n    return first.first!\n}",
+      "codeLanguage": "swift",
+      "options": [
+        { "id": "a", "text": "Each ! converts a genuinely possible nil into a runtime crash: names.first is nil for an empty array, and first.first is nil for an empty string element — both are reachable inputs, so this asserts an invariant that callers can violate, reintroducing exactly the crash optionals exist to prevent." },
+        { "id": "b", "text": "There is no real risk; force-unwrap on .first never crashes because arrays always have a first element." },
+        { "id": "c", "text": "The only risk is a compile warning; the code cannot crash at runtime." },
+        { "id": "d", "text": "The risk is a memory leak from retaining the array too long." }
+      ],
+      "answer": ["a"],
+      "explanation": "This is the chapter's force-unwrap trade-off applied: ! asserts non-nil and crashes if wrong, and here both nils are genuinely reachable (empty array, empty string), so the invariant isn't the programmer's to guarantee — callers can break it. (b) is false; .first is optional precisely because an empty collection has no first element. (c) is wrong — force-unwrap failures are runtime crashes (fatalError), not compile warnings. (d) fabricates an unrelated memory concern.",
+      "tags": ["force-unwrap", "optionals", "crash-risk"]
+    },
+    {
+      "id": "swift-01-q04",
+      "type": "mcq",
+      "difficulty": "staff",
+      "prompt": "What is an implicitly unwrapped optional, and why is it treated with suspicion outside its intended uses?",
+      "options": [
+        { "id": "a", "text": "An optional (written with ! in the type) that auto-unwraps on every access and crashes if nil at that moment; it exists mainly for Objective-C interop and @IBOutlet properties set after init, but elsewhere it opts out of null safety while looking like a non-optional, hiding the crash risk." },
+        { "id": "b", "text": "A performance-optimized optional that the compiler guarantees can never be nil, making it strictly safer than a normal optional." },
+        { "id": "c", "text": "An optional that can only hold reference types, used to avoid retain cycles." },
+        { "id": "d", "text": "A deprecated feature removed in modern Swift that no longer compiles." }
+      ],
+      "answer": ["a"],
+      "explanation": "The chapter defines it precisely: it auto-unwraps and crashes on nil access, is legitimate for interop and IBOutlets set post-init, and elsewhere is 'a way to opt out of null safety while looking like you didn't.' (b) inverts the safety — it is more dangerous, not guaranteed non-nil. (c) fabricates a reference-type restriction. (d) is false; it still exists and compiles, used exactly where the chapter notes.",
+      "tags": ["implicitly-unwrapped-optional", "null-safety", "interop"]
+    },
+    {
+      "id": "swift-01-q05",
+      "type": "multi",
+      "difficulty": "senior",
+      "prompt": "Which of the following unwrap an optional WITHOUT any risk of crashing? Select all that apply.",
+      "options": [
+        { "id": "a", "text": "if let / guard let optional binding" },
+        { "id": "b", "text": "Nil-coalescing with ?? providing a default" },
+        { "id": "c", "text": "Optional chaining with ?. (the result is itself optional)" },
+        { "id": "d", "text": "Force-unwrap with !" }
+      ],
+      "answer": ["a", "b", "c"],
+      "explanation": "Optional binding (a) safely scopes the unwrapped value; nil-coalescing (b) substitutes a default for nil; optional chaining (c) propagates nil safely (null in, null out) — none can crash. Force-unwrap (d) is the one that crashes on nil, which is exactly why the chapter singles it out as the operator that reintroduces the failure mode.",
+      "tags": ["optionals", "safe-unwrapping", "operators"]
+    },
+    {
+      "id": "swift-01-q06",
+      "type": "mcq",
+      "difficulty": "staff",
+      "prompt": "Per the chapter's trade-off framing, when is a force-unwrap a defensible choice rather than an anti-pattern?",
+      "options": [
+        { "id": "a", "text": "When a nil at that point represents an 'impossible' state that should crash loudly if the invariant is ever violated (a genuine programmer-error assertion), as opposed to silencing the compiler on a value that can genuinely be nil." },
+        { "id": "b", "text": "Whenever writing the safe-unwrapping code would take more than one line, since brevity outweighs the crash risk." },
+        { "id": "c", "text": "Force-unwrap is never defensible under any circumstances and should be banned entirely." },
+        { "id": "d", "text": "Only inside test code, never in production." }
+      ],
+      "answer": ["a"],
+      "explanation": "The chapter's explicit trade-off: ! is defensible when nil means 'impossible, crash loudly if I'm wrong' — a real invariant — and is an anti-pattern when used to silence the compiler on a genuinely possible nil. (b) prioritizes brevity over correctness, the exact reflex the chapter warns against. (c) overcorrects into a blanket ban the chapter explicitly rejects ('not automatically wrong'). (d) fabricates a test-only rule; the criterion is invariant-vs-possible-nil, not test-vs-production.",
+      "tags": ["force-unwrap", "tradeoffs", "invariants"]
+    }
+  ]
+}

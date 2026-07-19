@@ -1,0 +1,97 @@
+{
+  "schemaVersion": 1,
+  "chapterId": "swift-10",
+  "passScore": 0.7,
+  "questions": [
+    {
+      "id": "swift-10-q01",
+      "type": "mcq",
+      "difficulty": "senior",
+      "prompt": "What is the through-line the chapter identifies as the mark of idiomatic senior Swift?",
+      "options": [
+        { "id": "a", "text": "Letting the type system carry the weight — optionals for absence, value types for isolation, protocols for variation, throws for failure, actors for shared mutable state — each turning a class of runtime bug into something the compiler catches; anti-patterns are almost always ways of opting OUT of that checking." },
+        { "id": "b", "text": "Using as many advanced language features as possible in every file to demonstrate mastery." },
+        { "id": "c", "text": "Avoiding the type system in favor of runtime checks and dynamic dispatch for flexibility." },
+        { "id": "d", "text": "Writing everything as classes to maximize compatibility with Objective-C." }
+      ],
+      "answer": ["a"],
+      "explanation": "The chapter's synthesis: idiomatic Swift lets the type system catch bug classes at compile time, and anti-patterns are ways of opting out (force-unwraps, Any, unannotated interop, reference types for data). (b) is feature-showmanship, not idiom. (c) inverts the thesis. (d) contradicts the struct-by-default guidance.",
+      "tags": ["idioms", "type-system", "synthesis"]
+    },
+    {
+      "id": "swift-10-q02",
+      "type": "multi",
+      "difficulty": "senior",
+      "prompt": "Which of the following does the chapter name as anti-patterns that read as 'not really Swift'? Select all that apply.",
+      "options": [
+        { "id": "a", "text": "Force-unwrap as a default to silence the compiler rather than model the possibility" },
+        { "id": "b", "text": "A Massive View Controller cramming networking, state, and layout into one class" },
+        { "id": "c", "text": "Using a reference type (class) for pure immutable data that a struct would model" },
+        { "id": "d", "text": "Grouping a type's conformances into focused extensions to keep files navigable" }
+      ],
+      "answer": ["a", "b", "c"],
+      "explanation": "The chapter lists (a) force-unwrap-as-default, (b) Massive View Controller, and (c) reference types for pure data as anti-patterns — each an opt-out of the type system or of good structure. (d) is the opposite: using extensions to organize is an idiom the chapter endorses, not an anti-pattern.",
+      "tags": ["anti-patterns", "idioms", "structure"]
+    },
+    {
+      "id": "swift-10-q03",
+      "type": "mcq",
+      "difficulty": "staff",
+      "prompt": "When you call an OLD, unannotated Objective-C API from Swift, what happens to null safety, and why?",
+      "options": [
+        { "id": "a", "text": "The value imports as an implicitly-unwrapped optional — it looks non-optional but crashes if it's actually nil at the use site — because the unannotated header never states whether the pointer can be nil, so the compiler can't verify it; the guarantee is Swift-to-Swift and necessarily stops at a language that can't express nullability." },
+        { "id": "b", "text": "Swift refuses to compile any call to an unannotated Objective-C API until it is annotated." },
+        { "id": "c", "text": "Swift treats every unannotated value as a non-optional that can never be nil, fully safe." },
+        { "id": "d", "text": "Swift automatically wraps it in a proper optional and forces you to handle nil, so there is no risk." }
+      ],
+      "answer": ["a"],
+      "explanation": "The chapter: unannotated Obj-C APIs import as implicitly-unwrapped optionals (look non-optional, crash on nil), because the header never stated nullability — the guarantee stops at the interop boundary, mirroring Kotlin/Java platform types. (b) is false; it compiles, it just imports as IUO. (c) is dangerously wrong — it can be nil and will crash. (d) describes annotated APIs, not unannotated ones.",
+      "tags": ["objc-interop", "null-safety", "implicitly-unwrapped-optional"]
+    },
+    {
+      "id": "swift-10-q04",
+      "type": "mcq",
+      "difficulty": "staff",
+      "prompt": "What is the cost of exposing Swift to Objective-C with @objc (or using #selector, KVO, older UIKit patterns)?",
+      "options": [
+        { "id": "a", "text": "@objc forces Objective-C's dynamic message dispatch, giving up the static dispatch and inlining Swift normally uses — necessary for those interop features, but a performance and optimizer boundary worth being conscious of rather than sprinkling on for its own sake." },
+        { "id": "b", "text": "@objc has no runtime cost; it only changes how the symbol is named." },
+        { "id": "c", "text": "@objc makes the method faster by enabling aggressive inlining unavailable to pure Swift." },
+        { "id": "d", "text": "@objc converts the method to a value type, changing its copy semantics." }
+      ],
+      "answer": ["a"],
+      "explanation": "The chapter: @objc forces dynamic message dispatch, forfeiting static dispatch/inlining — necessary for interop features but a real optimizer boundary. (b) understates it — there IS a dispatch cost, not just a naming change. (c) reverses it (dynamic dispatch prevents the inlining static dispatch allows). (d) fabricates a value-type conversion.",
+      "tags": ["objc", "dynamic-dispatch", "performance"]
+    },
+    {
+      "id": "swift-10-q05",
+      "type": "mcq",
+      "difficulty": "senior",
+      "prompt": "Why does bridging Foundation types to Swift value types deserve attention on a hot path?",
+      "options": [
+        { "id": "a", "text": "Foundation types bridge to Swift value types (e.g. the Objective-C string type to String, arrays to Array) often with a copy; convenient, but bridging a huge collection back and forth in a hot loop is a real cost a profiler will surface." },
+        { "id": "b", "text": "Bridging is always free because the types share identical memory layout." },
+        { "id": "c", "text": "Bridging permanently converts the type so it can never be used from Objective-C again." },
+        { "id": "d", "text": "Bridging only occurs at compile time and has no runtime representation." }
+      ],
+      "answer": ["a"],
+      "explanation": "The chapter: bridging often involves a copy, convenient but costly for large collections in hot loops — a profiler-visible cost. (b) is false; a copy is frequently involved, so it's not free. (c) fabricates a one-way permanent conversion. (d) is false; bridging happens at runtime with real cost.",
+      "tags": ["bridging", "foundation", "performance"]
+    },
+    {
+      "id": "swift-10-q06",
+      "type": "mcq",
+      "difficulty": "staff",
+      "prompt": "Per the chapter's closing trade-off, why is 'idiom for its own sake' itself an anti-pattern?",
+      "options": [
+        { "id": "a", "text": "The cleverest reduce, the most protocol-oriented design, or the most granular value types can each be LESS clear than a plain implementation; the staff-level skill is optimizing for the reader who maintains this in a year, which sometimes means the boring, obvious version wins." },
+        { "id": "b", "text": "Idiomatic code is always slower, so idioms should be avoided for performance." },
+        { "id": "c", "text": "Idioms are only for junior engineers; staff engineers should write in a personal style." },
+        { "id": "d", "text": "There is no such thing as over-applying idioms; more idiom is always better." }
+      ],
+      "answer": ["a"],
+      "explanation": "The chapter's closing trade-off: over-applied idioms (clever reduce, maximal POP, hyper-granular types) can reduce clarity; optimize for the future maintainer, and sometimes the plain version wins. (b) misattributes the reason to performance rather than readability. (c) is false; the point is maintainability, not seniority signaling. (d) is exactly the reflex the trade-off warns against.",
+      "tags": ["tradeoffs", "readability", "idioms"]
+    }
+  ]
+}

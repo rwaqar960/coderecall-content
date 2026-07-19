@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "id": "swift",
+  "title": "Swift",
+  "version": "1.0.0",
+  "level": "core",
+  "bundled": false,
+  "primaryLanguage": "swift",
+  "description": "A senior-level refresher on idiomatic Swift — optionals as type-system null safety, value semantics and copy-on-write, protocol-oriented programming and its dispatch traps, some/any, ARC and retain cycles, structured concurrency, and Swift 6 actors and data-race safety.",
+  "chapters": [
+    { "id": "swift-01", "title": "Optionals — Swift's Answer to Null Safety", "file": "chapters/01-optionals-swifts-answer-to-null-safety.md", "quiz": "quizzes/01-optionals-swifts-answer-to-null-safety.json", "status": "ready" },
+    { "id": "swift-02", "title": "Value Types vs Reference Types: struct, class, and Copy Semantics", "file": "chapters/02-value-types-vs-reference-types.md", "quiz": "quizzes/02-value-types-vs-reference-types.json", "status": "ready" },
+    { "id": "swift-03", "title": "Protocols and Protocol-Oriented Programming", "file": "chapters/03-protocols-and-protocol-oriented-programming.md", "quiz": "quizzes/03-protocols-and-protocol-oriented-programming.json", "status": "ready" },
+    { "id": "swift-04", "title": "Protocol Extensions and the Static/Dynamic Dispatch Trap", "file": "chapters/04-protocol-extensions-and-dispatch.md", "quiz": "quizzes/04-protocol-extensions-and-dispatch.json", "status": "ready" },
+    { "id": "swift-05", "title": "Generics, some, and any", "file": "chapters/05-generics-and-associated-types.md", "quiz": "quizzes/05-generics-and-associated-types.json", "status": "ready" },
+    { "id": "swift-06", "title": "Error Handling: throws, Result, and typed throws", "file": "chapters/06-error-handling.md", "quiz": "quizzes/06-error-handling.json", "status": "ready" },
+    { "id": "swift-07", "title": "Memory Management: ARC, Retain Cycles, weak/unowned", "file": "chapters/07-memory-management-arc.md", "quiz": "quizzes/07-memory-management-arc.json", "status": "ready" },
+    { "id": "swift-08", "title": "Concurrency: async/await and Structured Concurrency", "file": "chapters/08-concurrency-async-await.md", "quiz": "quizzes/08-concurrency-async-await.json", "status": "ready" },
+    { "id": "swift-09", "title": "Actors and Data-Race Safety", "file": "chapters/09-actors-and-data-race-safety.md", "quiz": "quizzes/09-actors-and-data-race-safety.json", "status": "ready" },
+    { "id": "swift-10", "title": "Swift Idioms, Anti-Patterns, and Objective-C Interop", "file": "chapters/10-swift-idioms-and-objc-interop.md", "quiz": "quizzes/10-swift-idioms-and-objc-interop.json", "status": "ready" }
+  ]
+}

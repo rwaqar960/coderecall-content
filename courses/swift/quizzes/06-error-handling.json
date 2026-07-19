@@ -1,0 +1,99 @@
+{
+  "schemaVersion": 1,
+  "chapterId": "swift-06",
+  "passScore": 0.7,
+  "questions": [
+    {
+      "id": "swift-06-q01",
+      "type": "mcq",
+      "difficulty": "senior",
+      "prompt": "How does Swift's throws/try model differ from unchecked exceptions in languages like Java or C++?",
+      "options": [
+        { "id": "a", "text": "Failure points are marked in the type system: a failing function is annotated throws, and every call must be prefixed with try, so you can't accidentally propagate a throw — you either handle it, mark your own function throws to pass it up, or convert it. Errors are as visible as return values." },
+        { "id": "b", "text": "Swift exceptions unwind the stack silently and can propagate through any function without annotation, exactly like unchecked exceptions." },
+        { "id": "c", "text": "Swift has no way to handle errors; throws simply crashes the program." },
+        { "id": "d", "text": "throws is a runtime-only feature with no effect on function signatures or the type system." }
+      ],
+      "answer": ["a"],
+      "explanation": "The chapter's central design point: throwing is in the signature and try marks every failure point, so there's no silent propagation — errors are as visible as return values. (b) describes exactly the unchecked-exception behavior Swift deliberately avoids. (c) is false; do/catch handles errors. (d) is false; throws is part of the signature and type-checked.",
+      "tags": ["throws", "error-handling", "type-system"]
+    },
+    {
+      "id": "swift-06-q02",
+      "type": "mcq",
+      "difficulty": "senior",
+      "prompt": "Why is modeling an error type as an enum with associated values (e.g. corrupted(reason:)) the idiomatic choice?",
+      "options": [
+        { "id": "a", "text": "Errors are values (any type conforming to the error protocol), so an enum lets callers pattern-match specific cases in catch and carries diagnostic data (like a reason) without stringly-typed hacks." },
+        { "id": "b", "text": "Enums are the only type in Swift allowed to conform to the error protocol; classes and structs cannot be errors." },
+        { "id": "c", "text": "Because enum errors are automatically logged by the runtime, unlike other error types." },
+        { "id": "d", "text": "Because associated values make the error crash instead of propagate, which is safer." }
+      ],
+      "answer": ["a"],
+      "explanation": "The chapter: errors are values, so an enum with associated values enables precise case matching in catch and carries diagnostic data cleanly. (b) is false; structs and classes can also conform to the error protocol. (c) fabricates automatic logging. (d) is false; associated values carry data, they don't cause crashes.",
+      "tags": ["error-enums", "pattern-matching", "idioms"]
+    },
+    {
+      "id": "swift-06-q03",
+      "type": "code-review",
+      "difficulty": "senior",
+      "prompt": "A developer replaces a do/catch with 'let config = try? loadConfig(at: path)' to simplify the code. loadConfig can throw either notFound or corrupted(reason:). What is lost?",
+      "code": "// before: distinguishes notFound vs corrupted in catch\n// after:\nlet config = try? loadConfig(at: path)  // Config?",
+      "codeLanguage": "swift",
+      "options": [
+        { "id": "a", "text": "try? collapses any failure into nil, discarding WHY it failed — you can no longer tell notFound from corrupted, which often matters; it's the right tool only when any failure genuinely collapses to 'no value' and the reason truly doesn't matter." },
+        { "id": "b", "text": "Nothing is lost; try? preserves the specific error in a hidden property you can inspect later." },
+        { "id": "c", "text": "try? makes the call crash on any error, so the risk is a crash rather than lost information." },
+        { "id": "d", "text": "try? changes the return type to a non-optional Config, removing the ability to represent absence." }
+      ],
+      "answer": ["a"],
+      "explanation": "The chapter warns that try? throws away the error reason (success→value, failure→nil), so notFound vs corrupted becomes indistinguishable — acceptable only when the reason truly doesn't matter. (b) is false; try? discards the error entirely, it isn't stashed anywhere. (c) confuses try? (→ nil) with try! (→ crash). (d) reverses it — try? produces an optional, not a non-optional.",
+      "tags": ["try-optional", "error-handling", "information-loss"]
+    },
+    {
+      "id": "swift-06-q04",
+      "type": "mcq",
+      "difficulty": "senior",
+      "prompt": "When is Result the right tool rather than throws, especially given async/await now exists?",
+      "options": [
+        { "id": "a", "text": "When a failure is a VALUE you carry around — stored, deferred, or passed through (retry queues, caching an outcome, batch results where each item independently succeeded or failed); async/await removed most of Result's old use as an async-callback carrier, so its remaining niche is outcomes-as-data." },
+        { "id": "b", "text": "Result should always be preferred over throws because it is strictly more powerful." },
+        { "id": "c", "text": "Result is now obsolete and should never be used since async/await exists." },
+        { "id": "d", "text": "Result is only for synchronous code and throws is only for asynchronous code." }
+      ],
+      "answer": ["a"],
+      "explanation": "The chapter: Result fits when the outcome is data you store/defer/pass (retry queues, caching, per-item batch results); async/await removed its main old async use, but the outcomes-as-data niche remains. (b) overstates it — throws reads better for straight-line synchronous flow. (c) overcorrects into obsolescence; the data-carrying niche persists. (d) reverses the actual relationship (async functions can just be throws).",
+      "tags": ["result", "throws", "async-await"]
+    },
+    {
+      "id": "swift-06-q05",
+      "type": "mcq",
+      "difficulty": "staff",
+      "prompt": "The language team recommends defaulting to untyped throws for most APIs rather than typed throws. Why?",
+      "options": [
+        { "id": "a", "text": "Committing to a concrete error type is a versioning constraint: adding a new error case becomes a breaking change to the API's contract; typed throws is valuable in narrow cases (exhaustive catch with no catch-all, embedded code avoiding existential boxing) but the general default stays untyped." },
+        { "id": "b", "text": "Typed throws is slower at runtime than untyped throws in every case." },
+        { "id": "c", "text": "Typed throws is deprecated and will be removed, so untyped is the only safe choice." },
+        { "id": "d", "text": "Untyped throws is required because Swift cannot represent a specific error type in a signature." }
+      ],
+      "answer": ["a"],
+      "explanation": "The chapter's precise reason: a concrete error type is a versioning commitment (new error case = breaking change), so untyped is the default while typed throws serves narrow cases (exhaustive catch, embedded/no-boxing). (b) fabricates a blanket performance claim. (c) is false; typed throws is a real, supported feature. (d) is false; typed throws exists precisely because Swift CAN name the error type.",
+      "tags": ["typed-throws", "api-versioning", "tradeoffs"]
+    },
+    {
+      "id": "swift-06-q06",
+      "type": "mcq",
+      "difficulty": "staff",
+      "prompt": "Per the chapter's trade-off, how granular should an error type be?",
+      "options": [
+        { "id": "a", "text": "Match the granularity to how differently callers actually need to REACT — rich enum error types are more precise but more to maintain, while a single catch-all tells callers nothing; if every failure is handled the same way, an elaborate error taxonomy is wasted effort." },
+        { "id": "b", "text": "Always maximally granular — every conceivable failure should be its own distinct case, regardless of how callers handle them." },
+        { "id": "c", "text": "Always a single generic error, because callers never need to distinguish failures." },
+        { "id": "d", "text": "Granularity should be decided by the number of functions that throw, not by caller behavior." }
+      ],
+      "answer": ["a"],
+      "explanation": "The chapter's trade-off: granularity should track how differently callers react — precise enums cost maintenance, a catch-all conveys nothing, and identical handling makes fine taxonomies wasted. (b) and (c) are the two opposite overcorrections. (d) picks the wrong driver — it's caller reaction, not the count of throwing functions.",
+      "tags": ["error-granularity", "tradeoffs", "design"]
+    }
+  ]
+}
