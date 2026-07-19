@@ -1,5 +1,6 @@
 /**
  * Brand palette matches the CodeRecall app (seed color #00696B).
+ * Typography: Inter (headings + body), system monospace for code.
  */
 :root {
   --ifm-color-primary: #00696b;
@@ -10,6 +11,12 @@
   --ifm-color-primary-lighter: #007b7e;
   --ifm-color-primary-lightest: #009598;
   --ifm-code-font-size: 92%;
+  --ifm-font-family-base: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --ifm-heading-font-weight: 700;
+  --ifm-line-height-base: 1.65;
+  --ifm-navbar-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+  --cr-card-border: var(--ifm-color-emphasis-300);
+  --cr-card-bg: var(--ifm-background-surface-color);
 }
 
 [data-theme='dark'] {
@@ -20,4 +27,53 @@
   --ifm-color-primary-light: #71ddde;
   --ifm-color-primary-lighter: #80e1e2;
   --ifm-color-primary-lightest: #adecec;
+  --ifm-navbar-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+/* Tighter, more deliberate heading rhythm than the Infima default */
+.markdown h2 {
+  margin-top: 2.5rem;
+  padding-bottom: 0.4rem;
+  border-bottom: 1px solid var(--ifm-color-emphasis-200);
+}
+
+.markdown h3 {
+  margin-top: 2rem;
+}
+
+/* Blockquote callouts (Interview lens / Trade-off) read as cards, not
+   generic quote styling */
+.markdown blockquote {
+  border-left: 3px solid var(--ifm-color-primary);
+  background: var(--ifm-color-emphasis-100);
+  border-radius: 0 8px 8px 0;
+  padding: 0.9rem 1.2rem;
+}
+
+.markdown blockquote p {
+  margin-bottom: 0;
+}
+
+/* The injected "Take the chapter quiz" CTA reads as a distinct call to
+   action, not a plain heading */
+.markdown h3 a[href^='/quiz'],
+.markdown h3 a[href*='/coderecall-content/quiz'] {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.6rem 1.3rem;
+  border-radius: 999px;
+  background: var(--ifm-color-primary);
+  color: white !important;
+  text-decoration: none !important;
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.markdown h3 a[href^='/quiz']:hover,
+.markdown h3 a[href*='/coderecall-content/quiz']:hover {
+  opacity: 0.9;
+}
+
+.navbar {
+  backdrop-filter: saturate(180%) blur(6px);
 }

@@ -1,45 +1,182 @@
 .hero {
-  padding: 4rem 1rem;
+  padding: 5rem 1rem 3rem;
+  text-align: center;
+  background: linear-gradient(180deg, var(--ifm-color-emphasis-100) 0%, transparent 100%);
+}
+
+.heroTitle {
+  font-size: 3rem;
+  line-height: 1.15;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  margin-bottom: 1.25rem;
+}
+
+@media (max-width: 768px) {
+  .heroTitle {
+    font-size: 2.1rem;
+  }
+}
+
+.heroSubtitle {
+  font-size: 1.2rem;
+  color: var(--ifm-color-emphasis-700);
+  max-width: 640px;
+  margin: 0 auto 2rem;
 }
 
 .buttons {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 0.75rem;
+  gap: 0.9rem;
   flex-wrap: wrap;
+  margin-bottom: 3rem;
+}
+
+.outlineButton {
+  border-color: var(--ifm-color-emphasis-400);
+  color: var(--ifm-font-color-base);
+}
+
+.outlineButton:hover {
+  border-color: var(--ifm-color-primary);
+  color: var(--ifm-color-primary);
+}
+
+.statsRow {
+  display: flex;
+  justify-content: center;
+  gap: clamp(1.5rem, 5vw, 3.5rem);
+  flex-wrap: wrap;
+}
+
+.stat {
+  min-width: 90px;
+}
+
+.statValue {
+  font-size: 2rem;
+  font-weight: 800;
+  color: var(--ifm-color-primary);
+  line-height: 1;
+}
+
+.statLabel {
+  font-size: 0.85rem;
+  color: var(--ifm-color-emphasis-600);
+  margin-top: 0.35rem;
+}
+
+.section {
+  padding: 3rem 0;
+}
+
+.sectionSubtitle {
+  color: var(--ifm-color-emphasis-700);
+  max-width: 640px;
+  margin-bottom: 2rem;
+}
+
+.principlesGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 1.25rem;
+}
+
+.principleCard {
+  padding: 1.5rem;
+  border-radius: 14px;
+  border: 1px solid var(--ifm-color-emphasis-200);
+}
+
+.principleBadge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: var(--ifm-color-primary);
+  color: white;
+  font-size: 1.2rem;
+  font-weight: 700;
+  margin-bottom: 0.9rem;
+}
+
+.principleTitle {
+  font-size: 1.1rem;
+  margin-bottom: 0.5rem;
 }
 
 .courseGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
   gap: 1rem;
-  margin-top: 1.5rem;
 }
 
-.courseCard {
-  display: block;
-  border: 1px solid var(--ifm-color-emphasis-300);
-  border-radius: 12px;
+.courseCard,
+.courseCardDisabled {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
   padding: 1.25rem;
+  border-radius: 14px;
+  border: 1px solid var(--ifm-color-emphasis-300);
   text-decoration: none !important;
   color: inherit;
-  transition: border-color 0.15s ease;
+  transition: border-color 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
+  position: relative;
 }
 
 .courseCard:hover {
   border-color: var(--ifm-color-primary);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
 }
 
-.courseCardComingSoon {
-  composes: courseCard;
+.courseCardDisabled {
   opacity: 0.55;
-  cursor: default;
 }
 
-.principles {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 1.5rem;
-  margin: 2rem 0 3rem;
+.courseCard strong,
+.courseCardDisabled strong {
+  display: block;
+  font-size: 1.05rem;
+  margin-bottom: 0.25rem;
+}
+
+.courseCard p,
+.courseCardDisabled p {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--ifm-color-emphasis-700);
+}
+
+.monogram {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  background: var(--ifm-color-emphasis-200);
+  color: var(--ifm-color-primary);
+  font-weight: 800;
+  font-size: 0.85rem;
+}
+
+.pill {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+  background: var(--ifm-color-emphasis-100);
+  color: var(--ifm-color-emphasis-700);
 }

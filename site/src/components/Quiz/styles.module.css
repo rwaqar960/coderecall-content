@@ -1,0 +1,224 @@
+.quiz {
+  max-width: 720px;
+  margin: 2rem 0;
+}
+
+.progressRow {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.progressTrack {
+  flex: 1;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--ifm-color-emphasis-200);
+  overflow: hidden;
+}
+
+.progressFill {
+  height: 100%;
+  background: var(--ifm-color-primary);
+  transition: width 0.2s ease;
+}
+
+.progressLabel {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--ifm-color-emphasis-700);
+  white-space: nowrap;
+}
+
+.badgeRow {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.badge {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  background: var(--ifm-color-emphasis-100);
+  color: var(--ifm-color-emphasis-700);
+}
+
+.prompt {
+  font-size: 1.05rem;
+  line-height: 1.6;
+  margin-bottom: 1rem;
+}
+
+.prompt p:last-child {
+  margin-bottom: 0;
+}
+
+.codeBlock {
+  margin-bottom: 1.25rem;
+}
+
+.options {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  margin-bottom: 1.25rem;
+}
+
+.option {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  text-align: left;
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border-radius: 10px;
+  border: 2px solid var(--ifm-color-emphasis-300);
+  background: var(--ifm-background-surface-color);
+  color: var(--ifm-font-color-base);
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.option:hover:not(:disabled) {
+  border-color: var(--ifm-color-primary);
+}
+
+.option:disabled {
+  cursor: default;
+}
+
+.optionSelected {
+  border-color: var(--ifm-color-primary);
+}
+
+.optionCorrect {
+  border-color: #2fa876;
+  background: rgba(47, 168, 118, 0.08);
+}
+
+.optionWrong {
+  border-color: var(--ifm-color-danger);
+  background: rgba(220, 53, 69, 0.08);
+}
+
+.optionId {
+  font-weight: 700;
+  color: var(--ifm-color-emphasis-600);
+  flex-shrink: 0;
+}
+
+.optionText {
+  flex: 1;
+}
+
+.optionText p {
+  margin: 0;
+}
+
+.optionIcon {
+  color: #2fa876;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.optionIconWrong {
+  color: var(--ifm-color-danger);
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.explanationCorrect,
+.explanationWrong {
+  border-radius: 10px;
+  padding: 1rem 1.1rem;
+  margin-bottom: 1.25rem;
+}
+
+.explanationCorrect {
+  background: rgba(47, 168, 118, 0.1);
+  border: 1px solid rgba(47, 168, 118, 0.3);
+}
+
+.explanationWrong {
+  background: rgba(220, 53, 69, 0.08);
+  border: 1px solid rgba(220, 53, 69, 0.25);
+}
+
+.explanationBody {
+  margin-top: 0.4rem;
+  line-height: 1.6;
+}
+
+.explanationBody p:last-child {
+  margin-bottom: 0;
+}
+
+.primaryButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.7rem 1.6rem;
+  border-radius: 999px;
+  border: none;
+  background: var(--ifm-color-primary);
+  color: white;
+  font-weight: 600;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: opacity 0.15s ease;
+}
+
+.primaryButton:hover:not(:disabled) {
+  opacity: 0.9;
+}
+
+.primaryButton:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.resultCard {
+  max-width: 480px;
+  margin: 3rem auto;
+  text-align: center;
+  padding: 2.5rem 2rem;
+  border-radius: 16px;
+  border: 1px solid var(--ifm-color-emphasis-300);
+}
+
+.resultScore {
+  font-size: 3rem;
+  font-weight: 800;
+  color: var(--ifm-color-primary);
+  margin-bottom: 0.5rem;
+}
+
+.resultPass {
+  color: #2fa876;
+  font-weight: 600;
+}
+
+.resultFail {
+  color: var(--ifm-color-emphasis-700);
+}
+
+.retryButton {
+  margin-top: 1.5rem;
+  padding: 0.65rem 1.5rem;
+  border-radius: 999px;
+  border: 2px solid var(--ifm-color-primary);
+  background: transparent;
+  color: var(--ifm-color-primary);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.retryButton:hover {
+  background: var(--ifm-color-primary);
+  color: white;
+}

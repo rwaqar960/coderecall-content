@@ -2,3 +2,4 @@ node_modules
 .docusaurus
 build
 docs/
+static/quiz-data/
